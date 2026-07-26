@@ -1,0 +1,122 @@
+export type Tier = 1 | 2 | 3 | 4 | 5;
+
+export const TIER_LABELS: Record<Tier, string> = {
+  1: 'Débutant',
+  2: 'Novice',
+  3: 'Expérimenté',
+  4: 'Pro',
+  5: 'Maître',
+};
+
+export type ProgramType = 'fullbody' | 'split';
+
+export type SessionCategory = 'upper' | 'lower' | 'fullbody' | 'custom';
+
+export const MUSCLE_GROUPS = [
+  'pecs',
+  'dos',
+  'epaules',
+  'bras',
+  'quadriceps',
+  'ischios',
+  'fessiers',
+  'mollets',
+] as const;
+
+export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
+
+export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
+  pecs: 'Pecs',
+  dos: 'Dos',
+  epaules: 'Épaules',
+  bras: 'Bras',
+  quadriceps: 'Quadriceps',
+  ischios: 'Ischios',
+  fessiers: 'Fessiers',
+  mollets: 'Mollets',
+};
+
+export const MUSCLE_GROUP_CATEGORY: Record<MuscleGroup, 'upper' | 'lower'> = {
+  pecs: 'upper',
+  dos: 'upper',
+  epaules: 'upper',
+  bras: 'upper',
+  quadriceps: 'lower',
+  ischios: 'lower',
+  fessiers: 'lower',
+  mollets: 'lower',
+};
+
+export interface Exercise {
+  id: number;
+  name: string;
+  category: 'upper' | 'lower';
+  muscleGroup: MuscleGroup;
+  isCustom: boolean;
+  createdAt: string;
+}
+
+export type ExerciseInput = Omit<Exercise, 'id' | 'createdAt'>;
+
+export interface WorkoutSession {
+  id: number;
+  date: string; // ISO date (yyyy-mm-dd)
+  category: SessionCategory;
+  notes: string;
+  createdAt: string;
+}
+
+export type WorkoutSessionInput = Omit<WorkoutSession, 'id' | 'createdAt'>;
+
+export interface SetEntry {
+  id: number;
+  sessionId: number;
+  exerciseId: number;
+  setNumber: number;
+  reps: number;
+  weightKg: number;
+  rpe: number | null;
+  createdAt: string;
+}
+
+export type SetEntryInput = Omit<SetEntry, 'id' | 'createdAt'>;
+
+export interface SetWithExercise extends SetEntry {
+  exerciseName: string;
+  exerciseCategory: 'upper' | 'lower';
+  exerciseMuscleGroup: MuscleGroup;
+}
+
+export interface BodyWeightEntry {
+  id: number;
+  date: string;
+  weightKg: number;
+  createdAt: string;
+}
+
+export type BodyWeightEntryInput = Omit<BodyWeightEntry, 'id' | 'createdAt'>;
+
+export interface ProteinEntry {
+  id: number;
+  date: string;
+  grams: number;
+  createdAt: string;
+}
+
+export type ProteinEntryInput = Omit<ProteinEntry, 'id' | 'createdAt'>;
+
+export interface Profile {
+  tier: Tier;
+  programType: ProgramType;
+  onboardedAt: string | null;
+}
+
+export interface ExercisePR {
+  exerciseId: number;
+  maxWeightKg: number;
+  maxWeightDate: string;
+  bestEstimated1RM: number;
+  bestEstimated1RMDate: string;
+  maxSessionVolume: number;
+  maxSessionVolumeDate: string;
+}
