@@ -9,6 +9,7 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { SegmentedControl } from '../../components/SegmentedControl';
+import { BackupControls } from '../../components/BackupControls';
 import { useData } from '../../context/DataContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
@@ -144,6 +145,8 @@ export default function ProfilScreen() {
               </Card>
             )}
           </View>
+
+          <BackupControls />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

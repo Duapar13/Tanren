@@ -9,6 +9,7 @@ import {
 } from '@expo-google-fonts/permanent-marker';
 import { DB_NAME, migrateDb } from '../db/schema';
 import { DataProvider } from '../context/DataContext';
+import { BackupSync } from '../components/BackupSync';
 import { AppShell } from '../components/AppShell';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useTheme } from '../hooks/useTheme';
@@ -32,6 +33,7 @@ export default function RootLayout() {
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
         <SQLiteProvider databaseName={DB_NAME} onInit={migrateDb}>
           <DataProvider>
+            <BackupSync />
             <AppShell />
           </DataProvider>
         </SQLiteProvider>
