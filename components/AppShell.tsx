@@ -4,7 +4,6 @@ import { Stack } from 'expo-router';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../hooks/useTheme';
 import { SplashView } from './SplashView';
-import { OnboardingScreen } from './OnboardingScreen';
 
 const MIN_SPLASH_MS = 500;
 // Hard ceiling: no matter what else happens (slow DB init, a dropped
@@ -12,7 +11,7 @@ const MIN_SPLASH_MS = 500;
 const MAX_SPLASH_MS = 3000;
 
 export function AppShell() {
-  const { loading, profile } = useData();
+  const { loading } = useData();
   const { colors } = useTheme();
   const [showSplash, setShowSplash] = useState(true);
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
@@ -29,17 +28,6 @@ export function AppShell() {
   useEffect(() => {
     if (!loading && minTimeElapsed) setShowSplash(false);
   }, [loading, minTimeElapsed]);
-
-  if (!loading && !profile.onboardedAt) {
-    return (
-      <>
-        <OnboardingScreen />
-        {showSplash && (
-          <SplashView style={[StyleSheet.absoluteFill, { zIndex: 10 }]} />
-        )}
-      </>
-    );
-  }
 
   return (
     <>

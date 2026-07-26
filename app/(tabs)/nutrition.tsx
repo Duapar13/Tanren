@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-gifted-charts';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -30,8 +31,13 @@ const RANGE_OPTIONS: { label: string; value: string }[] = [
 ];
 
 export default function NutritionScreen() {
-  const { bodyWeightEntries, proteinEntries, addBodyWeightEntry, addProteinEntry } =
-    useData();
+  const {
+    bodyWeightEntries,
+    proteinEntries,
+    addBodyWeightEntry,
+    addProteinEntry,
+    removeProteinEntry,
+  } = useData();
   const { colors } = useTheme();
 
   const [proteinInput, setProteinInput] = useState('');
@@ -40,7 +46,9 @@ export default function NutritionScreen() {
 
   const currentWeight = latestBodyWeight(bodyWeightEntries);
   const target = currentWeight ? proteinTargetGrams(currentWeight) : null;
-  const todayProtein = proteinTotalForDate(proteinEntries, todayKey());
+  const today = todayKey();
+  const todayProtein = proteinTotalForDate(proteinEntries, today);
+  const todayEntries = proteinEntries.filter((e) => e.date === today);
 
   const proteinSeries = proteinDailySeries(proteinEntries, Number(proteinRange) as RangeDays);
   const weightSeries = bodyWeightSeries(bodyWeightEntries, 90);
@@ -112,6 +120,29 @@ export default function NutritionScreen() {
                 </View>
                 <Button title="Ajouter" onPress={handleAddProtein} style={{ paddingHorizontal: Spacing.lg }} />
               </View>
+
+              {todayEntries.length > 0 && (
+                <View style={{ gap: 4 }}>
+                  {todayEntries.map((entry) => (
+                    <View
+                      key={entry.id}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingVertical: 4,
+                      }}
+                    >
+                      <ThemedText variant="subhead" color="secondary">
+                        {entry.grams} g
+                      </ThemedText>
+                      <Pressable onPress={() => removeProteinEntry(entry.id)}>
+                        <Ionicons name="trash-outline" size={16} color={colors.textTertiary} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
             </Card>
           </View>
 

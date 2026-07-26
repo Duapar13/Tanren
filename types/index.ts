@@ -1,16 +1,4 @@
-export type Tier = 1 | 2 | 3 | 4 | 5;
-
-export const TIER_LABELS: Record<Tier, string> = {
-  1: 'Débutant',
-  2: 'Novice',
-  3: 'Expérimenté',
-  4: 'Pro',
-  5: 'Maître',
-};
-
-export type ProgramType = 'fullbody' | 'split';
-
-export type SessionCategory = 'upper' | 'lower' | 'fullbody' | 'custom';
+export type SessionCategory = 'upper' | 'lower' | 'custom';
 
 export const MUSCLE_GROUPS = [
   'pecs',
@@ -104,12 +92,6 @@ export interface ProteinEntry {
 }
 
 export type ProteinEntryInput = Omit<ProteinEntry, 'id' | 'createdAt'>;
-
-export interface Profile {
-  tier: Tier;
-  programType: ProgramType;
-  onboardedAt: string | null;
-}
 
 export interface ExercisePR {
   exerciseId: number;

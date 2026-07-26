@@ -12,24 +12,18 @@ import { WeekStrip } from '../../components/WeekStrip';
 import { useData } from '../../context/DataContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
-import { getNextFullBodyRoutine, getSplitDayType, SPLIT_DAY_LABELS } from '../../utils/program';
-import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
+import { getSplitDayType, SPLIT_DAY_LABELS } from '../../utils/program';
+import { sessionsInCurrentWeek, WEEKLY_TARGET } from '../../utils/workoutStats';
 import { findRecentPRs } from '../../utils/prStats';
 
 export default function DashboardScreen() {
-  const { sessions, sets, profile } = useData();
+  const { sessions, sets } = useData();
   const { colors } = useTheme();
 
-  const todaysPlanLabel =
-    profile.programType === 'split'
-      ? SPLIT_DAY_LABELS[getSplitDayType(new Date())]
-      : `Full Body ${getNextFullBodyRoutine(sessions)}`;
-
-  const isRestToday =
-    profile.programType === 'split' && getSplitDayType(new Date()) === 'rest';
+  const todaysPlanLabel = SPLIT_DAY_LABELS[getSplitDayType(new Date())];
+  const isRestToday = getSplitDayType(new Date()) === 'rest';
 
   const weekSessions = sessionsInCurrentWeek(sessions);
-  const target = weeklyTarget(profile);
   const recentPRs = findRecentPRs(sets, sessions);
   const topPR = recentPRs[0];
 
@@ -64,10 +58,10 @@ export default function DashboardScreen() {
               Cette semaine
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
-              <WeekStrip sessions={sessions} profile={profile} />
+              <WeekStrip sessions={sessions} />
               <StatTile
                 label="Séances effectuées"
-                value={`${weekSessions.length} / ${target}`}
+                value={`${weekSessions.length} / ${WEEKLY_TARGET}`}
               />
             </Card>
           </View>

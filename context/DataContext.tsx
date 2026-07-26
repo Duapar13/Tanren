@@ -11,12 +11,10 @@ import {
   BodyWeightEntryInput,
   Exercise,
   ExerciseInput,
-  Profile,
   ProteinEntry,
   ProteinEntryInput,
   SetEntryInput,
   SetWithExercise,
-  Tier,
   WorkoutSession,
   WorkoutSessionInput,
 } from '../types';
@@ -25,11 +23,9 @@ import * as sessionsDb from '../db/sessions';
 import * as setsDb from '../db/sets';
 import * as bodyWeightDb from '../db/bodyWeight';
 import * as proteinDb from '../db/protein';
-import * as profileDb from '../db/profile';
 
 interface DataContextValue {
   loading: boolean;
-  profile: Profile;
   exercises: Exercise[];
   sessions: WorkoutSession[];
   sets: SetWithExercise[];
@@ -56,9 +52,6 @@ interface DataContextValue {
 
   addProteinEntry: (input: ProteinEntryInput) => Promise<void>;
   removeProteinEntry: (id: number) => Promise<void>;
-
-  completeOnboarding: (tier: Tier) => Promise<void>;
-  updateTier: (tier: Tier) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -66,11 +59,6 @@ const DataContext = createContext<DataContextValue | null>(null);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const db = useSQLiteContext();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<Profile>({
-    tier: 1,
-    programType: 'fullbody',
-    onboardedAt: null,
-  });
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [sets, setSets] = useState<SetWithExercise[]>([]);
@@ -78,15 +66,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [proteinEntries, setProteinEntries] = useState<ProteinEntry[]>([]);
 
   const reload = useCallback(async () => {
-    const [p, ex, se, st, bw, pr] = await Promise.all([
-      profileDb.getProfile(db),
+    const [ex, se, st, bw, pr] = await Promise.all([
       exercisesDb.getAllExercises(db),
       sessionsDb.getAllSessions(db),
       setsDb.getAllSets(db),
       bodyWeightDb.getAllBodyWeightEntries(db),
       proteinDb.getAllProteinEntries(db),
     ]);
-    setProfile(p);
     setExercises(ex);
     setSessions(se);
     setSets(st);
@@ -187,27 +173,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [db, reload]
   );
 
-  const completeOnboarding = useCallback(
-    async (tier: Tier) => {
-      await profileDb.completeOnboarding(db, tier);
-      await reload();
-    },
-    [db, reload]
-  );
-
-  const updateTier = useCallback(
-    async (tier: Tier) => {
-      await profileDb.updateTier(db, tier);
-      await reload();
-    },
-    [db, reload]
-  );
-
   return (
     <DataContext.Provider
       value={{
         loading,
-        profile,
         exercises,
         sessions,
         sets,
@@ -224,8 +193,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         removeBodyWeightEntry,
         addProteinEntry,
         removeProteinEntry,
-        completeOnboarding,
-        updateTier,
       }}
     >
       {children}

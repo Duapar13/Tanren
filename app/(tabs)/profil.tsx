@@ -12,15 +12,13 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { useData } from '../../context/DataContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
-import { MUSCLE_GROUP_LABELS, MuscleGroup, Tier, TIER_LABELS } from '../../types';
-
-const TIERS: Tier[] = [1, 2, 3, 4, 5];
+import { MUSCLE_GROUP_LABELS, MuscleGroup } from '../../types';
 
 const UPPER_GROUPS: MuscleGroup[] = ['pecs', 'dos', 'epaules', 'bras'];
 const LOWER_GROUPS: MuscleGroup[] = ['quadriceps', 'ischios', 'fessiers', 'mollets'];
 
 export default function ProfilScreen() {
-  const { profile, exercises, updateTier, addExercise, removeExercise } = useData();
+  const { exercises, addExercise, removeExercise } = useData();
   const { colors } = useTheme();
 
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -62,41 +60,6 @@ export default function ProfilScreen() {
             paddingBottom: Spacing.xxl,
           }}
         >
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Palier de progression
-            </ThemedText>
-            <Card style={{ gap: Spacing.sm }}>
-              {TIERS.map((t) => {
-                const selected = t === profile.tier;
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => updateTier(t)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingVertical: Spacing.xs,
-                    }}
-                  >
-                    <ThemedText variant="body" weight={selected ? '700' : '400'}>
-                      {t}. {TIER_LABELS[t]}
-                    </ThemedText>
-                    {selected && (
-                      <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
-                    )}
-                  </Pressable>
-                );
-              })}
-              <ThemedText variant="caption" color="tertiary">
-                {profile.programType === 'fullbody'
-                  ? 'Programme actuel : Full Body (2 routines alternées)'
-                  : 'Programme actuel : Split Haut / Bas'}
-              </ThemedText>
-            </Card>
-          </View>
-
           <View>
             <View
               style={{

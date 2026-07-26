@@ -2,7 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { DEFAULT_EXERCISES } from '../constants/exercises';
 
 export const DB_NAME = 'tanren.db';
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 export async function migrateDb(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>(
@@ -10,6 +10,18 @@ export async function migrateDb(db: SQLiteDatabase) {
   );
   const currentVersion = row?.user_version ?? 0;
   if (currentVersion >= CURRENT_VERSION) return;
+
+  // Pre-release schema change (v1 -> v2): dropped the tier/onboarding
+  // profile table entirely and replaced the seeded exercise library with
+  // the user's actual gym exercises. No real training data predates this.
+  if (currentVersion > 0 && currentVersion < CURRENT_VERSION) {
+    await db.execAsync(`
+      DROP TABLE IF EXISTS sets;
+      DROP TABLE IF EXISTS sessions;
+      DROP TABLE IF EXISTS exercises;
+      DROP TABLE IF EXISTS profile;
+    `);
+  }
 
   await db.execAsync(`
     PRAGMA journal_mode = 'wal';
@@ -56,24 +68,12 @@ export async function migrateDb(db: SQLiteDatabase) {
       createdAt TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS profile (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      tier INTEGER NOT NULL DEFAULT 1,
-      programType TEXT NOT NULL DEFAULT 'fullbody',
-      onboardedAt TEXT
-    );
-
     CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions (date);
     CREATE INDEX IF NOT EXISTS idx_sets_sessionId ON sets (sessionId);
     CREATE INDEX IF NOT EXISTS idx_sets_exerciseId ON sets (exerciseId);
     CREATE INDEX IF NOT EXISTS idx_bodyweight_date ON body_weight_entries (date);
     CREATE INDEX IF NOT EXISTS idx_protein_date ON protein_entries (date);
   `);
-
-  await db.runAsync(
-    'INSERT OR IGNORE INTO profile (id, tier, programType, onboardedAt) VALUES (1, 1, ?, NULL)',
-    'fullbody'
-  );
 
   const exerciseCount = await db.getFirstAsync<{ count: number }>(
     'SELECT COUNT(*) as count FROM exercises'

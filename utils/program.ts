@@ -1,5 +1,3 @@
-import { WorkoutSession } from '../types';
-
 export type SplitDayType = 'upper' | 'lower' | 'rest';
 
 // Lundi=Haut, Mardi=Bas, Mercredi=Haut, Jeudi=Bas, Vendredi=Haut, Sam/Dim=Repos
@@ -22,9 +20,3 @@ export const SPLIT_DAY_LABELS: Record<SplitDayType, string> = {
   lower: 'Bas du corps',
   rest: 'Repos',
 };
-
-// Tier 1 (Débutant): 2 routines Full Body à alterner, indépendamment du jour.
-export function getNextFullBodyRoutine(sessions: WorkoutSession[]): 'A' | 'B' {
-  const fullbodyCount = sessions.filter((s) => s.category === 'fullbody').length;
-  return fullbodyCount % 2 === 0 ? 'A' : 'B';
-}

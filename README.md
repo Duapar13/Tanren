@@ -22,18 +22,13 @@ Application de suivi de musculation — log des séances et des performances par
 
 ## Fonctionnalités
 
-- **Onboarding** — questionnaire des 5 paliers de progression (Débutant → Maître) qui fixe le programme par défaut (Full Body pour Débutant, split Haut/Bas au-delà) et le niveau de détail affiché
-- **Accueil** — type de séance du jour (Haut/Bas/Repos ou Full Body A/B selon le palier), calendrier de la semaine, résumé de régularité, dernier record battu
-- **Séance** — log par exercice : séries, répétitions, poids, RPE optionnel ; bibliothèque pré-remplie triée Haut/Bas + ajout d'exercices custom
-- **Progression** — heatmap de régularité (séances faites vs prévues), graphiques par exercice (1RM estimée, poids max, volume), détection automatique des records personnels
-- **Nutrition** — quota protéines (poids × 1,8 g, recalculé automatiquement), saisie quotidienne avec barre de progression, graphique d'évolution (7/30/90j), suivi du poids de corps avec graphique
-- **Profil** — changer de palier, gérer la bibliothèque d'exercices
+- **Accueil** — type de séance du jour selon le split fixe (Haut/Bas/Repos), calendrier de la semaine, résumé de régularité, dernier record battu
+- **Séance** — log par exercice : séries, répétitions, poids, RPE optionnel ; bibliothèque pré-remplie (les exercices réellement utilisés en salle) triée Haut/Bas + ajout d'exercices custom
+- **Progression** — heatmap de régularité (séances faites vs prévues), graphiques par exercice filtrés Haut/Bas (1RM estimée, poids max, volume), détection automatique des records personnels
+- **Nutrition** — quota protéines (poids × 1,8 g, recalculé automatiquement), saisie quotidienne avec barre de progression et suppression des entrées du jour, graphique d'évolution (7/30/90j), suivi du poids de corps avec graphique
+- **Profil** — gérer la bibliothèque d'exercices (ajout/suppression des exercices custom)
 
-Tout fonctionne offline, aucune donnée ne quitte le téléphone, pas de compte.
-
-### Contenu par palier
-
-Les paliers 4 (Pro) et 5 (Maître) prévoient des notions avancées (courbes de résistance par exercice, courbe de force sur l'amplitude, tension étirement vs contraction). La fiche exercice affiche la section correspondante mais avec un contenu "à venir" plutôt que des données biomécaniques inventées — pas de base fiable pour les remplir exercice par exercice pour l'instant.
+Tout fonctionne offline, aucune donnée ne quitte le téléphone, pas de compte, pas d'onboarding — l'app s'ouvre directement sur le Dashboard.
 
 ## Stockage des données
 
@@ -46,7 +41,6 @@ Tout est stocké **localement sur le téléphone** dans une base **SQLite** (`ex
 | `sets` | séries individuelles : séance, exercice, n° de série, reps, poids (kg), RPE optionnel |
 | `body_weight_entries` | historique du poids de corps |
 | `protein_entries` | historique des grammes de protéines consommés |
-| `profile` | palier actuel, type de programme, date d'onboarding |
 
 [`context/DataContext.tsx`](context/DataContext.tsx) charge tout en mémoire au démarrage et recharge après chaque écriture ; c'est ce contexte unique que consomment tous les écrans. Les PR, graphiques de progression et heatmap sont calculés côté client à partir des séries brutes (`utils/prStats.ts`, `utils/exerciseSeries.ts`) plutôt que stockés — pas de flags à maintenir à jour.
 

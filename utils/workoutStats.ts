@@ -1,4 +1,4 @@
-import { Profile, WorkoutSession } from '../types';
+import { WorkoutSession } from '../types';
 import { startOfWeek, toDateKey, addDays } from './date';
 
 export function sessionsInCurrentWeek(sessions: WorkoutSession[]): WorkoutSession[] {
@@ -7,10 +7,8 @@ export function sessionsInCurrentWeek(sessions: WorkoutSession[]): WorkoutSessio
   return sessions.filter((s) => s.date >= start && s.date <= end);
 }
 
-// Nombre de séances "attendues" par semaine selon le programme.
-export function weeklyTarget(profile: Profile): number {
-  return profile.programType === 'split' ? 5 : 3;
-}
+// Nombre de séances "attendues" par semaine (split Haut/Bas : Lun/Mar/Mer/Jeu/Ven).
+export const WEEKLY_TARGET = 5;
 
 export function sessionsInLastDays(
   sessions: WorkoutSession[],

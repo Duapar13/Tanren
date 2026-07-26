@@ -1,18 +1,12 @@
 import { View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
-import { Radius, Spacing } from '../constants/theme';
-import { Profile, WorkoutSession } from '../types';
+import { Radius } from '../constants/theme';
+import { WorkoutSession } from '../types';
 import { addDays, formatWeekdayShort, startOfWeek, toDateKey, todayKey } from '../utils/date';
 import { getSplitDayType } from '../utils/program';
 
-export function WeekStrip({
-  sessions,
-  profile,
-}: {
-  sessions: WorkoutSession[];
-  profile: Profile;
-}) {
+export function WeekStrip({ sessions }: { sessions: WorkoutSession[] }) {
   const { colors } = useTheme();
   const loggedDates = new Set(sessions.map((s) => s.date));
   const monday = startOfWeek(new Date());
@@ -25,8 +19,7 @@ export function WeekStrip({
         const key = toDateKey(day);
         const isToday = key === today;
         const done = loggedDates.has(key);
-        const isRest =
-          profile.programType === 'split' && getSplitDayType(day) === 'rest';
+        const isRest = getSplitDayType(day) === 'rest';
 
         return (
           <View key={key} style={{ flex: 1, alignItems: 'center', gap: 4 }}>

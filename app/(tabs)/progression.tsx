@@ -24,14 +24,21 @@ const METRIC_OPTIONS: { label: string; value: Metric }[] = [
   { label: 'Volume', value: 'volume' },
 ];
 
+const CATEGORY_OPTIONS: { label: string; value: 'upper' | 'lower' }[] = [
+  { label: 'Haut', value: 'upper' },
+  { label: 'Bas', value: 'lower' },
+];
+
 export default function ProgressionScreen() {
-  const { exercises, sets, sessions, profile } = useData();
+  const { exercises, sets, sessions } = useData();
   const { colors } = useTheme();
+
+  const [category, setCategory] = useState<'upper' | 'lower'>('upper');
 
   const exercisesWithData = useMemo(() => {
     const idsWithSets = new Set(sets.map((s) => s.exerciseId));
-    return exercises.filter((e) => idsWithSets.has(e.id));
-  }, [exercises, sets]);
+    return exercises.filter((e) => idsWithSets.has(e.id) && e.category === category);
+  }, [exercises, sets, category]);
 
   const [selectedName, setSelectedName] = useState<string>('');
   const selectedExercise =
@@ -65,8 +72,22 @@ export default function ProgressionScreen() {
               Régularité
             </ThemedText>
             <Card>
-              <CalendarHeatmap sessions={sessions} profile={profile} />
+              <CalendarHeatmap sessions={sessions} />
             </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Exercice
+            </ThemedText>
+            <SegmentedControl
+              options={CATEGORY_OPTIONS}
+              value={category}
+              onChange={(v) => {
+                setCategory(v);
+                setSelectedName('');
+              }}
+            />
           </View>
 
           {exercisesWithData.length === 0 ? (
@@ -81,12 +102,11 @@ export default function ProgressionScreen() {
                 <View
                   style={{
                     flexDirection: 'row',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     alignItems: 'center',
                     marginBottom: Spacing.sm,
                   }}
                 >
-                  <ThemedText variant="headline">Exercice</ThemedText>
                   {selectedExercise && (
                     <Pressable onPress={() => router.push(`/exercise/${selectedExercise.id}`)}>
                       <ThemedText variant="footnote" weight="600" color="accent">

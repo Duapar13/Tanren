@@ -13,24 +13,21 @@ import { ExerciseSetLogger, DraftSet } from '../../components/ExerciseSetLogger'
 import { useData } from '../../context/DataContext';
 import { Spacing } from '../../constants/theme';
 import { SessionCategory } from '../../types';
-import { getNextFullBodyRoutine, getSplitDayType } from '../../utils/program';
+import { getSplitDayType } from '../../utils/program';
 import { todayKey } from '../../utils/date';
-import { FULLBODY_A, FULLBODY_B } from '../../constants/exercises';
 
 const CATEGORY_OPTIONS: { label: string; value: SessionCategory }[] = [
   { label: 'Haut', value: 'upper' },
   { label: 'Bas', value: 'lower' },
-  { label: 'Full Body', value: 'fullbody' },
   { label: 'Perso', value: 'custom' },
 ];
 
 export default function SeanceScreen() {
-  const { exercises, sessions, addSession } = useData();
+  const { exercises, addSession } = useData();
 
   const suggestedCategory: SessionCategory = useMemo(() => {
     const split = getSplitDayType(new Date());
-    if (split === 'rest') return 'fullbody';
-    return split;
+    return split === 'rest' ? 'custom' : split;
   }, []);
 
   const [category, setCategory] = useState<SessionCategory>(suggestedCategory);
@@ -39,17 +36,10 @@ export default function SeanceScreen() {
   const [showAllExercises, setShowAllExercises] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const nextRoutineNames = useMemo(() => {
-    return getNextFullBodyRoutine(sessions) === 'A' ? FULLBODY_A : FULLBODY_B;
-  }, [sessions]);
-
   const availableExercises = useMemo(() => {
     if (showAllExercises || category === 'custom') return exercises;
-    if (category === 'fullbody') {
-      return exercises.filter((e) => nextRoutineNames.includes(e.name));
-    }
     return exercises.filter((e) => e.category === category);
-  }, [exercises, category, showAllExercises, nextRoutineNames]);
+  }, [exercises, category, showAllExercises]);
 
   const pickableExercises = availableExercises.filter(
     (e) => !activeExerciseIds.includes(e.id)

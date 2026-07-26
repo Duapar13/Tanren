@@ -10,7 +10,7 @@ import { computeExercisePRs } from '../../utils/prStats';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { exercises, sets, sessions, profile } = useData();
+  const { exercises, sets, sessions } = useData();
   const exercise = exercises.find((e) => e.id === Number(id));
 
   if (!exercise) {
@@ -46,26 +46,6 @@ export default function ExerciseDetailScreen() {
             <ThemedText color="secondary">
               Volume max (1 séance) : {pr.maxSessionVolume.toFixed(0)} kg (
               {pr.maxSessionVolumeDate})
-            </ThemedText>
-          </Card>
-        )}
-
-        {profile.tier >= 2 && (
-          <Card style={{ gap: Spacing.xs }}>
-            <ThemedText variant="headline">Anatomic-mapping</ThemedText>
-            <ThemedText color="secondary">
-              Groupe musculaire principal : {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}.
-              Surveille exécution, tempo et temps de récupération sur cet exercice.
-            </ThemedText>
-          </Card>
-        )}
-
-        {profile.tier >= 4 && (
-          <Card style={{ gap: Spacing.xs }}>
-            <ThemedText variant="headline">Biomécanique (Pro / Maître)</ThemedText>
-            <ThemedText color="tertiary">
-              Courbe de résistance, courbe de force sur l’amplitude, et classification
-              tension d’étirement vs tension de contraction — à venir pour cet exercice.
             </ThemedText>
           </Card>
         )}
