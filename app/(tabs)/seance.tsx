@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { ChipSelector } from '../../components/ChipSelector';
 import { ExerciseSetLogger, DraftSet } from '../../components/ExerciseSetLogger';
+import { TodaySessionsReview } from '../../components/TodaySessionsReview';
 import { useData } from '../../context/DataContext';
 import { Spacing } from '../../constants/theme';
 import { SessionCategory } from '../../types';
@@ -106,6 +107,8 @@ export default function SeanceScreen() {
             paddingBottom: Spacing.xxl,
           }}
         >
+          <TodaySessionsReview />
+
           <Card style={{ gap: Spacing.sm }}>
             <ThemedText variant="headline">Type de séance</ThemedText>
             <SegmentedControl
