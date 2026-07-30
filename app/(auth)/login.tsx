@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
@@ -36,7 +36,6 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await login(identifier.trim(), password);
-      router.replace('/(tabs)');
     } catch (err) {
       Alert.alert('Connexion impossible', authErrorMessage(err));
     } finally {

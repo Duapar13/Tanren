@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
@@ -39,7 +39,6 @@ export default function SignupScreen() {
     setSubmitting(true);
     try {
       await signup(email.trim(), username.trim(), password);
-      router.replace('/(tabs)');
     } catch (err) {
       Alert.alert('Inscription impossible', authErrorMessage(err));
     } finally {
