@@ -248,11 +248,9 @@ export interface SeasonRanking {
   breakdown: { streak: number; pr: number; nutrition: number };
 }
 
-/** devBonusPoints: dev-mode-only local preview offset, never synced or persisted server-side. */
 export function computeSeasonRanking(
   params: RankingParams,
-  seasonInfo: SeasonInfo = currentSeasonInfo(),
-  devBonusPoints = 0
+  seasonInfo: SeasonInfo = currentSeasonInfo()
 ): SeasonRanking {
   const today = todayKey();
   const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
@@ -270,7 +268,7 @@ export function computeSeasonRanking(
   const events = [...streakEvents, ...prEvents, ...nutritionEvents].sort((a, b) =>
     a.date === b.date ? 0 : a.date < b.date ? 1 : -1
   );
-  const totalPoints = events.reduce((sum, e) => sum + e.points, 0) + devBonusPoints;
+  const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
 
   return {
     seasonInfo,
@@ -280,7 +278,7 @@ export function computeSeasonRanking(
     breakdown: {
       streak: streakEvents.reduce((s, e) => s + e.points, 0),
       pr: prEvents.reduce((s, e) => s + e.points, 0),
-      nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0) + devBonusPoints,
+      nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0),
     },
   };
 }
@@ -293,11 +291,7 @@ export interface SeasonMedal {
   peakRank: RankName;
 }
 
-export function computeSeasonMedal(
-  params: RankingParams,
-  seasonInfo: SeasonInfo,
-  devBonusPoints = 0
-): SeasonMedal {
+export function computeSeasonMedal(params: RankingParams, seasonInfo: SeasonInfo): SeasonMedal {
   const today = todayKey();
   const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
 
@@ -305,10 +299,6 @@ export function computeSeasonMedal(
   const pointsByDate = new Map<string, number>();
   for (const e of events) {
     pointsByDate.set(e.date, (pointsByDate.get(e.date) ?? 0) + e.points);
-  }
-  // Attribute the dev preview bonus on day one so it factors into every month's running peak.
-  if (devBonusPoints) {
-    pointsByDate.set(seasonInfo.startDate, (pointsByDate.get(seasonInfo.startDate) ?? 0) + devBonusPoints);
   }
 
   const start = new Date(`${seasonInfo.startDate}T00:00:00`);
@@ -320,8 +310,8 @@ export function computeSeasonMedal(
   }
 
   // A month's bar lights up as soon as that month has started, using whatever peak has
-  // been reached so far — not only once the whole month is over — so live progress (and
-  // dev-mode bonus points) show up on the medal immediately instead of a month late.
+  // been reached so far — not only once the whole month is over — so live progress shows
+  // up on the medal immediately instead of a month late.
   const segments: (RankName | null)[] = [];
   let cumulative = 0;
   let runningMax = 0;
@@ -351,12 +341,12 @@ export function computeSeasonMedal(
 }
 
 /** All season medals from Season 1 through the current season, most recent first. */
-export function computeSeasonMedalHistory(params: RankingParams, devBonusPoints = 0): SeasonMedal[] {
+export function computeSeasonMedalHistory(params: RankingParams): SeasonMedal[] {
   const current = currentSeasonInfo();
   const medals: SeasonMedal[] = [];
   for (let n = current.seasonNumber; n >= 1; n--) {
     const info = n === current.seasonNumber ? current : seasonInfoForNumber(n);
-    medals.push(computeSeasonMedal(params, info, n === current.seasonNumber ? devBonusPoints : 0));
+    medals.push(computeSeasonMedal(params, info));
   }
   return medals;
 }

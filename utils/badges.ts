@@ -126,24 +126,21 @@ export interface BadgeStatus {
   progress: string;
 }
 
-export function computeBadgeStatuses(
-  params: {
-    sessions: WorkoutSession[];
-    sets: SetWithExercise[];
-    nutritionEntries: NutritionEntry[];
-    bodyWeightEntries: BodyWeightEntry[];
-    trainingDays: number[];
-    splitType: SplitType;
-    goal: NutritionGoal;
-  },
-  devBonusPoints = 0
-): BadgeStatus[] {
+export function computeBadgeStatuses(params: {
+  sessions: WorkoutSession[];
+  sets: SetWithExercise[];
+  nutritionEntries: NutritionEntry[];
+  bodyWeightEntries: BodyWeightEntry[];
+  trainingDays: number[];
+  splitType: SplitType;
+  goal: NutritionGoal;
+}): BadgeStatus[] {
   const maxWeight = params.sets.reduce((max, s) => Math.max(max, s.weightKg), 0);
   const streak = countMaxTrainingStreak(params.sessions, params.trainingDays, params.splitType);
   const prCount = countAllTimePRs(params.sets, params.sessions);
   const nutritionDays = countNutritionTargetDaysHit(params.nutritionEntries, params.bodyWeightEntries, params.goal);
   const bodyWeightDays = new Set(params.bodyWeightEntries.map((e) => e.date)).size;
-  const seasonRank = computeSeasonRanking(params, undefined, devBonusPoints).state.rank;
+  const seasonRank = computeSeasonRanking(params).state.rank;
   const rankIndex = RANKS.indexOf(seasonRank);
 
   const values: Record<string, { unlocked: boolean; progress: string }> = {

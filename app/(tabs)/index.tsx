@@ -1,8 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -19,7 +18,6 @@ import { Spacing } from '../../constants/theme';
 import { getSessionTypeForDate, SPLIT_DAY_LABELS } from '../../utils/program';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
 import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
-import { getDevBonusPoints } from '../../lib/devMode';
 
 const SKILL_LABELS = { streak: 'Régularité', pr: 'Force', nutrition: 'Nutrition' } as const;
 
@@ -36,29 +34,18 @@ export default function DashboardScreen() {
 
   const weekSessions = sessionsInCurrentWeek(sessions);
 
-  const [devBonus, setDevBonus] = useState(0);
-  useFocusEffect(
-    useCallback(() => {
-      getDevBonusPoints().then(setDevBonus);
-    }, [])
-  );
-
   const ranking = useMemo(
     () =>
-      computeSeasonRanking(
-        {
-          sessions,
-          sets,
-          nutritionEntries,
-          bodyWeightEntries,
-          trainingDays,
-          splitType,
-          goal: user?.goal ?? 'maintain',
-        },
-        undefined,
-        devBonus
-      ),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, trainingDays, splitType, user, devBonus]
+      computeSeasonRanking({
+        sessions,
+        sets,
+        nutritionEntries,
+        bodyWeightEntries,
+        trainingDays,
+        splitType,
+        goal: user?.goal ?? 'maintain',
+      }),
+    [sessions, sets, nutritionEntries, bodyWeightEntries, trainingDays, splitType, user]
   );
   const rankColor = RANK_COLORS[ranking.state.rank];
   const topSkills = (Object.entries(ranking.breakdown) as [keyof typeof SKILL_LABELS, number][]).sort(
