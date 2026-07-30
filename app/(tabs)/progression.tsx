@@ -11,6 +11,7 @@ import { ChipSelector } from '../../components/ChipSelector';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { CalendarHeatmap } from '../../components/CalendarHeatmap';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { computeExerciseSeries } from '../../utils/exerciseSeries';
@@ -31,6 +32,7 @@ const CATEGORY_OPTIONS: { label: string; value: 'upper' | 'lower' }[] = [
 
 export default function ProgressionScreen() {
   const { exercises, sets, sessions } = useData();
+  const { user } = useAuth();
   const { colors } = useTheme();
 
   const [category, setCategory] = useState<'upper' | 'lower'>('upper');
@@ -72,7 +74,11 @@ export default function ProgressionScreen() {
               Régularité
             </ThemedText>
             <Card>
-              <CalendarHeatmap sessions={sessions} />
+              <CalendarHeatmap
+                sessions={sessions}
+                trainingDays={user?.trainingDays ?? []}
+                splitType={user?.splitType ?? 'upper_lower'}
+              />
             </Card>
           </View>
 

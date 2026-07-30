@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { SplashView } from './SplashView';
 
@@ -11,7 +12,9 @@ const MIN_SPLASH_MS = 500;
 const MAX_SPLASH_MS = 3000;
 
 export function AppShell() {
-  const { loading } = useData();
+  const { loading: dataLoading } = useData();
+  const { user, loading: authLoading } = useAuth();
+  const loading = dataLoading || authLoading;
   const { colors } = useTheme();
   const [showSplash, setShowSplash] = useState(true);
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
@@ -38,11 +41,20 @@ export function AppShell() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="exercise/[id]"
-          options={{ title: 'Exercice' }}
-        />
+        <Stack.Protected guard={!user}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={!!user}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="exercise/[id]"
+            options={{ title: 'Exercice' }}
+          />
+          <Stack.Screen
+            name="food-search"
+            options={{ title: 'Ajouter un aliment', presentation: 'modal' }}
+          />
+        </Stack.Protected>
       </Stack>
       {showSplash && (
         <SplashView style={[StyleSheet.absoluteFill, { zIndex: 10 }]} />

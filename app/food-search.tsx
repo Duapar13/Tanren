@@ -1,0 +1,241 @@
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
+import { ThemedText } from '../components/ThemedText';
+import { ThemedView } from '../components/ThemedView';
+import { Card } from '../components/Card';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { SegmentedControl } from '../components/SegmentedControl';
+import { useData } from '../context/DataContext';
+import { useTheme } from '../hooks/useTheme';
+import { Radius, Spacing } from '../constants/theme';
+import { fetchProductByBarcode, OFFProduct, searchProducts } from '../lib/openFoodFacts';
+import { todayKey } from '../utils/date';
+
+type Mode = 'scan' | 'search';
+
+export default function FoodSearchScreen() {
+  const { addNutritionEntry } = useData();
+  const { colors } = useTheme();
+  const [mode, setMode] = useState<Mode>('scan');
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanning, setScanning] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<OFFProduct[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const [selected, setSelected] = useState<OFFProduct | null>(null);
+  const [gramsInput, setGramsInput] = useState('100');
+
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+    if (!scanning) return;
+    setScanning(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const product = await fetchProductByBarcode(data);
+      if (product) {
+        setSelected(product);
+      } else {
+        setError('Produit non trouvé pour ce code-barre.');
+      }
+    } catch {
+      setError('Impossible de contacter Open Food Facts, réessaie.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setSearching(true);
+    setError(null);
+    try {
+      const products = await searchProducts(query);
+      setResults(products);
+      if (products.length === 0) setError('Aucun résultat.');
+    } catch {
+      setError('Impossible de contacter Open Food Facts, réessaie.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const gramsNum = parseFloat(gramsInput.replace(',', '.')) || 0;
+  const previewProtein = selected ? (selected.proteinPer100g * gramsNum) / 100 : 0;
+  const previewCarbs = selected ? (selected.carbsPer100g * gramsNum) / 100 : 0;
+  const previewFat = selected ? (selected.fatPer100g * gramsNum) / 100 : 0;
+
+  const handleAdd = async () => {
+    if (!selected || gramsNum <= 0) return;
+    await addNutritionEntry({
+      date: todayKey(),
+      proteinG: Math.round(previewProtein * 10) / 10,
+      carbsG: Math.round(previewCarbs * 10) / 10,
+      fatG: Math.round(previewFat * 10) / 10,
+      foodName: selected.name,
+      grams: gramsNum,
+      unit: selected.unit,
+      barcode: selected.barcode || null,
+    });
+    router.back();
+  };
+
+  const resetSelection = () => {
+    setSelected(null);
+    setScanning(true);
+    setError(null);
+  };
+
+  if (selected) {
+    return (
+      <ThemedView variant="grouped" style={{ flex: 1 }}>
+        <SafeAreaView edges={['bottom']} style={{ flex: 1, padding: Spacing.lg, gap: Spacing.lg }}>
+          <Card style={{ gap: Spacing.md }}>
+            <ThemedText variant="title3" weight="700">
+              {selected.name}
+            </ThemedText>
+            <ThemedText variant="caption" color="tertiary">
+              Pour 100{selected.unit} : P {selected.proteinPer100g}g · G {selected.carbsPer100g}g · L{' '}
+              {selected.fatPer100g}g
+            </ThemedText>
+            <View>
+              <ThemedText variant="caption" color="tertiary">
+                {selected.unit === 'ml' ? 'Millilitres consommés' : 'Grammes consommés'}
+              </ThemedText>
+              <Input
+                keyboardType="decimal-pad"
+                value={gramsInput}
+                onChangeText={setGramsInput}
+                placeholder="100"
+              />
+            </View>
+            <ThemedText variant="subhead" color="secondary">
+              → P {previewProtein.toFixed(1)}g · G {previewCarbs.toFixed(1)}g · L {previewFat.toFixed(1)}g
+            </ThemedText>
+            <Button title="Ajouter au journal" onPress={handleAdd} disabled={gramsNum <= 0} />
+            <Button title="Choisir un autre aliment" variant="plain" onPress={resetSelection} />
+          </Card>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
+  return (
+    <ThemedView variant="grouped" style={{ flex: 1 }}>
+      <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+        <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
+          <SegmentedControl
+            options={[
+              { label: 'Scanner', value: 'scan' as const },
+              { label: 'Rechercher', value: 'search' as const },
+            ]}
+            value={mode}
+            onChange={(m) => {
+              setMode(m);
+              setError(null);
+            }}
+          />
+        </View>
+
+        {mode === 'scan' ? (
+          <View style={{ flex: 1, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.lg }}>
+            {!permission ? (
+              <ActivityIndicator />
+            ) : !permission.granted ? (
+              <Card style={{ gap: Spacing.md, alignItems: 'center' }}>
+                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                  Autorise l’accès à la caméra pour scanner un code-barre.
+                </ThemedText>
+                <Button title="Autoriser la caméra" onPress={requestPermission} />
+              </Card>
+            ) : (
+              <View style={{ flex: 1, borderRadius: Radius.lg, overflow: 'hidden' }}>
+                <CameraView
+                  style={{ flex: 1 }}
+                  barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'] }}
+                  onBarcodeScanned={scanning ? handleBarcodeScanned : undefined}
+                />
+                {loading && (
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.overlay },
+                    ]}
+                  >
+                    <ActivityIndicator color="#FFFFFF" />
+                  </View>
+                )}
+              </View>
+            )}
+            {error && (
+              <Card style={{ marginTop: Spacing.md, gap: Spacing.sm, alignItems: 'center' }}>
+                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                  {error}
+                </ThemedText>
+                <Pressable onPress={resetSelection}>
+                  <ThemedText variant="subhead" weight="600" color="accent">
+                    Réessayer
+                  </ThemedText>
+                </Pressable>
+              </Card>
+            )}
+          </View>
+        ) : (
+          <View style={{ flex: 1, paddingHorizontal: Spacing.lg, gap: Spacing.md }}>
+            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+              <Input
+                style={{ flex: 1 }}
+                placeholder="Rechercher un aliment"
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+                onSubmitEditing={handleSearch}
+              />
+              <Pressable
+                onPress={handleSearch}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: Radius.sm,
+                  backgroundColor: colors.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="search" size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
+            {searching && <ActivityIndicator />}
+            {error && (
+              <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                {error}
+              </ThemedText>
+            )}
+            <ScrollView contentContainerStyle={{ gap: Spacing.sm, paddingBottom: Spacing.xxl }}>
+              {results.map((p) => (
+                <Pressable key={p.barcode + p.name} onPress={() => setSelected(p)}>
+                  <Card style={{ gap: 2 }}>
+                    <ThemedText variant="subhead" weight="600">
+                      {p.name}
+                    </ThemedText>
+                    <ThemedText variant="caption" color="tertiary">
+                      /100{p.unit} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
+                    </ThemedText>
+                  </Card>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </SafeAreaView>
+    </ThemedView>
+  );
+}

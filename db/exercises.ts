@@ -44,6 +44,19 @@ export async function insertExercise(
   return result.lastInsertRowId;
 }
 
+export async function updateExercise(
+  db: SQLiteDatabase,
+  id: number,
+  input: Partial<Pick<Exercise, 'name' | 'category'>>
+): Promise<void> {
+  if (input.name !== undefined) {
+    await db.runAsync('UPDATE exercises SET name = ? WHERE id = ?', input.name, id);
+  }
+  if (input.category !== undefined) {
+    await db.runAsync('UPDATE exercises SET category = ? WHERE id = ?', input.category, id);
+  }
+}
+
 export async function deleteExercise(
   db: SQLiteDatabase,
   id: number

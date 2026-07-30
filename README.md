@@ -7,8 +7,9 @@ Application de suivi de musculation — log des séances et des performances par
 ## Stack
 
 - [Expo](https://expo.dev) SDK 54 (managed workflow, testable en live via Expo Go) + TypeScript strict
-- [Expo Router](https://docs.expo.dev/router/introduction/) pour la navigation (tabs)
-- [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) pour le stockage 100% local
+- [Expo Router](https://docs.expo.dev/router/introduction/) pour la navigation (tabs + stack d'auth protégée)
+- [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) comme cache local / écriture offline
+- API [Node.js/Express](server/) + MariaDB comme backend, déployée sur `https://api-tanren.duapar.fr`
 - [react-native-gifted-charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) pour les graphiques
 - Police [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker) pour le wordmark
 
@@ -22,17 +23,18 @@ Application de suivi de musculation — log des séances et des performances par
 
 ## Fonctionnalités
 
+- **Compte** — inscription/connexion par email + pseudo + mot de passe, ou via Google/Apple (flux web `expo-auth-session`, fonctionne dans Expo Go)
 - **Accueil** — type de séance du jour selon le split fixe (Haut/Bas/Repos), calendrier de la semaine, résumé de régularité, dernier record battu
-- **Séance** — log par exercice : séries, répétitions, poids, RPE optionnel ; bibliothèque pré-remplie (les exercices réellement utilisés en salle) triée Haut/Bas + ajout d'exercices custom
-- **Progression** — heatmap de régularité (séances faites vs prévues), graphiques par exercice filtrés Haut/Bas (1RM estimée, poids max, volume), détection automatique des records personnels
-- **Nutrition** — quota protéines (poids × 1,8 g, recalculé automatiquement), saisie quotidienne avec barre de progression et suppression des entrées du jour, graphique d'évolution (7/30/90j), suivi du poids de corps avec graphique
-- **Profil** — gérer la bibliothèque d'exercices (ajout/suppression des exercices custom)
+- **Séance** — log par exercice : séries, répétitions, poids, RPE optionnel ; édition et suppression (avec confirmation) d'une série déjà loguée ou en brouillon ; confirmation avant de terminer la séance ; timer de repos optionnel (réglable en Profil) ; bibliothèque pré-remplie triée Haut/Bas + ajout d'exercices custom (nom + haut/bas du corps uniquement)
+- **Progression** — heatmap de régularité (séances faites vs prévues), graphiques par exercice filtrés Haut/Bas (1RM estimée, poids max, volume), détection automatique des records personnels (triés par marge de progression)
+- **Nutrition** — macros complètes (protéines/glucides/lipides) avec calories calculées, objectifs quotidiens dérivés du poids et de l'objectif (prise de masse/sèche/maintien) choisi en Profil, IMC (taille + dernier poids), graphiques par macro sur 7/30/90j, suivi du poids de corps
+- **Profil** — compte (déconnexion), taille + objectif nutrition, timer de repos, bibliothèque d'exercices custom
 
-Tout fonctionne offline, aucune donnée ne quitte le téléphone, pas de compte, pas d'onboarding — l'app s'ouvre directement sur le Dashboard.
+## Stockage des données et synchronisation
 
-## Stockage des données
+Chaque compte a ses propres données, stockées côté serveur (MariaDB) et mises en cache localement dans une base **SQLite** (`expo-sqlite`, fichier `tanren.db`) pour un fonctionnement **offline** : toute action (log d'une série, ajout d'une entrée nutrition, etc.) s'écrit d'abord en local puis part dans une file d'attente (`sync_queue`) rejouée vers l'API dès que le réseau/l'app revient au premier plan (`lib/syncEngine.ts`, `components/SyncEngine.tsx`). Au premier login sur un appareil, les données du compte sont récupérées depuis le serveur (`bootstrapAfterLogin`).
 
-Tout est stocké **localement sur le téléphone** dans une base **SQLite** (`expo-sqlite`, fichier `tanren.db`), sans backend. Schéma (défini dans [`db/schema.ts`](db/schema.ts)) :
+Schéma local (défini dans [`db/schema.ts`](db/schema.ts)) :
 
 | Table | Contenu |
 |---|---|
@@ -40,9 +42,14 @@ Tout est stocké **localement sur le téléphone** dans une base **SQLite** (`ex
 | `sessions` | date, catégorie de la séance |
 | `sets` | séries individuelles : séance, exercice, n° de série, reps, poids (kg), RPE optionnel |
 | `body_weight_entries` | historique du poids de corps |
-| `protein_entries` | historique des grammes de protéines consommés |
+| `nutrition_entries` | historique des macros (protéines/glucides/lipides) |
+| `sync_queue` | file d'attente des écritures en attente de synchronisation vers l'API |
 
-[`context/DataContext.tsx`](context/DataContext.tsx) charge tout en mémoire au démarrage et recharge après chaque écriture ; c'est ce contexte unique que consomment tous les écrans. Les PR, graphiques de progression et heatmap sont calculés côté client à partir des séries brutes (`utils/prStats.ts`, `utils/exerciseSeries.ts`) plutôt que stockés — pas de flags à maintenir à jour.
+[`context/DataContext.tsx`](context/DataContext.tsx) charge tout en mémoire au démarrage et recharge après chaque écriture ; c'est ce contexte unique que consomment tous les écrans. [`context/AuthContext.tsx`](context/AuthContext.tsx) gère la session (tokens en `expo-secure-store`, refresh automatique). Les PR, graphiques de progression et heatmap sont calculés côté client à partir des séries brutes (`utils/prStats.ts`, `utils/exerciseSeries.ts`) plutôt que stockés.
+
+## Backend
+
+Voir [`server/`](server/) — API Express + MariaDB, déployée sur le serveur perso via `pm2` (utilisateur dédié `tanren`) derrière `nginx` en HTTPS. Auth par JWT (access court + refresh token révocable), routes REST pour les comptes, exercices, séances/séries, poids et nutrition.
 
 ## Lancer le projet
 

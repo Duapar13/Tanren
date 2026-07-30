@@ -1,9 +1,12 @@
-import { Alert, Pressable, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Alert, Keyboard, Pressable, View } from 'react-native';
 import { Card } from './Card';
 import { ThemedText } from './ThemedText';
+import { Input } from './Input';
+import { Button } from './Button';
+import { IconButton } from './IconButton';
 import { useData } from '../context/DataContext';
-import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../context/AuthContext';
 import { Spacing } from '../constants/theme';
 import { SessionCategory, SetWithExercise } from '../types';
 import { todayKey } from '../utils/date';
@@ -11,6 +14,9 @@ import { todayKey } from '../utils/date';
 const CATEGORY_LABELS: Record<SessionCategory, string> = {
   upper: 'Haut',
   lower: 'Bas',
+  push: 'Push',
+  pull: 'Pull',
+  legs: 'Legs',
   custom: 'Perso',
 };
 
@@ -24,9 +30,20 @@ function groupByExercise(setsForSession: SetWithExercise[]) {
   return Array.from(byExercise.entries());
 }
 
+const num = (v: string) => {
+  const n = parseFloat(v.replace(',', '.'));
+  return Number.isFinite(n) ? n : 0;
+};
+
 export function TodaySessionsReview() {
-  const { sessions, sets, removeSet, removeSession } = useData();
-  const { colors } = useTheme();
+  const { sessions, sets, removeSet, updateSet, removeSession } = useData();
+  const { user } = useAuth();
+  const rpeEnabled = user?.rpeEnabled ?? false;
+
+  const [editingSetId, setEditingSetId] = useState<number | null>(null);
+  const [editReps, setEditReps] = useState('');
+  const [editWeight, setEditWeight] = useState('');
+  const [editRpe, setEditRpe] = useState('');
 
   const today = todayKey();
   const todaysSessions = sessions.filter((s) => s.date === today);
@@ -38,6 +55,38 @@ export function TodaySessionsReview() {
       { text: 'Annuler', style: 'cancel' },
       { text: 'Supprimer', style: 'destructive', onPress: () => removeSession(sessionId) },
     ]);
+  };
+
+  const confirmDeleteSet = (set: SetWithExercise) => {
+    Alert.alert('Supprimer la série', undefined, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          if (editingSetId === set.id) setEditingSetId(null);
+          removeSet(set.id);
+        },
+      },
+    ]);
+  };
+
+  const startEdit = (set: SetWithExercise) => {
+    setEditingSetId(set.id);
+    setEditReps(String(set.reps));
+    setEditWeight(String(set.weightKg));
+    setEditRpe(set.rpe != null ? String(set.rpe) : '');
+  };
+
+  const saveEdit = () => {
+    if (editingSetId === null || !editReps || !editWeight) return;
+    updateSet(editingSetId, {
+      reps: Math.round(num(editReps)),
+      weightKg: num(editWeight),
+      rpe: rpeEnabled && editRpe ? num(editRpe) : null,
+    });
+    Keyboard.dismiss();
+    setEditingSetId(null);
   };
 
   return (
@@ -56,37 +105,91 @@ export function TodaySessionsReview() {
                 alignItems: 'center',
               }}
             >
-              <ThemedText variant="subhead" weight="600">
+              <ThemedText variant="title3" weight="700">
                 {CATEGORY_LABELS[session.category]}
               </ThemedText>
-              <Pressable onPress={() => confirmDeleteSession(session.id)}>
-                <ThemedText variant="footnote" weight="600" style={{ color: colors.negative }}>
-                  Supprimer la séance
-                </ThemedText>
-              </Pressable>
+              <IconButton
+                name="trash-outline"
+                variant="destructive"
+                onPress={() => confirmDeleteSession(session.id)}
+              />
             </View>
 
             {grouped.map(([exerciseId, exerciseSets]) => (
               <View key={exerciseId} style={{ gap: 4 }}>
                 <ThemedText variant="subhead">{exerciseSets[0].exerciseName}</ThemedText>
-                {exerciseSets.map((s, i) => (
-                  <View
-                    key={s.id}
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <ThemedText variant="footnote" color="secondary">
-                      Série {i + 1} · {s.reps} reps × {s.weightKg} kg
-                      {s.rpe ? ` · RPE ${s.rpe}` : ''}
-                    </ThemedText>
-                    <Pressable onPress={() => removeSet(s.id)}>
-                      <Ionicons name="trash-outline" size={16} color={colors.textTertiary} />
-                    </Pressable>
-                  </View>
-                ))}
+                {exerciseSets.map((s, i) =>
+                  editingSetId === s.id ? (
+                    <View key={s.id} style={{ gap: Spacing.sm }}>
+                      <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                        <View style={{ flex: 1 }}>
+                          <ThemedText variant="caption" color="tertiary">
+                            Reps
+                          </ThemedText>
+                          <Input
+                            keyboardType="number-pad"
+                            value={editReps}
+                            onChangeText={setEditReps}
+                            returnKeyType="done"
+                            onSubmitEditing={Keyboard.dismiss}
+                          />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <ThemedText variant="caption" color="tertiary">
+                            Poids (kg)
+                          </ThemedText>
+                          <Input
+                            keyboardType="decimal-pad"
+                            value={editWeight}
+                            onChangeText={setEditWeight}
+                            returnKeyType="done"
+                            onSubmitEditing={Keyboard.dismiss}
+                          />
+                        </View>
+                        {rpeEnabled && (
+                          <View style={{ flex: 1 }}>
+                            <ThemedText variant="caption" color="tertiary">
+                              RPE
+                            </ThemedText>
+                            <Input
+                              keyboardType="decimal-pad"
+                              value={editRpe}
+                              onChangeText={setEditRpe}
+                              returnKeyType="done"
+                              onSubmitEditing={Keyboard.dismiss}
+                            />
+                          </View>
+                        )}
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                        <Button title="Enregistrer" onPress={saveEdit} style={{ flex: 1 }} />
+                        <IconButton name="close" onPress={() => setEditingSetId(null)} />
+                      </View>
+                    </View>
+                  ) : (
+                    <View
+                      key={s.id}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Pressable onPress={() => startEdit(s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
+                        <ThemedText variant="footnote" color="secondary">
+                          Série {i + 1} · {s.reps} reps × {s.weightKg} kg
+                          {s.rpe ? ` · RPE ${s.rpe}` : ''}
+                        </ThemedText>
+                      </Pressable>
+                      <IconButton
+                        name="trash-outline"
+                        variant="destructive"
+                        size={18}
+                        onPress={() => confirmDeleteSet(s)}
+                      />
+                    </View>
+                  )
+                )}
               </View>
             ))}
           </Card>

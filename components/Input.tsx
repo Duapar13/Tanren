@@ -1,6 +1,6 @@
 import { TextInput, TextInputProps } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { FontSizes } from '../constants/theme';
+import { FontSizes, Radius } from '../constants/theme';
 
 export function Input({ style, ...rest }: TextInputProps) {
   const { colors } = useTheme();
@@ -11,7 +11,12 @@ export function Input({ style, ...rest }: TextInputProps) {
         {
           color: colors.text,
           fontSize: FontSizes.body,
-          paddingVertical: 4,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          backgroundColor: colors.fill,
+          borderRadius: Radius.sm,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         style,
       ]}

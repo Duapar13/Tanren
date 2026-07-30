@@ -2,13 +2,19 @@ import { View } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { Radius, Spacing } from '../constants/theme';
 import { ThemedText } from './ThemedText';
-import { WorkoutSession } from '../types';
+import { SplitType, WorkoutSession } from '../types';
 import { addDays, startOfWeek, toDateKey, todayKey } from '../utils/date';
-import { getSplitDayType } from '../utils/program';
+import { getSessionTypeForDate } from '../utils/program';
 
 const WEEKS = 8;
 
-export function CalendarHeatmap({ sessions }: { sessions: WorkoutSession[] }) {
+interface Props {
+  sessions: WorkoutSession[];
+  trainingDays: number[];
+  splitType: SplitType;
+}
+
+export function CalendarHeatmap({ sessions, trainingDays, splitType }: Props) {
   const { colors } = useTheme();
   const loggedDates = new Set(sessions.map((s) => s.date));
   const today = todayKey();
@@ -26,7 +32,7 @@ export function CalendarHeatmap({ sessions }: { sessions: WorkoutSession[] }) {
             const key = toDateKey(day);
             const isFuture = key > today;
             const done = loggedDates.has(key);
-            const isRest = getSplitDayType(day) === 'rest';
+            const isRest = getSessionTypeForDate(day, trainingDays, splitType) === 'rest';
             const missed = !isFuture && !done && !isRest;
 
             return (

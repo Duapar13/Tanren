@@ -112,5 +112,9 @@ export function findRecentPRs(
     }
   }
 
-  return broken.sort((a, b) => b.newBest1RM - a.newBest1RM);
+  // Trie par marge de progression (1RM battue de combien), pas par 1RM absolue —
+  // sinon un exercice déjà lourd écrase toujours les vraies belles progressions du jour.
+  return broken.sort(
+    (a, b) => b.newBest1RM - b.previousBest1RM - (a.newBest1RM - a.previousBest1RM)
+  );
 }

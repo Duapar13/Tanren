@@ -1,4 +1,6 @@
-export type SessionCategory = 'upper' | 'lower' | 'custom';
+export type SessionCategory = 'upper' | 'lower' | 'custom' | 'push' | 'pull' | 'legs';
+
+export type SplitType = 'upper_lower' | 'ppl';
 
 export const MUSCLE_GROUPS = [
   'pecs',
@@ -84,14 +86,36 @@ export interface BodyWeightEntry {
 
 export type BodyWeightEntryInput = Omit<BodyWeightEntry, 'id' | 'createdAt'>;
 
-export interface ProteinEntry {
+export interface NutritionEntry {
   id: number;
   date: string;
-  grams: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  foodName: string | null;
+  grams: number | null;
+  unit: 'g' | 'ml' | null;
+  barcode: string | null;
   createdAt: string;
 }
 
-export type ProteinEntryInput = Omit<ProteinEntry, 'id' | 'createdAt'>;
+export type NutritionEntryInput = Omit<NutritionEntry, 'id' | 'createdAt'>;
+
+export type NutritionGoal = 'bulk' | 'cut' | 'maintain';
+
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  displayName: string | null;
+  heightCm: number | null;
+  goal: NutritionGoal;
+  restTimerEnabled: boolean;
+  restTimerSeconds: number;
+  trainingDays: number[]; // 0=dimanche..6=samedi (convention JS Date.getDay())
+  splitType: SplitType;
+  rpeEnabled: boolean;
+}
 
 export interface ExercisePR {
   exerciseId: number;

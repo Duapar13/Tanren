@@ -39,10 +39,25 @@
           "imageWidth": 180
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Utilisée pour scanner le code-barre d'un aliment en nutrition."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aa92ef13-ad39-4d5f-bd3a-66f48927e591"
+      }
+    },
+    "owner": "duapar13s-team"
   }
 }

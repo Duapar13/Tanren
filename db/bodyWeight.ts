@@ -5,7 +5,7 @@ export async function getAllBodyWeightEntries(
   db: SQLiteDatabase
 ): Promise<BodyWeightEntry[]> {
   return db.getAllAsync<BodyWeightEntry>(
-    'SELECT * FROM body_weight_entries ORDER BY date DESC'
+    'SELECT * FROM body_weight_entries ORDER BY date DESC, id DESC'
   );
 }
 

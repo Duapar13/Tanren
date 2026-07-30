@@ -7,8 +7,9 @@ export function sessionsInCurrentWeek(sessions: WorkoutSession[]): WorkoutSessio
   return sessions.filter((s) => s.date >= start && s.date <= end);
 }
 
-// Nombre de séances "attendues" par semaine (split Haut/Bas : Lun/Mar/Mer/Jeu/Ven).
-export const WEEKLY_TARGET = 5;
+export function weeklyTarget(trainingDays: number[]): number {
+  return trainingDays.length > 0 ? trainingDays.length : 5;
+}
 
 export function sessionsInLastDays(
   sessions: WorkoutSession[],

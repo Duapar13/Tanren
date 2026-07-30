@@ -31,7 +31,7 @@ export function Button({ title, variant = 'filled', style, ...rest }: Props) {
           borderRadius: Radius.md,
           paddingVertical: Spacing.md,
           alignItems: 'center',
-          opacity: state.pressed ? 0.7 : 1,
+          opacity: rest.disabled ? 0.4 : state.pressed ? 0.7 : 1,
           ...(isDestructive
             ? { borderWidth: 1, borderColor: colors.negative }
             : null),
