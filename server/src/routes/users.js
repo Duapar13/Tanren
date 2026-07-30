@@ -18,6 +18,7 @@ function publicUser(row) {
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
     splitType: row.split_type,
     rpeEnabled: !!row.rpe_enabled,
+    measurementsEnabled: !!row.measurements_enabled,
   };
 }
 
@@ -36,6 +37,7 @@ router.patch('/me', async (req, res) => {
     trainingDays,
     splitType,
     rpeEnabled,
+    measurementsEnabled,
   } = req.body ?? {};
 
   if (goal !== undefined && !['bulk', 'cut', 'maintain'].includes(goal)) {
@@ -61,6 +63,7 @@ router.patch('/me', async (req, res) => {
   if (trainingDays !== undefined) { fields.push('training_days = ?'); values.push(trainingDays.join(',')); }
   if (splitType !== undefined) { fields.push('split_type = ?'); values.push(splitType); }
   if (rpeEnabled !== undefined) { fields.push('rpe_enabled = ?'); values.push(rpeEnabled ? 1 : 0); }
+  if (measurementsEnabled !== undefined) { fields.push('measurements_enabled = ?'); values.push(measurementsEnabled ? 1 : 0); }
 
   if (fields.length > 0) {
     values.push(req.userId);

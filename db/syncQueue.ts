@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-export type SyncEntity = 'exercise' | 'session' | 'set' | 'bodyWeight' | 'nutrition';
+export type SyncEntity = 'exercise' | 'session' | 'set' | 'bodyWeight' | 'nutrition' | 'measurement';
 export type SyncOperation = 'create' | 'update' | 'delete';
 
 export interface SyncQueueItem {
@@ -70,7 +70,7 @@ export async function removeQueueItem(db: SQLiteDatabase, id: number): Promise<v
 
 export async function getRowServerId(
   db: SQLiteDatabase,
-  table: 'exercises' | 'sessions' | 'sets' | 'body_weight_entries' | 'nutrition_entries',
+  table: 'exercises' | 'sessions' | 'sets' | 'body_weight_entries' | 'nutrition_entries' | 'measurement_entries',
   id: number
 ): Promise<number | null> {
   const row = await db.getFirstAsync<{ serverId: number | null }>(

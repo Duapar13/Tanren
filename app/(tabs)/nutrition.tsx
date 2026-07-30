@@ -25,7 +25,7 @@ import {
   macroTotalsForDate,
 } from '../../utils/nutritionStats';
 import { todayKey } from '../../utils/date';
-import { NutritionEntry } from '../../types';
+import { MEASUREMENT_TYPE_LABELS, MEASUREMENT_TYPES, MeasurementType, NutritionEntry } from '../../types';
 
 const RANGE_OPTIONS: { label: string; value: string }[] = [
   { label: '7j', value: '7' },
@@ -61,15 +61,23 @@ const num = (v: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const MEASUREMENT_TYPE_OPTIONS: { label: string; value: MeasurementType }[] = MEASUREMENT_TYPES.map((t) => ({
+  label: MEASUREMENT_TYPE_LABELS[t],
+  value: t,
+}));
+
 export default function NutritionScreen() {
   const {
     bodyWeightEntries,
     nutritionEntries,
+    measurementEntries,
     addBodyWeightEntry,
     removeBodyWeightEntry,
     addNutritionEntry,
     updateNutritionEntry,
     removeNutritionEntry,
+    addMeasurementEntry,
+    removeMeasurementEntry,
   } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -80,6 +88,8 @@ export default function NutritionScreen() {
   const [weightInput, setWeightInput] = useState('');
   const [range, setRange] = useState<string>('7');
   const [macro, setMacro] = useState<MacroKey>('proteinG');
+  const [measurementType, setMeasurementType] = useState<MeasurementType>('biceps');
+  const [measurementInput, setMeasurementInput] = useState('');
 
   const [editingEntryId, setEditingEntryId] = useState<number | null>(null);
   const [editGrams, setEditGrams] = useState('');
@@ -96,6 +106,10 @@ export default function NutritionScreen() {
   const todayTotals = macroTotalsForDate(nutritionEntries, today);
   const todayEntries = nutritionEntries.filter((e) => e.date === today);
   const recentWeights = bodyWeightEntries.slice(0, 10);
+
+  const measurementsForType = measurementEntries.filter((e) => e.type === measurementType);
+  const latestMeasurement = measurementsForType[0] ?? null;
+  const recentMeasurements = measurementsForType.slice(0, 10);
 
   const macroSeries = macroDailySeries(nutritionEntries, Number(range));
   const weightSeries = bodyWeightSeries(bodyWeightEntries, 90);
@@ -125,6 +139,13 @@ export default function NutritionScreen() {
     if (weightKg <= 0) return;
     await addBodyWeightEntry({ date: todayKey(), weightKg });
     setWeightInput('');
+  };
+
+  const handleAddMeasurement = async () => {
+    const valueCm = num(measurementInput);
+    if (valueCm <= 0) return;
+    await addMeasurementEntry({ date: todayKey(), type: measurementType, valueCm });
+    setMeasurementInput('');
   };
 
   const startEditEntry = (entry: NutritionEntry) => {
@@ -416,6 +437,66 @@ export default function NutritionScreen() {
               )}
             </Card>
           </View>
+
+          {user?.measurementsEnabled && (
+            <View>
+              <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+                Mensurations
+              </ThemedText>
+              <Card style={{ gap: Spacing.md }}>
+                <SegmentedControl options={MEASUREMENT_TYPE_OPTIONS} value={measurementType} onChange={setMeasurementType} />
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <ThemedText variant="title2" weight="700">
+                    {latestMeasurement ? `${latestMeasurement.valueCm} cm` : '—'}
+                  </ThemedText>
+                  <ThemedText variant="footnote" color="secondary">
+                    Dernière mesure
+                  </ThemedText>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-end' }}>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText variant="caption" color="tertiary">
+                      {MEASUREMENT_TYPE_LABELS[measurementType]} (cm)
+                    </ThemedText>
+                    <Input
+                      keyboardType="decimal-pad"
+                      value={measurementInput}
+                      onChangeText={setMeasurementInput}
+                      placeholder="0"
+                    />
+                  </View>
+                  <Button title="Ajouter" onPress={handleAddMeasurement} style={{ paddingHorizontal: Spacing.lg }} />
+                </View>
+
+                {recentMeasurements.length > 0 && (
+                  <View style={{ gap: 4 }}>
+                    {recentMeasurements.map((entry) => (
+                      <View
+                        key={entry.id}
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <ThemedText variant="subhead" color="secondary">
+                          {entry.date} · {entry.valueCm} cm
+                        </ThemedText>
+                        <IconButton
+                          name="trash-outline"
+                          variant="destructive"
+                          size={18}
+                          onPress={() => removeMeasurementEntry(entry.id)}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </Card>
+            </View>
+          )}
 
           {currentBmi != null && (
             <View>

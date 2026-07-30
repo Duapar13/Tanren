@@ -229,6 +229,38 @@ async function processBodyWeight(db: SQLiteDatabase, item: SyncQueueItem): Promi
   return 'ok';
 }
 
+async function processMeasurement(db: SQLiteDatabase, item: SyncQueueItem): Promise<Outcome> {
+  if (item.operation === 'create') {
+    const row = await db.getFirstAsync<{ id: number; date: string; type: string; valueCm: number; serverId: number | null }>(
+      'SELECT * FROM measurement_entries WHERE id = ?',
+      item.localId
+    );
+    if (!row) return 'drop';
+    if (row.serverId) return 'ok';
+    try {
+      const created = await apiFetch('/measurements', {
+        method: 'POST',
+        body: JSON.stringify({ date: row.date, type: row.type, valueCm: row.valueCm }),
+      });
+      await db.runAsync('UPDATE measurement_entries SET serverId = ? WHERE id = ?', created.id, row.id);
+      return 'ok';
+    } catch (err) {
+      return isTransient(err) ? 'stop' : 'drop';
+    }
+  }
+  if (item.operation === 'delete') {
+    if (!item.serverId) return 'ok';
+    try {
+      await apiFetch(`/measurements/${item.serverId}`, { method: 'DELETE' });
+      return 'ok';
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return 'ok';
+      return isTransient(err) ? 'stop' : 'drop';
+    }
+  }
+  return 'ok';
+}
+
 async function processNutrition(db: SQLiteDatabase, item: SyncQueueItem): Promise<Outcome> {
   if (item.operation === 'create') {
     const row = await db.getFirstAsync<{
@@ -305,6 +337,8 @@ async function processItem(db: SQLiteDatabase, item: SyncQueueItem): Promise<Out
       return processBodyWeight(db, item);
     case 'nutrition':
       return processNutrition(db, item);
+    case 'measurement':
+      return processMeasurement(db, item);
     default:
       return 'drop';
   }
@@ -316,6 +350,7 @@ export async function wipeLocalData(db: SQLiteDatabase): Promise<void> {
     DELETE FROM sessions;
     DELETE FROM body_weight_entries;
     DELETE FROM nutrition_entries;
+    DELETE FROM measurement_entries;
     DELETE FROM exercises WHERE isCustom = 1;
     UPDATE exercises SET serverId = NULL;
     DELETE FROM sync_queue;
@@ -461,6 +496,19 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
       n.barcode,
       now,
       n.id
+    );
+  }
+
+  const measurements: { id: number; date: string; type: string; valueCm: number }[] =
+    await apiFetch('/measurements');
+  for (const m of measurements) {
+    await db.runAsync(
+      'INSERT INTO measurement_entries (date, type, valueCm, createdAt, serverId) VALUES (?, ?, ?, ?, ?)',
+      m.date,
+      m.type,
+      m.valueCm,
+      now,
+      m.id
     );
   }
 }

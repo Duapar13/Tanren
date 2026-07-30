@@ -19,15 +19,16 @@ import { getSessionTypeForDate, SPLIT_DAY_LABELS } from '../../utils/program';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
 import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
 
-const SKILL_LABELS = { streak: 'Régularité', pr: 'Force', nutrition: 'Nutrition' } as const;
+const SKILL_LABELS = { streak: 'Régularité', pr: 'Force', nutrition: 'Nutrition', measurement: 'Mensurations' } as const;
 
 export default function DashboardScreen() {
-  const { sessions, sets, nutritionEntries, bodyWeightEntries } = useData();
+  const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
 
   const trainingDays = user?.trainingDays ?? [];
   const splitType = user?.splitType ?? 'upper_lower';
+  const measurementsEnabled = user?.measurementsEnabled ?? false;
 
   const todaysPlanLabel = SPLIT_DAY_LABELS[getSessionTypeForDate(new Date(), trainingDays, splitType)];
   const isRestToday = getSessionTypeForDate(new Date(), trainingDays, splitType) === 'rest';
@@ -41,16 +42,18 @@ export default function DashboardScreen() {
         sets,
         nutritionEntries,
         bodyWeightEntries,
+        measurementEntries,
+        measurementsEnabled,
         trainingDays,
         splitType,
         goal: user?.goal ?? 'maintain',
       }),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, trainingDays, splitType, user]
+    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, measurementsEnabled, trainingDays, splitType, user]
   );
   const rankColor = RANK_COLORS[ranking.state.rank];
-  const topSkills = (Object.entries(ranking.breakdown) as [keyof typeof SKILL_LABELS, number][]).sort(
-    (a, b) => b[1] - a[1]
-  );
+  const topSkills = (Object.entries(ranking.breakdown) as [keyof typeof SKILL_LABELS, number][]).filter(
+    ([key]) => key !== 'measurement' || measurementsEnabled
+  ).sort((a, b) => b[1] - a[1]);
 
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>

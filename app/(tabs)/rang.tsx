@@ -43,7 +43,7 @@ interface MedalSelection {
 }
 
 export default function RangScreen() {
-  const { sessions, sets, nutritionEntries, bodyWeightEntries } = useData();
+  const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
 
@@ -56,11 +56,13 @@ export default function RangScreen() {
       sets,
       nutritionEntries,
       bodyWeightEntries,
+      measurementEntries,
+      measurementsEnabled: user?.measurementsEnabled ?? false,
       trainingDays: user?.trainingDays ?? [],
       splitType: user?.splitType ?? ('upper_lower' as const),
       goal: user?.goal ?? ('maintain' as const),
     }),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, user]
+    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, user]
   );
 
   const ranking = useMemo(() => computeSeasonRanking(rankingParams), [rankingParams]);
@@ -133,6 +135,9 @@ export default function RangScreen() {
             <StatTile label="Régularité" value={formatPoints(ranking.breakdown.streak)} />
             <StatTile label="Force" value={formatPoints(ranking.breakdown.pr)} />
             <StatTile label="Nutrition" value={formatPoints(ranking.breakdown.nutrition)} />
+            {user?.measurementsEnabled && (
+              <StatTile label="Mensurations" value={formatPoints(ranking.breakdown.measurement)} />
+            )}
           </View>
 
           <View>

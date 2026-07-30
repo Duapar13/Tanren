@@ -1,5 +1,8 @@
 import {
   BodyWeightEntry,
+  MeasurementEntry,
+  MeasurementType,
+  MEASUREMENT_TYPE_LABELS,
   NutritionEntry,
   NutritionGoal,
   SetWithExercise,
@@ -120,7 +123,7 @@ export interface RankEvent {
   date: string;
   label: string;
   points: number;
-  source: 'streak' | 'pr' | 'nutrition';
+  source: 'streak' | 'pr' | 'nutrition' | 'measurement';
 }
 
 function computeStreakEvents(
@@ -217,11 +220,59 @@ function computeNutritionEvents(
   return events;
 }
 
+/** For 'waist', smaller is progress unless the goal is a bulk (where it's not meaningfully scored). */
+function isMeasurementImprovement(type: MeasurementType, prevCm: number, newCm: number, goal: NutritionGoal): boolean {
+  if (type === 'waist') return goal !== 'bulk' && newCm < prevCm;
+  return newCm > prevCm;
+}
+
+function computeMeasurementEvents(
+  measurementEntries: MeasurementEntry[],
+  goal: NutritionGoal,
+  rangeStart: string,
+  rangeEnd: string
+): RankEvent[] {
+  const events: RankEvent[] = [];
+
+  const loggedDates = new Set(
+    measurementEntries.filter((e) => e.date >= rangeStart && e.date <= rangeEnd).map((e) => e.date)
+  );
+  for (const date of loggedDates) {
+    events.push({ date, label: 'Mensuration loggée', points: 3, source: 'measurement' });
+  }
+
+  const byType = new Map<MeasurementType, MeasurementEntry[]>();
+  for (const e of measurementEntries) {
+    if (!byType.has(e.type)) byType.set(e.type, []);
+    byType.get(e.type)!.push(e);
+  }
+  for (const [type, entries] of byType) {
+    const sorted = [...entries].sort((a, b) => (a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1));
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      if (curr.date < rangeStart || curr.date > rangeEnd) continue;
+      if (isMeasurementImprovement(type, prev.valueCm, curr.valueCm, goal)) {
+        events.push({
+          date: curr.date,
+          label: `Progression · ${MEASUREMENT_TYPE_LABELS[type]}`,
+          points: 8,
+          source: 'measurement',
+        });
+      }
+    }
+  }
+
+  return events;
+}
+
 export interface RankingParams {
   sessions: WorkoutSession[];
   sets: SetWithExercise[];
   nutritionEntries: NutritionEntry[];
   bodyWeightEntries: BodyWeightEntry[];
+  measurementEntries: MeasurementEntry[];
+  measurementsEnabled: boolean;
   trainingDays: number[];
   splitType: SplitType;
   goal: NutritionGoal;
@@ -237,7 +288,10 @@ function computeEventsForRange(params: RankingParams, rangeStart: string, rangeE
     rangeStart,
     rangeEnd
   );
-  return [...streakEvents, ...prEvents, ...nutritionEvents];
+  const measurementEvents = params.measurementsEnabled
+    ? computeMeasurementEvents(params.measurementEntries, params.goal, rangeStart, rangeEnd)
+    : [];
+  return [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents];
 }
 
 export interface SeasonRanking {
@@ -245,7 +299,7 @@ export interface SeasonRanking {
   totalPoints: number;
   state: RankState;
   events: RankEvent[];
-  breakdown: { streak: number; pr: number; nutrition: number };
+  breakdown: { streak: number; pr: number; nutrition: number; measurement: number };
 }
 
 export function computeSeasonRanking(
@@ -264,8 +318,11 @@ export function computeSeasonRanking(
     seasonInfo.startDate,
     effectiveEnd
   );
+  const measurementEvents = params.measurementsEnabled
+    ? computeMeasurementEvents(params.measurementEntries, params.goal, seasonInfo.startDate, effectiveEnd)
+    : [];
 
-  const events = [...streakEvents, ...prEvents, ...nutritionEvents].sort((a, b) =>
+  const events = [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents].sort((a, b) =>
     a.date === b.date ? 0 : a.date < b.date ? 1 : -1
   );
   const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
@@ -279,6 +336,7 @@ export function computeSeasonRanking(
       streak: streakEvents.reduce((s, e) => s + e.points, 0),
       pr: prEvents.reduce((s, e) => s + e.points, 0),
       nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0),
+      measurement: measurementEvents.reduce((s, e) => s + e.points, 0),
     },
   };
 }

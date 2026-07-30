@@ -25,6 +25,7 @@ interface AuthContextValue {
     trainingDays: number[];
     splitType: User['splitType'];
     rpeEnabled: boolean;
+    measurementsEnabled: boolean;
   }>) => Promise<void>;
 }
 

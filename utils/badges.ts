@@ -5,7 +5,7 @@ import { getSessionTypeForDate } from './program';
 import { estimate1RM } from './oneRepMax';
 import { macroTargets } from './nutrition';
 import { latestBodyWeight } from './nutritionStats';
-import { computeSeasonRanking, RANKS } from './ranking';
+import { computeSeasonRanking, RANKS, type RankingParams } from './ranking';
 
 export interface Badge {
   id: string;
@@ -126,15 +126,7 @@ export interface BadgeStatus {
   progress: string;
 }
 
-export function computeBadgeStatuses(params: {
-  sessions: WorkoutSession[];
-  sets: SetWithExercise[];
-  nutritionEntries: NutritionEntry[];
-  bodyWeightEntries: BodyWeightEntry[];
-  trainingDays: number[];
-  splitType: SplitType;
-  goal: NutritionGoal;
-}): BadgeStatus[] {
+export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
   const maxWeight = params.sets.reduce((max, s) => Math.max(max, s.weightKg), 0);
   const streak = countMaxTrainingStreak(params.sessions, params.trainingDays, params.splitType);
   const prCount = countAllTimePRs(params.sets, params.sessions);

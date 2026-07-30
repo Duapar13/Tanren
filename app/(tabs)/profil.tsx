@@ -290,6 +290,27 @@ export default function ProfilScreen() {
             </Card>
           </View>
 
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Mensurations
+            </ThemedText>
+            <Card style={{ gap: Spacing.md }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subhead">Suivi des mensurations</ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    Bras, taille, torse, cuisses — affiche le suivi dans Nutrition et compte dans les points de rang
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={user?.measurementsEnabled ?? false}
+                  onValueChange={(v) => updateProfile({ measurementsEnabled: v })}
+                  trackColor={{ true: colors.accent }}
+                />
+              </View>
+            </Card>
+          </View>
+
           <View style={{ gap: Spacing.sm }}>
             <ThemedText variant="headline">Bibliothèque d’exercices</ThemedText>
 

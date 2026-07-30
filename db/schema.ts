@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DB_NAME = 'tanren.db';
-const CURRENT_VERSION = 7;
+const CURRENT_VERSION = 8;
 
 export async function migrateDb(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>(
@@ -78,6 +78,15 @@ export async function migrateDb(db: SQLiteDatabase) {
       serverId INTEGER
     );
 
+    CREATE TABLE IF NOT EXISTS measurement_entries (
+      id INTEGER PRIMARY KEY NOT NULL,
+      date TEXT NOT NULL,
+      type TEXT NOT NULL,
+      valueCm REAL NOT NULL,
+      createdAt TEXT NOT NULL,
+      serverId INTEGER
+    );
+
     CREATE TABLE IF NOT EXISTS sync_queue (
       id INTEGER PRIMARY KEY NOT NULL,
       entity TEXT NOT NULL,
@@ -92,6 +101,7 @@ export async function migrateDb(db: SQLiteDatabase) {
     CREATE INDEX IF NOT EXISTS idx_sets_exerciseId ON sets (exerciseId);
     CREATE INDEX IF NOT EXISTS idx_bodyweight_date ON body_weight_entries (date);
     CREATE INDEX IF NOT EXISTS idx_nutrition_date ON nutrition_entries (date);
+    CREATE INDEX IF NOT EXISTS idx_measurement_type_date ON measurement_entries (type, date);
   `);
 
   // v2 -> v3: existing installs already have these tables without the

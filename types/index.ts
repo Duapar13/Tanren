@@ -86,6 +86,26 @@ export interface BodyWeightEntry {
 
 export type BodyWeightEntryInput = Omit<BodyWeightEntry, 'id' | 'createdAt'>;
 
+export const MEASUREMENT_TYPES = ['biceps', 'waist', 'chest', 'thighs'] as const;
+export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
+
+export const MEASUREMENT_TYPE_LABELS: Record<MeasurementType, string> = {
+  biceps: 'Bras',
+  waist: 'Taille',
+  chest: 'Torse',
+  thighs: 'Cuisses',
+};
+
+export interface MeasurementEntry {
+  id: number;
+  date: string;
+  type: MeasurementType;
+  valueCm: number;
+  createdAt: string;
+}
+
+export type MeasurementEntryInput = Omit<MeasurementEntry, 'id' | 'createdAt'>;
+
 export interface NutritionEntry {
   id: number;
   date: string;
@@ -115,6 +135,7 @@ export interface User {
   trainingDays: number[]; // 0=dimanche..6=samedi (convention JS Date.getDay())
   splitType: SplitType;
   rpeEnabled: boolean;
+  measurementsEnabled: boolean;
 }
 
 export interface ExercisePR {

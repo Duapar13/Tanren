@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   training_days VARCHAR(20) NOT NULL DEFAULT '1,2,3,4,5',
   split_type ENUM('upper_lower','ppl') NOT NULL DEFAULT 'upper_lower',
   rpe_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  measurements_enabled TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -77,6 +78,17 @@ CREATE TABLE IF NOT EXISTS body_weight_entries (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_bw_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_bw_user_date (user_id, date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS measurement_entries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  date DATE NOT NULL,
+  type ENUM('biceps','waist','chest','thighs') NOT NULL,
+  value_cm DECIMAL(5,1) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_measurement_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_measurement_user_type_date (user_id, type, date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS nutrition_entries (

@@ -9,6 +9,7 @@ import sessionsRoutes from './routes/sessions.js';
 import setsRoutes from './routes/sets.js';
 import bodyWeightRoutes from './routes/bodyWeight.js';
 import nutritionRoutes from './routes/nutrition.js';
+import measurementsRoutes from './routes/measurements.js';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/sessions', sessionsRoutes);
 app.use('/sets', setsRoutes);
 app.use('/body-weight', bodyWeightRoutes);
 app.use('/nutrition/entries', nutritionRoutes);
+app.use('/measurements', measurementsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'not_found' });
