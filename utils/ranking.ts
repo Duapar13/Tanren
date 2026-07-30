@@ -56,9 +56,12 @@ export function tierFromPoints(rawPoints: number): RankState {
   };
 }
 
-// Seasons are calendar half-years (Jan-Jun / Jul-Dec), numbered globally so
-// everyone's "Season N" means the same real-world period — like Season 2 = H2 2026.
+// Seasons are calendar half-years (Jan-Jun / Jul-Dec), numbered globally so everyone's
+// "Season N" means the same real-world period. The epoch is pinned so the season we're
+// in right now is Season 1 — earlier half-years would count down from there (unused).
 const SEASON_EPOCH_YEAR = 2026;
+const SEASON_EPOCH_HALF: 1 | 2 = 2;
+const SEASON_EPOCH_HALF_INDEX = SEASON_EPOCH_YEAR * 2 + (SEASON_EPOCH_HALF - 1);
 
 export interface SeasonInfo {
   seasonNumber: number;
@@ -68,10 +71,16 @@ export interface SeasonInfo {
   endDate: string; // yyyy-mm-dd, last day of the 6th month
 }
 
-export function seasonInfoForDate(date: Date): SeasonInfo {
+function halfIndexForDate(date: Date): number {
   const year = date.getFullYear();
   const half: 1 | 2 = date.getMonth() < 6 ? 1 : 2;
-  const seasonNumber = (year - SEASON_EPOCH_YEAR) * 2 + half;
+  return year * 2 + (half - 1);
+}
+
+function seasonInfoForHalfIndex(halfIndex: number): SeasonInfo {
+  const year = Math.floor(halfIndex / 2);
+  const half: 1 | 2 = ((halfIndex % 2) + 1) as 1 | 2;
+  const seasonNumber = halfIndex - SEASON_EPOCH_HALF_INDEX + 1;
   const startMonth = half === 1 ? 0 : 6;
   const start = new Date(year, startMonth, 1);
   const end = new Date(year, startMonth + 6, 0); // day 0 of the month after = last day of the 6th month
@@ -84,17 +93,16 @@ export function seasonInfoForDate(date: Date): SeasonInfo {
   };
 }
 
+export function seasonInfoForDate(date: Date): SeasonInfo {
+  return seasonInfoForHalfIndex(halfIndexForDate(date));
+}
+
 export function currentSeasonInfo(date = new Date()): SeasonInfo {
   return seasonInfoForDate(date);
 }
 
 export function seasonInfoForNumber(seasonNumber: number): SeasonInfo {
-  const half: 1 | 2 = ((seasonNumber - 1) % 2 === 0 ? 1 : 2) as 1 | 2;
-  const year = SEASON_EPOCH_YEAR + Math.floor((seasonNumber - half) / 2);
-  const startMonth = half === 1 ? 0 : 6;
-  const start = new Date(year, startMonth, 1);
-  const end = new Date(year, startMonth + 6, 0);
-  return { seasonNumber, half, year, startDate: toDateKey(start), endDate: toDateKey(end) };
+  return seasonInfoForHalfIndex(seasonNumber - 1 + SEASON_EPOCH_HALF_INDEX);
 }
 
 export function seasonLabel(info: SeasonInfo): string {
@@ -304,22 +312,28 @@ export function computeSeasonMedal(
   }
 
   const start = new Date(`${seasonInfo.startDate}T00:00:00`);
-  const boundaries: string[] = [];
+  const monthStarts: string[] = [];
+  const monthEnds: string[] = [];
   for (let i = 0; i < 6; i++) {
-    boundaries.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i + 1, 0)));
+    monthStarts.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i, 1)));
+    monthEnds.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i + 1, 0)));
   }
 
+  // A month's bar lights up as soon as that month has started, using whatever peak has
+  // been reached so far — not only once the whole month is over — so live progress (and
+  // dev-mode bonus points) show up on the medal immediately instead of a month late.
   const segments: (RankName | null)[] = [];
   let cumulative = 0;
   let runningMax = 0;
   let cursor = start;
   let cursorKey = toDateKey(cursor);
-  for (const boundary of boundaries) {
-    if (boundary > effectiveEnd) {
+  for (let i = 0; i < 6; i++) {
+    if (monthStarts[i] > effectiveEnd) {
       segments.push(null);
       continue;
     }
-    while (cursorKey <= boundary) {
+    const target = monthEnds[i] < effectiveEnd ? monthEnds[i] : effectiveEnd;
+    while (cursorKey <= target) {
       cumulative += pointsByDate.get(cursorKey) ?? 0;
       runningMax = Math.max(runningMax, cumulative);
       cursor = addDays(cursor, 1);

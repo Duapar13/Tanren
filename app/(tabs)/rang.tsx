@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -23,12 +24,33 @@ import {
   POINTS_PER_DIVISION,
   RANK_COLORS,
   seasonLabel,
+  type RankName,
+  type SeasonMedal,
+  type SeasonRanking,
 } from '../../utils/ranking';
 import { computeBadgeStatuses, type BadgeStatus } from '../../utils/badges';
 import { checkDevPassword, getDevBonusPoints, setDevBonusPoints } from '../../lib/devMode';
+import { generateRandomMedals } from '../../utils/devMedals';
 
 function formatPoints(points: number): string {
   return `${points >= 0 ? '+' : ''}${points} pt${Math.abs(points) > 1 ? 's' : ''}`;
+}
+
+function filledCountOf(medal: SeasonMedal): number {
+  return medal.segments.filter((s) => s !== null).length;
+}
+
+function monthLabelForSegment(medal: SeasonMedal, index: number): string {
+  const start = new Date(`${medal.seasonInfo.startDate}T00:00:00`);
+  const d = new Date(start.getFullYear(), start.getMonth() + index, 1);
+  const label = d.toLocaleDateString('fr-FR', { month: 'long' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+type MedalKind = 'current' | 'history' | 'test';
+interface MedalSelection {
+  medal: SeasonMedal;
+  kind: MedalKind;
 }
 
 export default function RangScreen() {
@@ -43,6 +65,11 @@ export default function RangScreen() {
   const [devPasswordError, setDevPasswordError] = useState(false);
   const [devBonusInput, setDevBonusInput] = useState('0');
   const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
+  const [devSegmentsOverride, setDevSegmentsOverride] = useState<number | null>(null);
+  const [segmentSliderKey, setSegmentSliderKey] = useState(0);
+  const [testMedalCount, setTestMedalCount] = useState(6);
+  const [testMedals, setTestMedals] = useState<SeasonMedal[]>([]);
+  const [selectedMedal, setSelectedMedal] = useState<MedalSelection | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,7 +106,41 @@ export default function RangScreen() {
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
 
-  const badgeStatuses = useMemo(() => computeBadgeStatuses(rankingParams), [rankingParams]);
+  const badgeStatuses = useMemo(
+    () => computeBadgeStatuses(rankingParams, devBonus),
+    [rankingParams, devBonus]
+  );
+
+  // Manual "barrettes" override for the live season medal — lets the current-season count
+  // (only ever a few months in) be previewed as if more months had already passed.
+  const displayedMedals = useMemo(() => {
+    const [current, ...rest] = seasonMedals;
+    if (!current || devSegmentsOverride === null) return seasonMedals;
+    const overriddenSegments: (RankName | null)[] = Array.from({ length: 6 }, (_, i) =>
+      i < devSegmentsOverride ? state.rank : null
+    );
+    const overridden: SeasonMedal = {
+      ...current,
+      segments: overriddenSegments,
+      peakRank: devSegmentsOverride > 0 ? state.rank : current.peakRank,
+      isComplete: devSegmentsOverride === 6,
+    };
+    return [overridden, ...rest];
+  }, [seasonMedals, devSegmentsOverride, state.rank]);
+
+  const selectedStats: SeasonRanking | null = useMemo(() => {
+    if (!selectedMedal || selectedMedal.kind === 'test') return null;
+    if (selectedMedal.kind === 'current') return ranking;
+    return computeSeasonRanking(rankingParams, selectedMedal.medal.seasonInfo, 0);
+  }, [selectedMedal, ranking, rankingParams]);
+
+  function openMedalDetail(medal: SeasonMedal, kind: MedalKind) {
+    setSelectedMedal({ medal, kind });
+  }
+
+  function handleGenerateTestMedals() {
+    setTestMedals(generateRandomMedals(testMedalCount));
+  }
 
   function handleDevPasswordSubmit() {
     if (checkDevPassword(devPasswordInput)) {
@@ -221,6 +282,111 @@ export default function RangScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
+
+              <View style={{ height: 1, backgroundColor: colors.separator, marginVertical: Spacing.xs }} />
+
+              <ThemedText variant="subhead" weight="600">
+                Barrettes de la saison en cours : {devSegmentsOverride ?? filledCountOf(seasonMedals[0])} / 6
+              </ThemedText>
+              <Slider
+                key={`segments-${segmentSliderKey}`}
+                minimumValue={0}
+                maximumValue={6}
+                step={1}
+                value={devSegmentsOverride ?? filledCountOf(seasonMedals[0])}
+                onValueChange={setDevSegmentsOverride}
+                minimumTrackTintColor={colors.accent}
+                maximumTrackTintColor={colors.separator}
+                thumbTintColor={colors.accent}
+              />
+              <Pressable
+                onPress={() => {
+                  setDevSegmentsOverride(null);
+                  setSegmentSliderKey((k) => k + 1);
+                }}
+                style={{
+                  paddingVertical: Spacing.sm,
+                  borderRadius: 10,
+                  backgroundColor: colors.fill,
+                  alignItems: 'center',
+                }}
+              >
+                <ThemedText variant="footnote" weight="600">
+                  Réinitialiser l'aperçu de la médaille
+                </ThemedText>
+              </Pressable>
+
+              <View style={{ height: 1, backgroundColor: colors.separator, marginVertical: Spacing.xs }} />
+
+              <ThemedText variant="subhead" weight="600">
+                Générer des médailles de test : {testMedalCount}
+              </ThemedText>
+              <ThemedText variant="footnote" color="secondary">
+                Crée des médailles aléatoires (complètes ou non, rangs variés) pour comparer les couleurs.
+              </ThemedText>
+              <Slider
+                minimumValue={1}
+                maximumValue={12}
+                step={1}
+                value={testMedalCount}
+                onValueChange={setTestMedalCount}
+                minimumTrackTintColor={colors.accent}
+                maximumTrackTintColor={colors.separator}
+                thumbTintColor={colors.accent}
+              />
+              <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                <Pressable
+                  onPress={handleGenerateTestMedals}
+                  style={{
+                    flex: 1,
+                    paddingVertical: Spacing.md,
+                    borderRadius: 10,
+                    backgroundColor: colors.accent,
+                    alignItems: 'center',
+                  }}
+                >
+                  <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+                    Aléatoire
+                  </ThemedText>
+                </Pressable>
+                {testMedals.length > 0 && (
+                  <Pressable
+                    onPress={() => setTestMedals([])}
+                    style={{
+                      flex: 1,
+                      paddingVertical: Spacing.md,
+                      borderRadius: 10,
+                      backgroundColor: colors.fill,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <ThemedText variant="subhead" weight="600">
+                      Effacer
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
+
+              {testMedals.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: Spacing.lg, paddingTop: Spacing.xs }}
+                >
+                  {testMedals.map((medal, i) => (
+                    <Pressable
+                      key={i}
+                      onPress={() => openMedalDetail(medal, 'test')}
+                      style={{ alignItems: 'center', gap: 4, width: 92 }}
+                    >
+                      <SeasonMedalBadge medal={medal} size={84} />
+                      <ThemedText variant="caption" weight="600" color="tertiary">
+                        {medal.isComplete ? 'Complète' : 'Partielle'}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
             </Card>
           )}
 
@@ -277,13 +443,17 @@ export default function RangScreen() {
             </ThemedText>
             <Card>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.lg }}>
-                {seasonMedals.map((medal) => (
-                  <View key={medal.seasonInfo.seasonNumber} style={{ alignItems: 'center', gap: 4, width: 92 }}>
+                {displayedMedals.map((medal, i) => (
+                  <Pressable
+                    key={medal.seasonInfo.seasonNumber}
+                    onPress={() => openMedalDetail(medal, i === 0 ? 'current' : 'history')}
+                    style={{ alignItems: 'center', gap: 4, width: 92 }}
+                  >
                     <SeasonMedalBadge medal={medal} size={84} />
                     <ThemedText variant="caption" weight="600" color={medal.isComplete ? 'secondary' : 'accent'}>
                       {medal.isComplete ? 'Terminée' : 'En cours'}
                     </ThemedText>
-                  </View>
+                  </Pressable>
                 ))}
               </ScrollView>
             </Card>
@@ -342,6 +512,57 @@ export default function RangScreen() {
               <ThemedText weight="600" style={{ textAlign: 'center' }}>
                 {selectedBadge.unlocked ? 'Débloqué ✓' : `Progression : ${selectedBadge.progress}`}
               </ThemedText>
+            </View>
+          )}
+        </Popup>
+
+        <Popup
+          title={
+            selectedMedal
+              ? selectedMedal.kind === 'test'
+                ? 'Médaille de test'
+                : seasonLabel(selectedMedal.medal.seasonInfo)
+              : ''
+          }
+          visible={!!selectedMedal}
+          onClose={() => setSelectedMedal(null)}
+        >
+          {selectedMedal && (
+            <View style={{ gap: Spacing.sm }}>
+              <View style={{ alignItems: 'center' }}>
+                <SeasonMedalBadge medal={selectedMedal.medal} size={110} />
+              </View>
+              {selectedMedal.kind === 'test' && (
+                <ThemedText variant="footnote" color="tertiary" style={{ textAlign: 'center' }}>
+                  Médaille générée aléatoirement pour prévisualiser le design — ne reflète pas de vraies données.
+                </ThemedText>
+              )}
+              <ThemedText weight="600" style={{ textAlign: 'center' }}>
+                Rang de pointe :{' '}
+                <ThemedText weight="700" style={{ color: RANK_COLORS[selectedMedal.medal.peakRank] }}>
+                  {selectedMedal.medal.peakRank}
+                </ThemedText>
+              </ThemedText>
+              {selectedStats && (
+                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                  {selectedStats.totalPoints} pts au total · Régularité {formatPoints(selectedStats.breakdown.streak)} ·
+                  Force {formatPoints(selectedStats.breakdown.pr)} · Nutrition{' '}
+                  {formatPoints(selectedStats.breakdown.nutrition)}
+                </ThemedText>
+              )}
+              <View style={{ gap: 4 }}>
+                {selectedMedal.medal.segments.map((rank, i) => (
+                  <View
+                    key={i}
+                    style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}
+                  >
+                    <ThemedText color="secondary">{monthLabelForSegment(selectedMedal.medal, i)}</ThemedText>
+                    <ThemedText weight="600" style={{ color: rank ? RANK_COLORS[rank] : colors.textTertiary }}>
+                      {rank ?? '—'}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
         </Popup>
