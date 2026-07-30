@@ -19,7 +19,7 @@ export const BADGES: Badge[] = [
   { id: 'bar-100', name: 'Barre à 100', description: 'Logge une série à 100 kg ou plus.', icon: 'barbell' },
   {
     id: 'streak-7',
-    name: 'Trempe de 7 jours',
+    name: 'Chauffé à blanc',
     description: '7 jours d’entraînement prévus d’affilée, sans en manquer un.',
     icon: 'flame',
   },

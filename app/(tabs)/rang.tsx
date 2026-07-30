@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -8,18 +9,23 @@ import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { ProgressBar } from '../../components/ProgressBar';
 import { StatTile } from '../../components/StatTile';
+import { Popup } from '../../components/Popup';
+import { Input } from '../../components/Input';
+import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import {
+  computeSeasonMedalHistory,
   computeSeasonRanking,
   daysUntilNextSeason,
   POINTS_PER_DIVISION,
   RANK_COLORS,
   seasonLabel,
 } from '../../utils/ranking';
-import { computeBadgeStatuses } from '../../utils/badges';
+import { computeBadgeStatuses, type BadgeStatus } from '../../utils/badges';
+import { checkDevPassword, getDevBonusPoints, setDevBonusPoints } from '../../lib/devMode';
 
 function formatPoints(points: number): string {
   return `${points >= 0 ? '+' : ''}${points} pt${Math.abs(points) > 1 ? 's' : ''}`;
@@ -30,36 +36,75 @@ export default function RangScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const ranking = useMemo(
-    () =>
-      computeSeasonRanking({
-        sessions,
-        sets,
-        nutritionEntries,
-        bodyWeightEntries,
-        trainingDays: user?.trainingDays ?? [],
-        splitType: user?.splitType ?? 'upper_lower',
-        goal: user?.goal ?? 'maintain',
-      }),
+  const [devBonus, setDevBonus] = useState(0);
+  const [devUnlocked, setDevUnlocked] = useState(false);
+  const [devPasswordPromptVisible, setDevPasswordPromptVisible] = useState(false);
+  const [devPasswordInput, setDevPasswordInput] = useState('');
+  const [devPasswordError, setDevPasswordError] = useState(false);
+  const [devBonusInput, setDevBonusInput] = useState('0');
+  const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getDevBonusPoints().then((points) => {
+        setDevBonus(points);
+        setDevBonusInput(String(points));
+      });
+    }, [])
+  );
+
+  const rankingParams = useMemo(
+    () => ({
+      sessions,
+      sets,
+      nutritionEntries,
+      bodyWeightEntries,
+      trainingDays: user?.trainingDays ?? [],
+      splitType: user?.splitType ?? ('upper_lower' as const),
+      goal: user?.goal ?? ('maintain' as const),
+    }),
     [sessions, sets, nutritionEntries, bodyWeightEntries, user]
+  );
+
+  const ranking = useMemo(
+    () => computeSeasonRanking(rankingParams, undefined, devBonus),
+    [rankingParams, devBonus]
+  );
+
+  const seasonMedals = useMemo(
+    () => computeSeasonMedalHistory(rankingParams, devBonus),
+    [rankingParams, devBonus]
   );
 
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
 
-  const badgeStatuses = useMemo(
-    () =>
-      computeBadgeStatuses({
-        sessions,
-        sets,
-        nutritionEntries,
-        bodyWeightEntries,
-        trainingDays: user?.trainingDays ?? [],
-        splitType: user?.splitType ?? 'upper_lower',
-        goal: user?.goal ?? 'maintain',
-      }),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, user]
-  );
+  const badgeStatuses = useMemo(() => computeBadgeStatuses(rankingParams), [rankingParams]);
+
+  function handleDevPasswordSubmit() {
+    if (checkDevPassword(devPasswordInput)) {
+      setDevUnlocked(true);
+      setDevPasswordPromptVisible(false);
+      setDevPasswordInput('');
+      setDevPasswordError(false);
+    } else {
+      setDevPasswordError(true);
+    }
+  }
+
+  async function handleApplyDevBonus() {
+    const parsed = parseInt(devBonusInput, 10);
+    const points = Number.isFinite(parsed) ? parsed : 0;
+    await setDevBonusPoints(points);
+    setDevBonus(points);
+    setDevBonusInput(String(points));
+  }
+
+  async function handleResetDevBonus() {
+    await setDevBonusPoints(0);
+    setDevBonus(0);
+    setDevBonusInput('0');
+  }
 
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
@@ -73,26 +118,45 @@ export default function RangScreen() {
           }}
         >
           <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
-            <View
-              style={{
-                width: 96,
-                height: 96,
-                borderRadius: 999,
-                backgroundColor: rankColor + '26',
-                borderWidth: 2,
-                borderColor: rankColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+            <Pressable
+              onLongPress={() => !devUnlocked && setDevPasswordPromptVisible(true)}
+              delayLongPress={800}
             >
-              <Ionicons name="shield" size={44} color={rankColor} />
-            </View>
+              <View
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 999,
+                  backgroundColor: rankColor + '26',
+                  borderWidth: 2,
+                  borderColor: rankColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="shield" size={44} color={rankColor} />
+              </View>
+            </Pressable>
             <ThemedText variant="title1" weight="700">
               {state.rank} {state.division}
             </ThemedText>
             <ThemedText variant="subhead" color="secondary">
-              {seasonLabel(ranking.seasonId)}
+              {seasonLabel(ranking.seasonInfo)}
             </ThemedText>
+            {devBonus !== 0 && (
+              <View
+                style={{
+                  paddingHorizontal: Spacing.sm,
+                  paddingVertical: 4,
+                  borderRadius: 999,
+                  backgroundColor: colors.accent + '26',
+                }}
+              >
+                <ThemedText variant="caption" weight="600" color="accent">
+                  Mode dev actif · {formatPoints(devBonus)}
+                </ThemedText>
+              </View>
+            )}
 
             <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
               {state.isMaxTier ? (
@@ -114,6 +178,52 @@ export default function RangScreen() {
             </ThemedText>
           </Card>
 
+          {devUnlocked && (
+            <Card style={{ gap: Spacing.sm }}>
+              <ThemedText variant="headline">Mode dev</ThemedText>
+              <ThemedText variant="footnote" color="secondary">
+                Ajoute des points bonus locaux pour prévisualiser un rang ou une médaille de saison. N'est jamais
+                envoyé au serveur.
+              </ThemedText>
+              <Input
+                value={devBonusInput}
+                onChangeText={setDevBonusInput}
+                keyboardType="numbers-and-punctuation"
+                placeholder="Points bonus"
+              />
+              <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                <Pressable
+                  onPress={handleApplyDevBonus}
+                  style={{
+                    flex: 1,
+                    paddingVertical: Spacing.md,
+                    borderRadius: 10,
+                    backgroundColor: colors.accent,
+                    alignItems: 'center',
+                  }}
+                >
+                  <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+                    Appliquer
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={handleResetDevBonus}
+                  style={{
+                    flex: 1,
+                    paddingVertical: Spacing.md,
+                    borderRadius: 10,
+                    backgroundColor: colors.fill,
+                    alignItems: 'center',
+                  }}
+                >
+                  <ThemedText variant="subhead" weight="600">
+                    Réinitialiser
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </Card>
+          )}
+
           <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
             <StatTile label="Régularité" value={formatPoints(ranking.breakdown.streak)} />
             <StatTile label="Force" value={formatPoints(ranking.breakdown.pr)} />
@@ -125,41 +235,57 @@ export default function RangScreen() {
               Badges
             </ThemedText>
             <Card style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
-              {badgeStatuses.map(({ badge, unlocked, progress }) => (
-                <Pressable
-                  key={badge.id}
-                  onPress={() =>
-                    Alert.alert(
-                      badge.name,
-                      `${badge.description}\n\n${unlocked ? 'Débloqué ✓' : `Progression : ${progress}`}`
-                    )
-                  }
-                  style={{ width: '22%', alignItems: 'center', gap: 6 }}
-                >
-                  <View
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 999,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: unlocked ? colors.accent + '26' : colors.fill,
-                      borderWidth: 2,
-                      borderColor: unlocked ? colors.accent : colors.separator,
-                    }}
+              {badgeStatuses.map((status) => {
+                const { badge, unlocked } = status;
+                return (
+                  <Pressable
+                    key={badge.id}
+                    onPress={() => setSelectedBadge(status)}
+                    style={{ width: '22%', alignItems: 'center', gap: 6 }}
                   >
-                    <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
+                    <View
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: unlocked ? colors.accent + '26' : colors.fill,
+                        borderWidth: 2,
+                        borderColor: unlocked ? colors.accent : colors.separator,
+                      }}
+                    >
+                      <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
+                    </View>
+                    <ThemedText
+                      variant="caption"
+                      weight="600"
+                      color={unlocked ? 'primary' : 'tertiary'}
+                      style={{ textAlign: 'center' }}
+                    >
+                      {badge.name}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Historique des saisons
+            </ThemedText>
+            <Card>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.lg }}>
+                {seasonMedals.map((medal) => (
+                  <View key={medal.seasonInfo.seasonNumber} style={{ alignItems: 'center', gap: 4, width: 92 }}>
+                    <SeasonMedalBadge medal={medal} size={84} />
+                    <ThemedText variant="caption" weight="600" color={medal.isComplete ? 'secondary' : 'accent'}>
+                      {medal.isComplete ? 'Terminée' : 'En cours'}
+                    </ThemedText>
                   </View>
-                  <ThemedText
-                    variant="caption"
-                    weight="600"
-                    color={unlocked ? 'primary' : 'tertiary'}
-                    style={{ textAlign: 'center' }}
-                  >
-                    {badge.name}
-                  </ThemedText>
-                </Pressable>
-              ))}
+                ))}
+              </ScrollView>
             </Card>
           </View>
 
@@ -206,6 +332,65 @@ export default function RangScreen() {
             )}
           </View>
         </ScrollView>
+
+        <Popup title={selectedBadge?.badge.name ?? ''} visible={!!selectedBadge} onClose={() => setSelectedBadge(null)}>
+          {selectedBadge && (
+            <View style={{ gap: Spacing.sm }}>
+              <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                {selectedBadge.badge.description}
+              </ThemedText>
+              <ThemedText weight="600" style={{ textAlign: 'center' }}>
+                {selectedBadge.unlocked ? 'Débloqué ✓' : `Progression : ${selectedBadge.progress}`}
+              </ThemedText>
+            </View>
+          )}
+        </Popup>
+
+        <Popup
+          title="Mode dev"
+          visible={devPasswordPromptVisible}
+          onClose={() => {
+            setDevPasswordPromptVisible(false);
+            setDevPasswordInput('');
+            setDevPasswordError(false);
+          }}
+        >
+          <View style={{ gap: Spacing.sm }}>
+            <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+              Entre le mot de passe pour prévisualiser des rangs et médailles.
+            </ThemedText>
+            <Input
+              value={devPasswordInput}
+              onChangeText={(text) => {
+                setDevPasswordInput(text);
+                setDevPasswordError(false);
+              }}
+              placeholder="Mot de passe"
+              secureTextEntry
+              autoCapitalize="none"
+              onSubmitEditing={handleDevPasswordSubmit}
+              returnKeyType="done"
+            />
+            {devPasswordError && (
+              <ThemedText variant="footnote" style={{ color: colors.negative, textAlign: 'center' }}>
+                Mot de passe incorrect.
+              </ThemedText>
+            )}
+            <Pressable
+              onPress={handleDevPasswordSubmit}
+              style={{
+                paddingVertical: Spacing.md,
+                borderRadius: 10,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+              }}
+            >
+              <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+                Déverrouiller
+              </ThemedText>
+            </Pressable>
+          </View>
+        </Popup>
       </SafeAreaView>
     </ThemedView>
   );

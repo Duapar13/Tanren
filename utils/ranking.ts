@@ -56,19 +56,56 @@ export function tierFromPoints(rawPoints: number): RankState {
   };
 }
 
-export function currentSeasonId(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+// Seasons are calendar half-years (Jan-Jun / Jul-Dec), numbered globally so
+// everyone's "Season N" means the same real-world period — like Season 2 = H2 2026.
+const SEASON_EPOCH_YEAR = 2026;
+
+export interface SeasonInfo {
+  seasonNumber: number;
+  half: 1 | 2;
+  year: number;
+  startDate: string; // yyyy-mm-01
+  endDate: string; // yyyy-mm-dd, last day of the 6th month
 }
 
-export function seasonLabel(seasonId: string): string {
-  const [y, m] = seasonId.split('-').map(Number);
-  const label = new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  return label.charAt(0).toUpperCase() + label.slice(1);
+export function seasonInfoForDate(date: Date): SeasonInfo {
+  const year = date.getFullYear();
+  const half: 1 | 2 = date.getMonth() < 6 ? 1 : 2;
+  const seasonNumber = (year - SEASON_EPOCH_YEAR) * 2 + half;
+  const startMonth = half === 1 ? 0 : 6;
+  const start = new Date(year, startMonth, 1);
+  const end = new Date(year, startMonth + 6, 0); // day 0 of the month after = last day of the 6th month
+  return {
+    seasonNumber,
+    half,
+    year,
+    startDate: toDateKey(start),
+    endDate: toDateKey(end),
+  };
+}
+
+export function currentSeasonInfo(date = new Date()): SeasonInfo {
+  return seasonInfoForDate(date);
+}
+
+export function seasonInfoForNumber(seasonNumber: number): SeasonInfo {
+  const half: 1 | 2 = ((seasonNumber - 1) % 2 === 0 ? 1 : 2) as 1 | 2;
+  const year = SEASON_EPOCH_YEAR + Math.floor((seasonNumber - half) / 2);
+  const startMonth = half === 1 ? 0 : 6;
+  const start = new Date(year, startMonth, 1);
+  const end = new Date(year, startMonth + 6, 0);
+  return { seasonNumber, half, year, startDate: toDateKey(start), endDate: toDateKey(end) };
+}
+
+export function seasonLabel(info: SeasonInfo): string {
+  return `Saison ${info.seasonNumber}`;
 }
 
 export function daysUntilNextSeason(date = new Date()): number {
-  const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  return Math.ceil((nextMonth.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+  const info = seasonInfoForDate(date);
+  const end = new Date(`${info.endDate}T00:00:00`);
+  const next = addDays(end, 1);
+  return Math.ceil((next.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
 }
 
 export interface RankEvent {
@@ -82,15 +119,16 @@ function computeStreakEvents(
   sessions: WorkoutSession[],
   trainingDays: number[],
   splitType: SplitType,
-  monthStart: string,
-  today: string
+  rangeStart: string,
+  rangeEnd: string
 ): RankEvent[] {
   if (trainingDays.length === 0) return [];
   const loggedDates = new Set(sessions.map((s) => s.date));
   const events: RankEvent[] = [];
-  let cursor = new Date(`${monthStart}T00:00:00`);
+  let cursor = new Date(`${rangeStart}T00:00:00`);
   let cursorKey = toDateKey(cursor);
-  while (cursorKey <= today) {
+  const today = todayKey();
+  while (cursorKey <= rangeEnd) {
     const type = getSessionTypeForDate(cursor, trainingDays, splitType);
     if (type !== 'rest') {
       if (loggedDates.has(cursorKey)) {
@@ -113,8 +151,8 @@ function computeStreakEvents(
 function computePRPoints(
   sets: SetWithExercise[],
   sessions: WorkoutSession[],
-  monthStart: string,
-  today: string
+  rangeStart: string,
+  rangeEnd: string
 ): RankEvent[] {
   const dateBySession = new Map(sessions.map((s) => [s.id, s.date]));
   const sorted = [...sets].sort((a, b) => {
@@ -131,7 +169,7 @@ function computePRPoints(
     const est = estimate1RM(s.weightKg, s.reps);
     const prevBest = bestByExercise.get(s.exerciseId) ?? 0;
     if (est > prevBest) {
-      if (date >= monthStart && date <= today) {
+      if (date >= rangeStart && date <= rangeEnd) {
         const points =
           prevBest === 0 ? 15 : Math.min(40, 10 + Math.round(((est - prevBest) / prevBest) * 100));
         events.push({ date, label: `Record battu · ${s.exerciseName}`, points, source: 'pr' });
@@ -146,16 +184,17 @@ function computeNutritionEvents(
   nutritionEntries: NutritionEntry[],
   bodyWeightEntries: BodyWeightEntry[],
   goal: NutritionGoal,
-  monthStart: string,
-  today: string
+  rangeStart: string,
+  rangeEnd: string
 ): RankEvent[] {
   const currentWeight = latestBodyWeight(bodyWeightEntries);
   if (!currentWeight) return [];
   const targets = macroTargets(currentWeight, goal);
+  const today = todayKey();
 
   const caloriesByDate = new Map<string, number>();
   for (const e of nutritionEntries) {
-    if (e.date < monthStart || e.date >= today) continue; // journée du jour pas encore terminée
+    if (e.date < rangeStart || e.date > rangeEnd || e.date >= today) continue; // journée du jour pas encore terminée
     const calories = e.proteinG * 4 + e.carbsG * 4 + e.fatG * 9;
     caloriesByDate.set(e.date, (caloriesByDate.get(e.date) ?? 0) + calories);
   }
@@ -170,15 +209,7 @@ function computeNutritionEvents(
   return events;
 }
 
-export interface SeasonRanking {
-  seasonId: string;
-  totalPoints: number;
-  state: RankState;
-  events: RankEvent[];
-  breakdown: { streak: number; pr: number; nutrition: number };
-}
-
-export function computeSeasonRanking(params: {
+export interface RankingParams {
   sessions: WorkoutSession[];
   sets: SetWithExercise[];
   nutritionEntries: NutritionEntry[];
@@ -186,34 +217,132 @@ export function computeSeasonRanking(params: {
   trainingDays: number[];
   splitType: SplitType;
   goal: NutritionGoal;
-}): SeasonRanking {
-  const today = todayKey();
-  const monthStart = `${today.slice(0, 7)}-01`;
+}
 
-  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, params.splitType, monthStart, today);
-  const prEvents = computePRPoints(params.sets, params.sessions, monthStart, today);
+function computeEventsForRange(params: RankingParams, rangeStart: string, rangeEnd: string): RankEvent[] {
+  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, params.splitType, rangeStart, rangeEnd);
+  const prEvents = computePRPoints(params.sets, params.sessions, rangeStart, rangeEnd);
   const nutritionEvents = computeNutritionEvents(
     params.nutritionEntries,
     params.bodyWeightEntries,
     params.goal,
-    monthStart,
-    today
+    rangeStart,
+    rangeEnd
+  );
+  return [...streakEvents, ...prEvents, ...nutritionEvents];
+}
+
+export interface SeasonRanking {
+  seasonInfo: SeasonInfo;
+  totalPoints: number;
+  state: RankState;
+  events: RankEvent[];
+  breakdown: { streak: number; pr: number; nutrition: number };
+}
+
+/** devBonusPoints: dev-mode-only local preview offset, never synced or persisted server-side. */
+export function computeSeasonRanking(
+  params: RankingParams,
+  seasonInfo: SeasonInfo = currentSeasonInfo(),
+  devBonusPoints = 0
+): SeasonRanking {
+  const today = todayKey();
+  const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
+
+  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, params.splitType, seasonInfo.startDate, effectiveEnd);
+  const prEvents = computePRPoints(params.sets, params.sessions, seasonInfo.startDate, effectiveEnd);
+  const nutritionEvents = computeNutritionEvents(
+    params.nutritionEntries,
+    params.bodyWeightEntries,
+    params.goal,
+    seasonInfo.startDate,
+    effectiveEnd
   );
 
   const events = [...streakEvents, ...prEvents, ...nutritionEvents].sort((a, b) =>
     a.date === b.date ? 0 : a.date < b.date ? 1 : -1
   );
-  const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
+  const totalPoints = events.reduce((sum, e) => sum + e.points, 0) + devBonusPoints;
 
   return {
-    seasonId: currentSeasonId(),
+    seasonInfo,
     totalPoints,
     state: tierFromPoints(totalPoints),
     events,
     breakdown: {
       streak: streakEvents.reduce((s, e) => s + e.points, 0),
       pr: prEvents.reduce((s, e) => s + e.points, 0),
-      nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0),
+      nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0) + devBonusPoints,
     },
   };
+}
+
+export interface SeasonMedal {
+  seasonInfo: SeasonInfo;
+  isComplete: boolean;
+  /** One entry per calendar month of the season; null = that month hasn't happened yet. */
+  segments: (RankName | null)[];
+  peakRank: RankName;
+}
+
+export function computeSeasonMedal(
+  params: RankingParams,
+  seasonInfo: SeasonInfo,
+  devBonusPoints = 0
+): SeasonMedal {
+  const today = todayKey();
+  const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
+
+  const events = computeEventsForRange(params, seasonInfo.startDate, effectiveEnd);
+  const pointsByDate = new Map<string, number>();
+  for (const e of events) {
+    pointsByDate.set(e.date, (pointsByDate.get(e.date) ?? 0) + e.points);
+  }
+  // Attribute the dev preview bonus on day one so it factors into every month's running peak.
+  if (devBonusPoints) {
+    pointsByDate.set(seasonInfo.startDate, (pointsByDate.get(seasonInfo.startDate) ?? 0) + devBonusPoints);
+  }
+
+  const start = new Date(`${seasonInfo.startDate}T00:00:00`);
+  const boundaries: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    boundaries.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i + 1, 0)));
+  }
+
+  const segments: (RankName | null)[] = [];
+  let cumulative = 0;
+  let runningMax = 0;
+  let cursor = start;
+  let cursorKey = toDateKey(cursor);
+  for (const boundary of boundaries) {
+    if (boundary > effectiveEnd) {
+      segments.push(null);
+      continue;
+    }
+    while (cursorKey <= boundary) {
+      cumulative += pointsByDate.get(cursorKey) ?? 0;
+      runningMax = Math.max(runningMax, cumulative);
+      cursor = addDays(cursor, 1);
+      cursorKey = toDateKey(cursor);
+    }
+    segments.push(tierFromPoints(runningMax).rank);
+  }
+
+  return {
+    seasonInfo,
+    isComplete: seasonInfo.endDate < today,
+    segments,
+    peakRank: tierFromPoints(runningMax).rank,
+  };
+}
+
+/** All season medals from Season 1 through the current season, most recent first. */
+export function computeSeasonMedalHistory(params: RankingParams, devBonusPoints = 0): SeasonMedal[] {
+  const current = currentSeasonInfo();
+  const medals: SeasonMedal[] = [];
+  for (let n = current.seasonNumber; n >= 1; n--) {
+    const info = n === current.seasonNumber ? current : seasonInfoForNumber(n);
+    medals.push(computeSeasonMedal(params, info, n === current.seasonNumber ? devBonusPoints : 0));
+  }
+  return medals;
 }
