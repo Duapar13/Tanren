@@ -27,6 +27,26 @@ export async function clearTokens() {
   ]);
 }
 
+const LOCAL_DATA_OWNER_KEY = 'tanren_local_data_owner';
+
+/**
+ * Which account's data currently lives in local SQLite. Used to catch the case where a
+ * session never cleanly logged out (e.g. its token went stale — account deleted, wiped
+ * test data — while the app was closed) and a different account then logs in on the same
+ * device: without this, the new account would inherit the old one's cached rows instead
+ * of getting a fresh pull, since the "wipe on logout" path only fires on an actual
+ * logged-in-to-logged-out transition, which never happens if `user` was null all along.
+ */
+export async function getLocalDataOwner(): Promise<number | null> {
+  const raw = await SecureStore.getItemAsync(LOCAL_DATA_OWNER_KEY);
+  return raw ? parseInt(raw, 10) : null;
+}
+
+export async function setLocalDataOwner(userId: number | null): Promise<void> {
+  if (userId === null) await SecureStore.deleteItemAsync(LOCAL_DATA_OWNER_KEY);
+  else await SecureStore.setItemAsync(LOCAL_DATA_OWNER_KEY, String(userId));
+}
+
 export class ApiError extends Error {
   status: number;
   code: string;

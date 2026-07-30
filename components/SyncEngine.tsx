@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { bootstrapAfterLogin, runSync, wipeLocalData } from '../lib/syncEngine';
 import { registerSyncTrigger } from '../lib/syncBus';
+import { getLocalDataOwner, setLocalDataOwner } from '../lib/api';
 
 /** Headless: drains the local sync_queue to the API on login, reconnect, foreground, and after each local write. */
 export function SyncEngine() {
@@ -30,6 +31,7 @@ export function SyncEngine() {
         .then(reload)
         .catch((err) => console.warn('[sync] wipe on logout failed', err));
       bootstrappedFor.current = null;
+      setLocalDataOwner(null).catch(() => {});
     }
     previousUserId.current = user?.id ?? null;
   }, [db, user, reload]);
@@ -37,6 +39,16 @@ export function SyncEngine() {
   useEffect(() => {
     if (!user) return;
     (async () => {
+      // Covers the case where the previous session never cleanly logged out (its token
+      // just went stale while the app was closed) — the transition-based wipe above never
+      // ran, so double-check against the last known owner before trusting local data.
+      const owner = await getLocalDataOwner();
+      if (owner !== null && owner !== user.id) {
+        await wipeLocalData(db);
+        await reload();
+        bootstrappedFor.current = null;
+      }
+
       if (bootstrappedFor.current !== user.id) {
         try {
           await bootstrapAfterLogin(db);
@@ -45,6 +57,7 @@ export function SyncEngine() {
           console.warn('[sync] bootstrap failed', err);
         }
         bootstrappedFor.current = user.id;
+        await setLocalDataOwner(user.id);
       }
       runSync(db);
     })();
