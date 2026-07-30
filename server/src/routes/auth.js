@@ -29,8 +29,8 @@ function publicUser(row) {
     restTimerEnabled: !!row.rest_timer_enabled,
     restTimerSeconds: row.rest_timer_seconds,
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
-    splitType: row.split_type,
     rpeEnabled: !!row.rpe_enabled,
+    measurementsEnabled: !!row.measurements_enabled,
   };
 }
 

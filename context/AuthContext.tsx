@@ -23,7 +23,6 @@ interface AuthContextValue {
     restTimerEnabled: boolean;
     restTimerSeconds: number;
     trainingDays: number[];
-    splitType: User['splitType'];
     rpeEnabled: boolean;
     measurementsEnabled: boolean;
   }>) => Promise<void>;

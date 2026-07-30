@@ -6,11 +6,10 @@ import {
   NutritionEntry,
   NutritionGoal,
   SetWithExercise,
-  SplitType,
   WorkoutSession,
 } from '../types';
 import { addDays, toDateKey, todayKey } from './date';
-import { getSessionTypeForDate, SPLIT_DAY_LABELS } from './program';
+import { isTrainingDay } from './program';
 import { estimate1RM } from './oneRepMax';
 import { macroTargets } from './nutrition';
 import { latestBodyWeight } from './nutritionStats';
@@ -129,7 +128,6 @@ export interface RankEvent {
 function computeStreakEvents(
   sessions: WorkoutSession[],
   trainingDays: number[],
-  splitType: SplitType,
   rangeStart: string,
   rangeEnd: string
 ): RankEvent[] {
@@ -140,15 +138,9 @@ function computeStreakEvents(
   let cursorKey = toDateKey(cursor);
   const today = todayKey();
   while (cursorKey <= rangeEnd) {
-    const type = getSessionTypeForDate(cursor, trainingDays, splitType);
-    if (type !== 'rest') {
+    if (isTrainingDay(cursor, trainingDays)) {
       if (loggedDates.has(cursorKey)) {
-        events.push({
-          date: cursorKey,
-          label: `Séance loggée · ${SPLIT_DAY_LABELS[type]}`,
-          points: 10,
-          source: 'streak',
-        });
+        events.push({ date: cursorKey, label: 'Séance loggée', points: 10, source: 'streak' });
       } else if (cursorKey < today) {
         events.push({ date: cursorKey, label: 'Séance planifiée manquée', points: -15, source: 'streak' });
       }
@@ -274,12 +266,11 @@ export interface RankingParams {
   measurementEntries: MeasurementEntry[];
   measurementsEnabled: boolean;
   trainingDays: number[];
-  splitType: SplitType;
   goal: NutritionGoal;
 }
 
 function computeEventsForRange(params: RankingParams, rangeStart: string, rangeEnd: string): RankEvent[] {
-  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, params.splitType, rangeStart, rangeEnd);
+  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, rangeStart, rangeEnd);
   const prEvents = computePRPoints(params.sets, params.sessions, rangeStart, rangeEnd);
   const nutritionEvents = computeNutritionEvents(
     params.nutritionEntries,
@@ -309,7 +300,7 @@ export function computeSeasonRanking(
   const today = todayKey();
   const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
 
-  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, params.splitType, seasonInfo.startDate, effectiveEnd);
+  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, seasonInfo.startDate, effectiveEnd);
   const prEvents = computePRPoints(params.sets, params.sessions, seasonInfo.startDate, effectiveEnd);
   const nutritionEvents = computeNutritionEvents(
     params.nutritionEntries,

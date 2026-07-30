@@ -59,7 +59,6 @@ export default function RangScreen() {
       measurementEntries,
       measurementsEnabled: user?.measurementsEnabled ?? false,
       trainingDays: user?.trainingDays ?? [],
-      splitType: user?.splitType ?? ('upper_lower' as const),
       goal: user?.goal ?? ('maintain' as const),
     }),
     [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, user]

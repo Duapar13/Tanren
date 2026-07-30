@@ -77,7 +77,6 @@ export default function ProgressionScreen() {
               <CalendarHeatmap
                 sessions={sessions}
                 trainingDays={user?.trainingDays ?? []}
-                splitType={user?.splitType ?? 'upper_lower'}
               />
             </Card>
           </View>

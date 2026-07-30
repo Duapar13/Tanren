@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BodyWeightEntry, NutritionEntry, NutritionGoal, SetWithExercise, SplitType, WorkoutSession } from '../types';
+import { BodyWeightEntry, NutritionEntry, NutritionGoal, SetWithExercise, WorkoutSession } from '../types';
 import { addDays, toDateKey, todayKey } from './date';
-import { getSessionTypeForDate } from './program';
+import { isTrainingDay } from './program';
 import { estimate1RM } from './oneRepMax';
 import { macroTargets } from './nutrition';
 import { latestBodyWeight } from './nutritionStats';
@@ -66,11 +66,7 @@ function countAllTimePRs(sets: SetWithExercise[], sessions: WorkoutSession[]): n
   return count;
 }
 
-function countMaxTrainingStreak(
-  sessions: WorkoutSession[],
-  trainingDays: number[],
-  splitType: SplitType
-): number {
+function countMaxTrainingStreak(sessions: WorkoutSession[], trainingDays: number[]): number {
   if (trainingDays.length === 0 || sessions.length === 0) return 0;
   const loggedDates = new Set(sessions.map((s) => s.date));
   const firstDate = [...sessions].map((s) => s.date).sort()[0];
@@ -81,8 +77,7 @@ function countMaxTrainingStreak(
   let current = 0;
   let max = 0;
   while (cursorKey <= today) {
-    const type = getSessionTypeForDate(cursor, trainingDays, splitType);
-    if (type !== 'rest') {
+    if (isTrainingDay(cursor, trainingDays)) {
       if (loggedDates.has(cursorKey)) {
         current += 1;
         max = Math.max(max, current);
@@ -128,7 +123,7 @@ export interface BadgeStatus {
 
 export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
   const maxWeight = params.sets.reduce((max, s) => Math.max(max, s.weightKg), 0);
-  const streak = countMaxTrainingStreak(params.sessions, params.trainingDays, params.splitType);
+  const streak = countMaxTrainingStreak(params.sessions, params.trainingDays);
   const prCount = countAllTimePRs(params.sets, params.sessions);
   const nutritionDays = countNutritionTargetDaysHit(params.nutritionEntries, params.bodyWeightEntries, params.goal);
   const bodyWeightDays = new Set(params.bodyWeightEntries.map((e) => e.date)).size;

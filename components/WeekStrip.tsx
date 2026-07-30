@@ -2,17 +2,16 @@ import { View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
 import { Radius } from '../constants/theme';
-import { SplitType, WorkoutSession } from '../types';
+import { WorkoutSession } from '../types';
 import { addDays, formatWeekdayShort, startOfWeek, toDateKey, todayKey } from '../utils/date';
-import { getSessionTypeForDate } from '../utils/program';
+import { isTrainingDay } from '../utils/program';
 
 interface Props {
   sessions: WorkoutSession[];
   trainingDays: number[];
-  splitType: SplitType;
 }
 
-export function WeekStrip({ sessions, trainingDays, splitType }: Props) {
+export function WeekStrip({ sessions, trainingDays }: Props) {
   const { colors } = useTheme();
   const loggedDates = new Set(sessions.map((s) => s.date));
   const monday = startOfWeek(new Date());
@@ -25,7 +24,7 @@ export function WeekStrip({ sessions, trainingDays, splitType }: Props) {
         const key = toDateKey(day);
         const isToday = key === today;
         const done = loggedDates.has(key);
-        const isRest = getSessionTypeForDate(day, trainingDays, splitType) === 'rest';
+        const isRest = !isTrainingDay(day, trainingDays);
 
         return (
           <View key={key} style={{ flex: 1, alignItems: 'center', gap: 4 }}>

@@ -15,7 +15,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
-import { getSessionTypeForDate, SPLIT_DAY_LABELS } from '../../utils/program';
+import { isTrainingDay } from '../../utils/program';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
 import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
 
@@ -27,11 +27,9 @@ export default function DashboardScreen() {
   const { colors } = useTheme();
 
   const trainingDays = user?.trainingDays ?? [];
-  const splitType = user?.splitType ?? 'upper_lower';
   const measurementsEnabled = user?.measurementsEnabled ?? false;
 
-  const todaysPlanLabel = SPLIT_DAY_LABELS[getSessionTypeForDate(new Date(), trainingDays, splitType)];
-  const isRestToday = getSessionTypeForDate(new Date(), trainingDays, splitType) === 'rest';
+  const isRestToday = !isTrainingDay(new Date(), trainingDays);
 
   const weekSessions = sessionsInCurrentWeek(sessions);
 
@@ -45,10 +43,9 @@ export default function DashboardScreen() {
         measurementEntries,
         measurementsEnabled,
         trainingDays,
-        splitType,
         goal: user?.goal ?? 'maintain',
       }),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, measurementsEnabled, trainingDays, splitType, user]
+    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, measurementsEnabled, trainingDays, user]
   );
   const rankColor = RANK_COLORS[ranking.state.rank];
   const topSkills = (Object.entries(ranking.breakdown) as [keyof typeof SKILL_LABELS, number][]).filter(
@@ -71,7 +68,7 @@ export default function DashboardScreen() {
               Aujourd’hui
             </ThemedText>
             <ThemedText variant="title1" weight="700">
-              {todaysPlanLabel}
+              {isRestToday ? 'Jour de repos' : 'Jour d’entraînement'}
             </ThemedText>
             {!isRestToday && (
               <Button
@@ -86,7 +83,7 @@ export default function DashboardScreen() {
               Cette semaine
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
-              <WeekStrip sessions={sessions} trainingDays={trainingDays} splitType={splitType} />
+              <WeekStrip sessions={sessions} trainingDays={trainingDays} />
               <StatTile
                 label="Séances effectuées"
                 value={`${weekSessions.length} / ${weeklyTarget(trainingDays)}`}

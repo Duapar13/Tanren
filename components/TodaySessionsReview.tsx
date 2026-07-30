@@ -8,17 +8,8 @@ import { IconButton } from './IconButton';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { Spacing } from '../constants/theme';
-import { SessionCategory, SetWithExercise } from '../types';
+import { SetWithExercise } from '../types';
 import { todayKey } from '../utils/date';
-
-const CATEGORY_LABELS: Record<SessionCategory, string> = {
-  upper: 'Haut',
-  lower: 'Bas',
-  push: 'Push',
-  pull: 'Pull',
-  legs: 'Legs',
-  custom: 'Perso',
-};
 
 function groupByExercise(setsForSession: SetWithExercise[]) {
   const byExercise = new Map<number, SetWithExercise[]>();
@@ -106,7 +97,7 @@ export function TodaySessionsReview() {
               }}
             >
               <ThemedText variant="title3" weight="700">
-                {CATEGORY_LABELS[session.category]}
+                {grouped.length} exercice{grouped.length > 1 ? 's' : ''}
               </ThemedText>
               <IconButton
                 name="trash-outline"

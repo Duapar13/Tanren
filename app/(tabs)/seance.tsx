@@ -19,26 +19,18 @@ import { TodaySessionsReview } from '../../components/TodaySessionsReview';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Spacing } from '../../constants/theme';
-import { SessionCategory } from '../../types';
-import { getSessionTypeForDate, PPL_EXERCISE_FILTER, SPLIT_STAGES } from '../../utils/program';
 import { todayKey } from '../../utils/date';
 
-const SPLIT_LABELS: Record<SessionCategory, string> = {
-  upper: 'Haut',
-  lower: 'Bas',
-  push: 'Push',
-  pull: 'Pull',
-  legs: 'Legs',
-  custom: 'Perso',
-};
+const EXERCISE_FILTER_OPTIONS: { label: string; value: 'all' | 'upper' | 'lower' }[] = [
+  { label: 'Tout', value: 'all' },
+  { label: 'Haut', value: 'upper' },
+  { label: 'Bas', value: 'lower' },
+];
 
 export default function SeanceScreen() {
   const { exercises, sessions, addSession, addSetsToSession, addExercise: createExercise } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
-
-  const trainingDays = user?.trainingDays ?? [];
-  const splitType = user?.splitType ?? 'upper_lower';
 
   const todaysSessions = useMemo(
     () => sessions.filter((s) => s.date === todayKey()),
@@ -48,27 +40,11 @@ export default function SeanceScreen() {
   const [resuming, setResuming] = useState(false);
   const showBuilder = !resumeTarget || resuming;
 
-  const categoryOptions: { label: string; value: SessionCategory }[] = useMemo(
-    () => [
-      ...SPLIT_STAGES[splitType].map((stage) => ({ label: SPLIT_LABELS[stage], value: stage })),
-      { label: 'Perso', value: 'custom' as const },
-    ],
-    [splitType]
-  );
-
-  const suggestedCategory: SessionCategory = useMemo(() => {
-    const split = getSessionTypeForDate(new Date(), trainingDays, splitType);
-    return split === 'rest' ? 'custom' : split;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const [category, setCategory] = useState<SessionCategory>(suggestedCategory);
-  const effectiveCategory = resumeTarget && resuming ? resumeTarget.category : category;
+  const [exerciseFilter, setExerciseFilter] = useState<'all' | 'upper' | 'lower'>('all');
 
   const [activeExerciseIds, setActiveExerciseIds] = useState<number[]>([]);
   const [draftSets, setDraftSets] = useState<Record<number, DraftSet[]>>({});
   const [validatedExerciseIds, setValidatedExerciseIds] = useState<Set<number>>(new Set());
-  const [showAllExercises, setShowAllExercises] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [restTimerEndAt, setRestTimerEndAt] = useState<number | null>(null);
   const [showCreateExercise, setShowCreateExercise] = useState(false);
@@ -76,13 +52,9 @@ export default function SeanceScreen() {
   const [newExerciseCategory, setNewExerciseCategory] = useState<'upper' | 'lower'>('upper');
 
   const availableExercises = useMemo(() => {
-    if (showAllExercises || effectiveCategory === 'custom') return exercises;
-    const filter =
-      effectiveCategory === 'upper' || effectiveCategory === 'lower'
-        ? effectiveCategory
-        : PPL_EXERCISE_FILTER[effectiveCategory];
-    return exercises.filter((e) => e.category === filter);
-  }, [exercises, effectiveCategory, showAllExercises]);
+    if (exerciseFilter === 'all') return exercises;
+    return exercises.filter((e) => e.category === exerciseFilter);
+  }, [exercises, exerciseFilter]);
 
   const pickableExercises = availableExercises.filter(
     (e) => !activeExerciseIds.includes(e.id)
@@ -179,7 +151,7 @@ export default function SeanceScreen() {
         resetBuilder();
         setResuming(false);
       } else {
-        await addSession({ date: todayKey(), category, notes: '' }, setInputs);
+        await addSession({ date: todayKey(), category: 'custom', notes: '' }, setInputs);
         resetBuilder();
         router.push('/(tabs)');
       }
@@ -260,13 +232,13 @@ export default function SeanceScreen() {
                 <RestTimerBanner endAt={restTimerEndAt} onDone={() => setRestTimerEndAt(null)} />
               )}
 
-              {resumeTarget && resuming ? (
+              {resumeTarget && resuming && (
                 <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View>
                     <ThemedText variant="caption" color="tertiary">
                       Ajout à la séance
                     </ThemedText>
-                    <ThemedText variant="headline">{SPLIT_LABELS[resumeTarget.category]}</ThemedText>
+                    <ThemedText variant="headline">Séance d’aujourd’hui</ThemedText>
                   </View>
                   <Button
                     title="Annuler"
@@ -277,32 +249,15 @@ export default function SeanceScreen() {
                     }}
                   />
                 </Card>
-              ) : (
-                <Card style={{ gap: Spacing.sm }}>
-                  <ThemedText variant="headline">Type de séance</ThemedText>
-                  <SegmentedControl
-                    options={categoryOptions}
-                    value={category}
-                    onChange={setCategory}
-                  />
-                </Card>
               )}
 
               <Card style={{ gap: Spacing.sm }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <ThemedText variant="headline">Ajouter un exercice</ThemedText>
-                  <Button
-                    title={showAllExercises ? 'Filtré' : 'Tout voir'}
-                    variant="plain"
-                    onPress={() => setShowAllExercises((v) => !v)}
-                  />
-                </View>
+                <ThemedText variant="headline">Ajouter un exercice</ThemedText>
+                <SegmentedControl
+                  options={EXERCISE_FILTER_OPTIONS}
+                  value={exerciseFilter}
+                  onChange={setExerciseFilter}
+                />
                 <ChipSelector
                   options={pickableExercises.map((e) => e.name)}
                   value=""

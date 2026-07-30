@@ -16,7 +16,6 @@ function publicUser(row) {
     restTimerEnabled: !!row.rest_timer_enabled,
     restTimerSeconds: row.rest_timer_seconds,
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
-    splitType: row.split_type,
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
   };
@@ -35,16 +34,12 @@ router.patch('/me', async (req, res) => {
     restTimerEnabled,
     restTimerSeconds,
     trainingDays,
-    splitType,
     rpeEnabled,
     measurementsEnabled,
   } = req.body ?? {};
 
   if (goal !== undefined && !['bulk', 'cut', 'maintain'].includes(goal)) {
     return res.status(400).json({ error: 'invalid_goal' });
-  }
-  if (splitType !== undefined && !['upper_lower', 'ppl'].includes(splitType)) {
-    return res.status(400).json({ error: 'invalid_split_type' });
   }
   if (
     trainingDays !== undefined &&
@@ -61,7 +56,6 @@ router.patch('/me', async (req, res) => {
   if (restTimerEnabled !== undefined) { fields.push('rest_timer_enabled = ?'); values.push(restTimerEnabled ? 1 : 0); }
   if (restTimerSeconds !== undefined) { fields.push('rest_timer_seconds = ?'); values.push(restTimerSeconds); }
   if (trainingDays !== undefined) { fields.push('training_days = ?'); values.push(trainingDays.join(',')); }
-  if (splitType !== undefined) { fields.push('split_type = ?'); values.push(splitType); }
   if (rpeEnabled !== undefined) { fields.push('rpe_enabled = ?'); values.push(rpeEnabled ? 1 : 0); }
   if (measurementsEnabled !== undefined) { fields.push('measurements_enabled = ?'); values.push(measurementsEnabled ? 1 : 0); }
 

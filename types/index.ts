@@ -1,7 +1,5 @@
 export type SessionCategory = 'upper' | 'lower' | 'custom' | 'push' | 'pull' | 'legs';
 
-export type SplitType = 'upper_lower' | 'ppl';
-
 export const MUSCLE_GROUPS = [
   'pecs',
   'dos',
@@ -133,7 +131,6 @@ export interface User {
   restTimerEnabled: boolean;
   restTimerSeconds: number;
   trainingDays: number[]; // 0=dimanche..6=samedi (convention JS Date.getDay())
-  splitType: SplitType;
   rpeEnabled: boolean;
   measurementsEnabled: boolean;
 }

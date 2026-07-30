@@ -13,7 +13,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
-import { Exercise, NutritionGoal, SplitType } from '../../types';
+import { Exercise, NutritionGoal } from '../../types';
 
 const REST_DURATIONS = [60, 90, 120, 180];
 // Short forms so all three fit on one line in the segmented control (full names in utils/nutrition.ts's GOAL_LABELS).
@@ -21,11 +21,6 @@ const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
   { label: 'Masse', value: 'bulk' },
   { label: 'Sèche', value: 'cut' },
   { label: 'Maintien', value: 'maintain' },
-];
-
-const SPLIT_TYPE_OPTIONS: { label: string; value: SplitType }[] = [
-  { label: 'Haut / Bas', value: 'upper_lower' },
-  { label: 'Push Pull Legs', value: 'ppl' },
 ];
 
 // Lundi en premier pour matcher WeekStrip/CalendarHeatmap ; dow = index JS (0=dimanche..6=samedi).
@@ -212,16 +207,6 @@ export default function ProfilScreen() {
                     );
                   })}
                 </View>
-              </View>
-              <View>
-                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  Type de split
-                </ThemedText>
-                <SegmentedControl
-                  options={SPLIT_TYPE_OPTIONS}
-                  value={user?.splitType ?? 'upper_lower'}
-                  onChange={(splitType) => updateProfile({ splitType })}
-                />
               </View>
             </Card>
           </View>
