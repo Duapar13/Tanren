@@ -225,7 +225,7 @@ export default function NutritionScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader />
+        <ScreenHeader mascot="content" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,

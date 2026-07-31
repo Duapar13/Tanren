@@ -85,7 +85,7 @@ export default function ProgressionScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader />
+        <ScreenHeader mascot="excited" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,

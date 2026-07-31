@@ -1,12 +1,14 @@
 import { View } from 'react-native';
 import { TanrenWordmark } from './TanrenWordmark';
+import { NinjaMascot, NinjaReaction } from './NinjaMascot';
 import { Spacing } from '../constants/theme';
 
 interface Props {
   right?: React.ReactNode;
+  mascot?: NinjaReaction;
 }
 
-export function ScreenHeader({ right }: Props) {
+export function ScreenHeader({ right, mascot }: Props) {
   return (
     <View
       style={{
@@ -19,7 +21,7 @@ export function ScreenHeader({ right }: Props) {
       }}
     >
       <TanrenWordmark size={32} />
-      {right}
+      {right ?? (mascot && <NinjaMascot size={34} reaction={mascot} />)}
     </View>
   );
 }

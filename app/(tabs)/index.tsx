@@ -74,7 +74,7 @@ export default function DashboardScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader />
+        <ScreenHeader mascot="default" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,

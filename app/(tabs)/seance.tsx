@@ -187,7 +187,7 @@ export default function SeanceScreen() {
     return (
       <ThemedView variant="grouped" style={{ flex: 1 }}>
         <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-          <ScreenHeader />
+          <ScreenHeader mascot="focused" />
           <ScrollView
             contentContainerStyle={{
               padding: Spacing.lg,
@@ -210,7 +210,7 @@ export default function SeanceScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader />
+        <ScreenHeader mascot="focused" />
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
