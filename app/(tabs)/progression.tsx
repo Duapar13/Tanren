@@ -9,13 +9,16 @@ import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { ChipSelector } from '../../components/ChipSelector';
 import { SegmentedControl } from '../../components/SegmentedControl';
-import { CalendarHeatmap } from '../../components/CalendarHeatmap';
+import { MonthlyCalendar } from '../../components/MonthlyCalendar';
+import { SessionDetailPopup } from '../../components/SessionDetailPopup';
+import { MonthStatsPopup } from '../../components/MonthStatsPopup';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { computeExerciseSeries } from '../../utils/exerciseSeries';
 import { computeExercisePRs } from '../../utils/prStats';
+import { computeMonthlyRecap } from '../../utils/monthlyStats';
 
 type Metric = '1RM' | 'weight' | 'volume';
 
@@ -36,6 +39,27 @@ export default function ProgressionScreen() {
   const { colors } = useTheme();
 
   const [category, setCategory] = useState<'upper' | 'lower'>('upper');
+
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [showMonthStats, setShowMonthStats] = useState(false);
+
+  const monthlyRecap = useMemo(
+    () => computeMonthlyRecap(sets, sessions, viewYear, viewMonth),
+    [sets, sessions, viewYear, viewMonth]
+  );
+  const monthLabelText = useMemo(() => {
+    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [viewYear, viewMonth]);
+
+  const selectedDaySets = useMemo(() => {
+    if (!selectedDay) return [];
+    const sessionIds = new Set(sessions.filter((s) => s.date === selectedDay).map((s) => s.id));
+    return sets.filter((s) => sessionIds.has(s.sessionId));
+  }, [selectedDay, sessions, sets]);
 
   const exercisesWithData = useMemo(() => {
     const idsWithSets = new Set(sets.map((s) => s.exerciseId));
@@ -74,9 +98,17 @@ export default function ProgressionScreen() {
               Régularité
             </ThemedText>
             <Card>
-              <CalendarHeatmap
+              <MonthlyCalendar
+                year={viewYear}
+                month={viewMonth}
                 sessions={sessions}
                 trainingDays={user?.trainingDays ?? []}
+                onChangeMonth={(y, m) => {
+                  setViewYear(y);
+                  setViewMonth(m);
+                }}
+                onDayPress={setSelectedDay}
+                onStatsPress={() => setShowMonthStats(true)}
               />
             </Card>
           </View>
@@ -180,6 +212,19 @@ export default function ProgressionScreen() {
             </>
           )}
         </ScrollView>
+
+        <SessionDetailPopup
+          visible={!!selectedDay}
+          onClose={() => setSelectedDay(null)}
+          date={selectedDay}
+          sets={selectedDaySets}
+        />
+        <MonthStatsPopup
+          visible={showMonthStats}
+          onClose={() => setShowMonthStats(false)}
+          monthLabel={monthLabelText}
+          recap={monthlyRecap}
+        />
       </SafeAreaView>
     </ThemedView>
   );
