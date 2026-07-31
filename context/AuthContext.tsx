@@ -18,6 +18,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<{
     displayName: string;
+    username: string;
+    email: string;
     heightCm: number | null;
     goal: User['goal'];
     restTimerEnabled: boolean;
@@ -29,7 +31,9 @@ interface AuthContextValue {
     customCarbsG: number | null;
     customFatG: number | null;
     onboardingCompleted: boolean;
+    pushToken: string | null;
   }>) => Promise<void>;
+  uploadAvatar: (uri: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -127,6 +131,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   }, []);
 
+  const uploadAvatar = useCallback(async (uri: string) => {
+    const filename = uri.split('/').pop() ?? 'avatar.jpg';
+    const ext = /\.(\w+)$/.exec(filename)?.[1]?.toLowerCase();
+    const type = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+    const formData = new FormData();
+    // React Native's fetch/FormData accepts this {uri, name, type} shape for file uploads —
+    // not the standard web File/Blob API, hence the cast.
+    formData.append('avatar', { uri, name: filename, type } as unknown as Blob);
+
+    const me = await apiFetch('/users/me/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+    setUser(me);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -138,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithAppleIdToken,
         logout,
         updateProfile,
+        uploadAvatar,
       }}
     >
       {children}

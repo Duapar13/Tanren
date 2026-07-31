@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Alert, Keyboard, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Image, Keyboard, Pressable, ScrollView, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -14,6 +16,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { Exercise, NutritionGoal } from '../../types';
+import { API_URL, apiFetch } from '../../lib/api';
+import { authErrorMessage } from '../../lib/authErrors';
+import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
 
 const REST_DURATIONS = [60, 90, 120, 180];
 // Short forms so all three fit on one line in the segmented control (full names in utils/nutrition.ts's GOAL_LABELS).
@@ -23,7 +28,7 @@ const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
   { label: 'Maintien', value: 'maintain' },
 ];
 
-// Lundi en premier pour matcher WeekStrip/CalendarHeatmap ; dow = index JS (0=dimanche..6=samedi).
+// Lundi en premier pour matcher WeekStrip ; dow = index JS (0=dimanche..6=samedi).
 const WEEKDAYS: { label: string; dow: number }[] = [
   { label: 'L', dow: 1 },
   { label: 'M', dow: 2 },
@@ -36,7 +41,7 @@ const WEEKDAYS: { label: string; dow: number }[] = [
 
 export default function ProfilScreen() {
   const { exercises, addExercise, updateExercise, removeExercise } = useData();
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, uploadAvatar, logout } = useAuth();
   const { colors } = useTheme();
 
   const handleLogout = () => {
@@ -44,6 +49,98 @@ export default function ProfilScreen() {
       { text: 'Annuler', style: 'cancel' },
       { text: 'Se déconnecter', style: 'destructive', onPress: () => logout() },
     ]);
+  };
+
+  const [editingAccount, setEditingAccount] = useState(false);
+  const [editUsername, setEditUsername] = useState(user?.username ?? '');
+  const [editEmail, setEditEmail] = useState(user?.email ?? '');
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const startEditAccount = () => {
+    setEditUsername(user?.username ?? '');
+    setEditEmail(user?.email ?? '');
+    setAccountError(null);
+    setEditingAccount(true);
+  };
+
+  const saveAccountEdits = async () => {
+    Keyboard.dismiss();
+    setAccountError(null);
+    setSavingAccount(true);
+    try {
+      const patch: { username?: string; email?: string } = {};
+      if (editUsername.trim() !== user?.username) patch.username = editUsername.trim();
+      if (editEmail.trim() !== user?.email) patch.email = editEmail.trim();
+      if (Object.keys(patch).length > 0) await updateProfile(patch);
+      setEditingAccount(false);
+    } catch (err) {
+      setAccountError(authErrorMessage(err));
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission requise', 'Autorise l’accès à tes photos pour changer ta photo de profil.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    setUploadingAvatar(true);
+    try {
+      await uploadAvatar(result.assets[0].uri);
+    } catch (err) {
+      Alert.alert('Photo de profil', authErrorMessage(err));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const [togglingPush, setTogglingPush] = useState(false);
+  const [sendingTestPush, setSendingTestPush] = useState(false);
+
+  const handleTogglePush = async (enabled: boolean) => {
+    setTogglingPush(true);
+    try {
+      if (enabled) {
+        const token = await registerForPushNotificationsAsync();
+        if (!token) {
+          Alert.alert(
+            'Permission requise',
+            'Autorise les notifications pour Tanren dans les réglages de ton téléphone.'
+          );
+          return;
+        }
+        await updateProfile({ pushToken: token });
+      } else {
+        await updateProfile({ pushToken: null });
+      }
+    } catch {
+      Alert.alert('Notifications', 'Impossible de mettre à jour ce réglage pour le moment.');
+    } finally {
+      setTogglingPush(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setSendingTestPush(true);
+    try {
+      await apiFetch('/notifications/test', { method: 'POST' });
+      Alert.alert('Envoyée', 'Notification de test envoyée — elle devrait arriver dans quelques secondes.');
+    } catch (err) {
+      Alert.alert('Notifications', authErrorMessage(err));
+    } finally {
+      setSendingTestPush(false);
+    }
   };
 
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -120,22 +217,106 @@ export default function ProfilScreen() {
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
               Compte
             </ThemedText>
-            <Card style={{ gap: Spacing.xs }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View>
-                  <ThemedText variant="subhead" weight="600">
+            <Card style={{ gap: Spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                <Pressable onPress={handlePickAvatar} disabled={uploadingAvatar}>
+                  {user?.avatarUrl ? (
+                    <Image
+                      source={{ uri: `${API_URL}${user.avatarUrl}` }}
+                      style={{ width: 56, height: 56, borderRadius: 28, opacity: uploadingAvatar ? 0.5 : 1 }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 28,
+                        backgroundColor: colors.fill,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: uploadingAvatar ? 0.5 : 1,
+                      }}
+                    >
+                      <ThemedText variant="title2" weight="700" color="secondary">
+                        {(user?.displayName ?? user?.username ?? '?').charAt(0).toUpperCase()}
+                      </ThemedText>
+                    </View>
+                  )}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      right: -2,
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: colors.accent,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: colors.card,
+                    }}
+                  >
+                    <Ionicons name="camera" size={12} color="#FFFFFF" />
+                  </View>
+                </Pressable>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <ThemedText variant="subhead" weight="600" numberOfLines={1}>
                     {user?.displayName ?? user?.username}
                   </ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
+                  <ThemedText variant="caption" color="tertiary" numberOfLines={1} ellipsizeMode="tail">
                     {user?.email}
                   </ThemedText>
                 </View>
-                <Pressable onPress={handleLogout}>
-                  <ThemedText variant="footnote" weight="600" style={{ color: colors.negative }}>
-                    Se déconnecter
-                  </ThemedText>
-                </Pressable>
               </View>
+
+              {editingAccount ? (
+                <View style={{ gap: Spacing.sm }}>
+                  <View>
+                    <ThemedText variant="caption" color="tertiary">
+                      Pseudo
+                    </ThemedText>
+                    <Input value={editUsername} onChangeText={setEditUsername} autoCapitalize="none" autoCorrect={false} />
+                  </View>
+                  <View>
+                    <ThemedText variant="caption" color="tertiary">
+                      Email
+                    </ThemedText>
+                    <Input
+                      value={editEmail}
+                      onChangeText={setEditEmail}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                    />
+                  </View>
+                  {accountError && (
+                    <ThemedText variant="footnote" style={{ color: colors.negative }}>
+                      {accountError}
+                    </ThemedText>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                    <Button
+                      title={savingAccount ? 'Enregistrement…' : 'Enregistrer'}
+                      onPress={saveAccountEdits}
+                      disabled={savingAccount}
+                      style={{ flex: 1 }}
+                    />
+                    <IconButton name="close" onPress={() => setEditingAccount(false)} disabled={savingAccount} />
+                  </View>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                  <Button title="Modifier pseudo / email" variant="plain" onPress={startEditAccount} style={{ flex: 1 }} />
+                  <Pressable onPress={handleLogout}>
+                    <ThemedText variant="footnote" weight="600" style={{ color: colors.negative }}>
+                      Se déconnecter
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              )}
             </Card>
           </View>
 
@@ -293,6 +474,36 @@ export default function ProfilScreen() {
                   trackColor={{ true: colors.accent }}
                 />
               </View>
+            </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Notifications
+            </ThemedText>
+            <Card style={{ gap: Spacing.md }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subhead">Notifications push</ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    Rappels de séance et félicitations de série en cours
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={user?.pushNotificationsEnabled ?? false}
+                  onValueChange={handleTogglePush}
+                  disabled={togglingPush}
+                  trackColor={{ true: colors.accent }}
+                />
+              </View>
+              {user?.pushNotificationsEnabled && (
+                <Button
+                  title={sendingTestPush ? 'Envoi…' : 'Envoyer une notification test'}
+                  variant="plain"
+                  onPress={handleTestPush}
+                  disabled={sendingTestPush}
+                />
+              )}
             </Card>
           </View>
 

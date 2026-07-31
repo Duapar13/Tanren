@@ -122,11 +122,14 @@ async function refreshAccessToken(): Promise<string | null> {
 /** For authenticated endpoints — attaches the access token and retries once via refresh on 401. */
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const { accessToken: initialToken } = await getTokens();
+  // A FormData body (avatar upload) needs fetch to set its own multipart boundary —
+  // forcing application/json here would corrupt the request.
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const request = (token: string | null) =>
     fetchWithTimeout(`${API_URL}${path}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers ?? {}),
       },

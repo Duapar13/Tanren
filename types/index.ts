@@ -151,6 +151,8 @@ export interface User {
   customCarbsG: number | null;
   customFatG: number | null;
   onboardingCompleted: boolean;
+  avatarUrl: string | null;
+  pushNotificationsEnabled: boolean;
 }
 
 export interface ExercisePR {
