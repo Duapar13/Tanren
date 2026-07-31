@@ -48,14 +48,27 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "expo-web-browser",
       [
         "expo-camera",
         {
           "cameraPermission": "Utilisée pour scanner le code-barre d'un aliment en nutrition."
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Utilisée pour choisir une photo de profil."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-foreground.png",
+          "color": "#C4881F"
+        }
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true
