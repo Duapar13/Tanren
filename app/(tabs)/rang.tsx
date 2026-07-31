@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -26,6 +27,16 @@ import {
 } from '../../utils/ranking';
 import { computeBadgeStatuses, type BadgeStatus } from '../../utils/badges';
 import { toDateKey, todayKey } from '../../utils/date';
+import { apiFetch } from '../../lib/api';
+
+interface LeaderboardEntry {
+  userId: number;
+  username: string;
+  displayName: string | null;
+  points: number;
+  rank: string;
+  division: string;
+}
 
 function formatPoints(points: number): string {
   return `${points >= 0 ? '+' : ''}${points} pt${Math.abs(points) > 1 ? 's' : ''}`;
@@ -72,6 +83,30 @@ export default function RangScreen() {
 
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
+
+  // Ranking has no server-side scoring engine — this just reports what this device already
+  // computed for itself, so the leaderboard is only as fresh as each player's last report.
+  useEffect(() => {
+    apiFetch('/leaderboard/report', {
+      method: 'POST',
+      body: JSON.stringify({
+        seasonNumber: ranking.seasonInfo.seasonNumber,
+        points: ranking.totalPoints,
+        rank: state.rank,
+        division: state.division,
+      }),
+    }).catch(() => {});
+  }, [ranking.seasonInfo.seasonNumber, ranking.totalPoints, state.rank, state.division]);
+
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      apiFetch(`/leaderboard?seasonNumber=${ranking.seasonInfo.seasonNumber}`)
+        .then(setLeaderboard)
+        .catch(() => {});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ranking.seasonInfo.seasonNumber])
+  );
 
   const selectedStats: SeasonRanking | null = useMemo(() => {
     if (!selectedMedal) return null;
@@ -180,6 +215,57 @@ export default function RangScreen() {
                 );
               })}
             </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Classement global
+            </ThemedText>
+            {leaderboard.length === 0 ? (
+              <Card>
+                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                  Personne n’a encore de score ce semestre — sois le premier !
+                </ThemedText>
+              </Card>
+            ) : (
+              <Card style={{ gap: 0 }}>
+                {leaderboard.map((entry, i) => {
+                  const isMe = entry.userId === user?.id;
+                  return (
+                    <View
+                      key={entry.userId}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: Spacing.sm,
+                        paddingVertical: Spacing.xs,
+                        borderTopWidth: i === 0 ? 0 : 1,
+                        borderTopColor: colors.separator,
+                        backgroundColor: isMe ? colors.accent + '14' : 'transparent',
+                        marginHorizontal: isMe ? -Spacing.md : 0,
+                        paddingHorizontal: isMe ? Spacing.md : 0,
+                        borderRadius: isMe ? 8 : 0,
+                      }}
+                    >
+                      <ThemedText variant="subhead" weight="700" color="tertiary" style={{ width: 24 }}>
+                        {i + 1}
+                      </ThemedText>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <ThemedText variant="subhead" weight={isMe ? '700' : '400'} numberOfLines={1}>
+                          {entry.displayName ?? entry.username}
+                        </ThemedText>
+                        <ThemedText variant="caption" color="tertiary">
+                          {entry.rank} {entry.division}
+                        </ThemedText>
+                      </View>
+                      <ThemedText variant="subhead" weight="700">
+                        {entry.points} pts
+                      </ThemedText>
+                    </View>
+                  );
+                })}
+              </Card>
+            )}
           </View>
 
           <View>
