@@ -19,6 +19,10 @@ function publicUser(row) {
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    customProteinG: row.custom_protein_g !== null ? Number(row.custom_protein_g) : null,
+    customCarbsG: row.custom_carbs_g !== null ? Number(row.custom_carbs_g) : null,
+    customFatG: row.custom_fat_g !== null ? Number(row.custom_fat_g) : null,
+    onboardingCompleted: !!row.onboarding_completed,
   };
 }
 
@@ -37,6 +41,10 @@ router.patch('/me', async (req, res) => {
     trainingDays,
     rpeEnabled,
     measurementsEnabled,
+    customProteinG,
+    customCarbsG,
+    customFatG,
+    onboardingCompleted,
   } = req.body ?? {};
 
   if (goal !== undefined && !['bulk', 'cut', 'maintain'].includes(goal)) {
@@ -59,6 +67,10 @@ router.patch('/me', async (req, res) => {
   if (trainingDays !== undefined) { fields.push('training_days = ?'); values.push(trainingDays.join(',')); }
   if (rpeEnabled !== undefined) { fields.push('rpe_enabled = ?'); values.push(rpeEnabled ? 1 : 0); }
   if (measurementsEnabled !== undefined) { fields.push('measurements_enabled = ?'); values.push(measurementsEnabled ? 1 : 0); }
+  if (customProteinG !== undefined) { fields.push('custom_protein_g = ?'); values.push(customProteinG); }
+  if (customCarbsG !== undefined) { fields.push('custom_carbs_g = ?'); values.push(customCarbsG); }
+  if (customFatG !== undefined) { fields.push('custom_fat_g = ?'); values.push(customFatG); }
+  if (onboardingCompleted !== undefined) { fields.push('onboarding_completed = ?'); values.push(onboardingCompleted ? 1 : 0); }
 
   if (fields.length > 0) {
     values.push(req.userId);

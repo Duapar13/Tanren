@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Keyboard, Pressable, ScrollView, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Pressable, ScrollView, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LineChart } from 'react-native-gifted-charts';
@@ -13,11 +13,12 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { IconButton } from '../../components/IconButton';
 import { SegmentedControl } from '../../components/SegmentedControl';
+import { ChipSelector } from '../../components/ChipSelector';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Radius, Spacing } from '../../constants/theme';
-import { bmi, bmiCategory, macroTargets } from '../../utils/nutrition';
+import { bmi, bmiCategory, effectiveMacroTargets, macroTargets } from '../../utils/nutrition';
 import {
   bodyWeightSeries,
   latestBodyWeight,
@@ -79,7 +80,7 @@ export default function NutritionScreen() {
     addMeasurementEntry,
     removeMeasurementEntry,
   } = useData();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { colors } = useTheme();
 
   const [proteinInput, setProteinInput] = useState('');
@@ -97,9 +98,31 @@ export default function NutritionScreen() {
   const [editCarbs, setEditCarbs] = useState('');
   const [editFat, setEditFat] = useState('');
 
+  const isCustomTargets =
+    user?.customProteinG != null && user?.customCarbsG != null && user?.customFatG != null;
+  const [customProteinInput, setCustomProteinInput] = useState('');
+  const [customCarbsInput, setCustomCarbsInput] = useState('');
+  const [customFatInput, setCustomFatInput] = useState('');
+  useEffect(() => {
+    setCustomProteinInput(user?.customProteinG != null ? String(user.customProteinG) : '');
+    setCustomCarbsInput(user?.customCarbsG != null ? String(user.customCarbsG) : '');
+    setCustomFatInput(user?.customFatG != null ? String(user.customFatG) : '');
+  }, [user?.customProteinG, user?.customCarbsG, user?.customFatG]);
+
   const currentWeight = latestBodyWeight(bodyWeightEntries);
   const goal = user?.goal ?? 'maintain';
-  const targets = currentWeight ? macroTargets(currentWeight, goal) : null;
+  const targets =
+    isCustomTargets || currentWeight
+      ? effectiveMacroTargets(
+          {
+            customProteinG: user?.customProteinG ?? null,
+            customCarbsG: user?.customCarbsG ?? null,
+            customFatG: user?.customFatG ?? null,
+          },
+          currentWeight ?? 0,
+          goal
+        )
+      : null;
   const currentBmi = currentWeight && user?.heightCm ? bmi(currentWeight, user.heightCm) : null;
 
   const today = todayKey();
@@ -146,6 +169,24 @@ export default function NutritionScreen() {
     if (valueCm <= 0) return;
     await addMeasurementEntry({ date: todayKey(), type: measurementType, valueCm });
     setMeasurementInput('');
+  };
+
+  const handleToggleCustomTargets = async (enabled: boolean) => {
+    if (enabled) {
+      const base = currentWeight ? macroTargets(currentWeight, goal) : { proteinG: 150, carbsG: 200, fatG: 70 };
+      await updateProfile({ customProteinG: base.proteinG, customCarbsG: base.carbsG, customFatG: base.fatG });
+    } else {
+      await updateProfile({ customProteinG: null, customCarbsG: null, customFatG: null });
+    }
+  };
+
+  const handleSaveCustomTargets = () => {
+    Keyboard.dismiss();
+    updateProfile({
+      customProteinG: num(customProteinInput),
+      customCarbsG: num(customCarbsInput),
+      customFatG: num(customFatInput),
+    });
   };
 
   const startEditEntry = (entry: NutritionEntry) => {
@@ -375,6 +416,68 @@ export default function NutritionScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Objectif nutritionnel
+            </ThemedText>
+            <Card style={{ gap: Spacing.md }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subhead">Calories et macros personnalisées</ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    Sinon calculé automatiquement à partir de ton poids et ton objectif
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={isCustomTargets}
+                  onValueChange={handleToggleCustomTargets}
+                  trackColor={{ true: colors.accent }}
+                />
+              </View>
+
+              {isCustomTargets && (
+                <View style={{ gap: Spacing.sm }}>
+                  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText variant="caption" color="tertiary">
+                        Protéines (g)
+                      </ThemedText>
+                      <Input
+                        keyboardType="decimal-pad"
+                        value={customProteinInput}
+                        onChangeText={setCustomProteinInput}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText variant="caption" color="tertiary">
+                        Glucides (g)
+                      </ThemedText>
+                      <Input
+                        keyboardType="decimal-pad"
+                        value={customCarbsInput}
+                        onChangeText={setCustomCarbsInput}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText variant="caption" color="tertiary">
+                        Lipides (g)
+                      </ThemedText>
+                      <Input
+                        keyboardType="decimal-pad"
+                        value={customFatInput}
+                        onChangeText={setCustomFatInput}
+                      />
+                    </View>
+                  </View>
+                  <ThemedText variant="caption" color="tertiary">
+                    Soit {Math.round(num(customProteinInput) * 4 + num(customCarbsInput) * 4 + num(customFatInput) * 9)} kcal
+                  </ThemedText>
+                  <Button title="Enregistrer" onPress={handleSaveCustomTargets} />
+                </View>
+              )}
+            </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
               Poids de corps
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
@@ -444,7 +547,14 @@ export default function NutritionScreen() {
                 Mensurations
               </ThemedText>
               <Card style={{ gap: Spacing.md }}>
-                <SegmentedControl options={MEASUREMENT_TYPE_OPTIONS} value={measurementType} onChange={setMeasurementType} />
+                <ChipSelector
+                  options={MEASUREMENT_TYPE_OPTIONS.map((o) => o.label)}
+                  value={MEASUREMENT_TYPE_LABELS[measurementType]}
+                  onChange={(label) => {
+                    const match = MEASUREMENT_TYPE_OPTIONS.find((o) => o.label === label);
+                    if (match) setMeasurementType(match.value);
+                  }}
+                />
 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <ThemedText variant="title2" weight="700">

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
-const TYPES = ['biceps', 'waist', 'chest', 'thighs'];
+const TYPES = ['biceps', 'waist', 'chest', 'thighs', 'neck', 'forearms', 'calves', 'hips'];
 
 const router = Router();
 router.use(requireAuth);

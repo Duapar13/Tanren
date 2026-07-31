@@ -84,7 +84,16 @@ export interface BodyWeightEntry {
 
 export type BodyWeightEntryInput = Omit<BodyWeightEntry, 'id' | 'createdAt'>;
 
-export const MEASUREMENT_TYPES = ['biceps', 'waist', 'chest', 'thighs'] as const;
+export const MEASUREMENT_TYPES = [
+  'biceps',
+  'waist',
+  'chest',
+  'thighs',
+  'neck',
+  'forearms',
+  'calves',
+  'hips',
+] as const;
 export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
 
 export const MEASUREMENT_TYPE_LABELS: Record<MeasurementType, string> = {
@@ -92,6 +101,10 @@ export const MEASUREMENT_TYPE_LABELS: Record<MeasurementType, string> = {
   waist: 'Taille',
   chest: 'Torse',
   thighs: 'Cuisses',
+  neck: 'Cou',
+  forearms: 'Avant-bras',
+  calves: 'Mollets',
+  hips: 'Hanches',
 };
 
 export interface MeasurementEntry {
@@ -134,6 +147,10 @@ export interface User {
   rpeEnabled: boolean;
   measurementsEnabled: boolean;
   createdAt: string;
+  customProteinG: number | null;
+  customCarbsG: number | null;
+  customFatG: number | null;
+  onboardingCompleted: boolean;
 }
 
 export interface ExercisePR {

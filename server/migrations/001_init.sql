@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS users (
   split_type ENUM('upper_lower','ppl') NOT NULL DEFAULT 'upper_lower',
   rpe_enabled TINYINT(1) NOT NULL DEFAULT 0,
   measurements_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  custom_protein_g DECIMAL(6,1) NULL,
+  custom_carbs_g DECIMAL(6,1) NULL,
+  custom_fat_g DECIMAL(6,1) NULL,
+  onboarding_completed TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -84,7 +88,7 @@ CREATE TABLE IF NOT EXISTS measurement_entries (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   date DATE NOT NULL,
-  type ENUM('biceps','waist','chest','thighs') NOT NULL,
+  type ENUM('biceps','waist','chest','thighs','neck','forearms','calves','hips') NOT NULL,
   value_cm DECIMAL(5,1) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_measurement_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

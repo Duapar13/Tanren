@@ -47,3 +47,22 @@ export function macroTargets(bodyWeightKg: number, goal: NutritionGoal): MacroTa
   const carbsG = Math.max(0, Math.round((calories - proteinG * 4 - fatG * 9) / 4));
   return { calories, proteinG, fatG, carbsG };
 }
+
+/**
+ * Custom macros are all-or-nothing: if the user has set their own protein/carbs/fat, use
+ * those (with calories always derived from them, so the displayed target never contradicts
+ * itself) — otherwise fall back to the auto-computed estimate from bodyweight + goal.
+ */
+export function effectiveMacroTargets(
+  custom: { customProteinG: number | null; customCarbsG: number | null; customFatG: number | null },
+  bodyWeightKg: number,
+  goal: NutritionGoal
+): MacroTargets & { isCustom: boolean } {
+  if (custom.customProteinG != null && custom.customCarbsG != null && custom.customFatG != null) {
+    const proteinG = custom.customProteinG;
+    const carbsG = custom.customCarbsG;
+    const fatG = custom.customFatG;
+    return { calories: Math.round(proteinG * 4 + carbsG * 4 + fatG * 9), proteinG, carbsG, fatG, isCustom: true };
+  }
+  return { ...macroTargets(bodyWeightKg, goal), isCustom: false };
+}

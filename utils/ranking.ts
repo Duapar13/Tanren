@@ -244,9 +244,11 @@ function computeNutritionEvents(
   return events;
 }
 
-/** For 'waist', smaller is progress unless the goal is a bulk (where it's not meaningfully scored). */
+const SHRINK_IS_PROGRESS: MeasurementType[] = ['waist', 'hips'];
+
+/** For waist/hips, smaller is progress unless the goal is a bulk (where it's not meaningfully scored). */
 function isMeasurementImprovement(type: MeasurementType, prevCm: number, newCm: number, goal: NutritionGoal): boolean {
-  if (type === 'waist') return goal !== 'bulk' && newCm < prevCm;
+  if (SHRINK_IS_PROGRESS.includes(type)) return goal !== 'bulk' && newCm < prevCm;
   return newCm > prevCm;
 }
 

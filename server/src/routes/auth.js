@@ -32,6 +32,10 @@ function publicUser(row) {
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    customProteinG: row.custom_protein_g !== null ? Number(row.custom_protein_g) : null,
+    customCarbsG: row.custom_carbs_g !== null ? Number(row.custom_carbs_g) : null,
+    customFatG: row.custom_fat_g !== null ? Number(row.custom_fat_g) : null,
+    onboardingCompleted: !!row.onboarding_completed,
   };
 }
 

@@ -25,6 +25,10 @@ interface AuthContextValue {
     trainingDays: number[];
     rpeEnabled: boolean;
     measurementsEnabled: boolean;
+    customProteinG: number | null;
+    customCarbsG: number | null;
+    customFatG: number | null;
+    onboardingCompleted: boolean;
   }>) => Promise<void>;
 }
 

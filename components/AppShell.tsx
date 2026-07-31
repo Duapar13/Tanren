@@ -27,15 +27,17 @@ export function AppShell() {
     return <SplashView />;
   }
 
+  const needsOnboarding = !!user && !user.onboardingCompleted;
+
   return (
     <Stack
-      // Keying on auth state forces a full remount instead of a live guard
-      // flip on login/logout — Stack.Protected re-evaluating its guards on an
-      // already-mounted navigator was exactly the fragile path that could
-      // leave login/signup stuck on the form after a successful response
-      // (the redirect racing React's own state propagation). A fresh mount
-      // always gets the guards right the first time, same fix as above.
-      key={user ? 'authed' : 'anon'}
+      // Keying on auth/onboarding state forces a full remount instead of a live
+      // guard flip on login/logout/onboarding-complete — Stack.Protected
+      // re-evaluating its guards on an already-mounted navigator was exactly the
+      // fragile path that could leave login/signup (or the onboarding flow)
+      // stuck after a successful response (the redirect racing React's own
+      // state propagation). A fresh mount always gets the guards right first try.
+      key={!user ? 'anon' : needsOnboarding ? 'onboarding' : 'authed'}
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
@@ -45,7 +47,10 @@ export function AppShell() {
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={!!user}>
+      <Stack.Protected guard={needsOnboarding}>
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!!user && !needsOnboarding}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="exercise/[id]"
