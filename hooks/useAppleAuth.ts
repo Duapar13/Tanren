@@ -1,49 +1,41 @@
-import { useEffect } from 'react';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
-
-WebBrowser.maybeCompleteAuthSession();
-
-const APPLE_CLIENT_ID = process.env.EXPO_PUBLIC_APPLE_CLIENT_ID ?? '';
-
-const discovery = {
-  authorizationEndpoint: 'https://appleid.apple.com/auth/authorize',
-};
+import { useCallback, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 /**
- * Flux web Apple (navigateur système) via expo-auth-session, response_mode=fragment
- * (nécessaire pour un redirect_uri non-https comme un scheme custom). Inactif tant que
- * EXPO_PUBLIC_APPLE_CLIENT_ID n'est pas défini (Services ID créé sur
- * https://developer.apple.com, nécessite un compte Apple Developer Program payant).
+ * Native "Sign in with Apple" (expo-apple-authentication) — requires a real EAS build, not
+ * Expo Go. The identity token's audience is the app's bundle ID (com.duapar.tanren), not a
+ * separate web Services ID, so no extra Apple portal resource is needed beyond enabling the
+ * "Sign In with Apple" capability (handled automatically by this package's config plugin).
  */
 export function useAppleAuth(onIdToken: (idToken: string) => void) {
-  const redirectUri = AuthSession.makeRedirectUri();
-
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: APPLE_CLIENT_ID,
-      scopes: ['name', 'email'],
-      redirectUri,
-      responseType: 'code id_token' as AuthSession.ResponseType,
-      usePKCE: false,
-      extraParams: {
-        response_mode: 'fragment',
-        nonce: Math.random().toString(36).slice(2),
-      },
-    },
-    discovery
-  );
+  const [isAvailable, setIsAvailable] = useState(false);
 
   useEffect(() => {
-    if (response?.type === 'success' && response.params.id_token) {
-      onIdToken(response.params.id_token);
+    if (Platform.OS !== 'ios') return;
+    AppleAuthentication.isAvailableAsync().then(setIsAvailable);
+  }, []);
+
+  const promptAsync = useCallback(async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (credential.identityToken) {
+        onIdToken(credential.identityToken);
+      }
+    } catch (err: any) {
+      if (err?.code === 'ERR_REQUEST_CANCELED') return;
+      throw err;
     }
-  }, [response, onIdToken]);
+  }, [onIdToken]);
 
   return {
-    isConfigured: APPLE_CLIENT_ID.length > 0,
-    canPrompt: !!request,
+    isConfigured: isAvailable,
+    canPrompt: isAvailable,
     promptAsync,
-    redirectUri,
   };
 }

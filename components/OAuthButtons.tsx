@@ -36,12 +36,16 @@ export function OAuthButtons() {
     google.promptAsync();
   };
 
-  const handleApple = () => {
+  const handleApple = async () => {
     if (!apple.isConfigured) {
-      Alert.alert('Bientôt disponible', "La connexion Apple n'est pas encore configurée.");
+      Alert.alert('Indisponible', "La connexion Apple n'est pas disponible sur cet appareil.");
       return;
     }
-    apple.promptAsync();
+    try {
+      await apple.promptAsync();
+    } catch (err) {
+      Alert.alert('Connexion Apple', authErrorMessage(err));
+    }
   };
 
   return (

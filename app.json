@@ -54,7 +54,8 @@
         {
           "cameraPermission": "Utilisée pour scanner le code-barre d'un aliment en nutrition."
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true
