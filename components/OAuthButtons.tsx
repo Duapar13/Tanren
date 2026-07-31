@@ -28,12 +28,16 @@ export function OAuthButtons() {
     }
   });
 
-  const handleGoogle = () => {
+  const handleGoogle = async () => {
     if (!google.isConfigured) {
       Alert.alert('Bientôt disponible', "La connexion Google n'est pas encore configurée.");
       return;
     }
-    google.promptAsync();
+    try {
+      await google.promptAsync();
+    } catch (err) {
+      Alert.alert('Connexion Google', authErrorMessage(err));
+    }
   };
 
   const handleApple = async () => {

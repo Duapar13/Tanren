@@ -1,44 +1,31 @@
-import { useEffect } from 'react';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useEffect } from 'react';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '';
-
-const discovery = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-};
+const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
 
 /**
- * Flux web (navigateur système) via expo-auth-session — fonctionne dans Expo Go,
- * pas besoin de dev build. Inactif tant que EXPO_PUBLIC_GOOGLE_CLIENT_ID n'est pas défini
- * (créer un client OAuth "Web application" sur https://console.cloud.google.com).
+ * Native Google Sign In — requires a real EAS build, not Expo Go. The returned ID token's
+ * audience is always the *web* client ID (not the iOS one) regardless of platform, which is
+ * exactly what the server already verifies against; the iOS client ID is only needed for the
+ * native SDK's own URL scheme handling. Inactive until both env vars below are set — create a
+ * Google Cloud project, then a "Web application" and an "iOS" OAuth client under it.
  */
 export function useGoogleAuth(onIdToken: (idToken: string) => void) {
-  const redirectUri = AuthSession.makeRedirectUri();
-
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: GOOGLE_CLIENT_ID,
-      scopes: ['openid', 'email', 'profile'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.IdToken,
-      extraParams: { nonce: Math.random().toString(36).slice(2) },
-    },
-    discovery
-  );
+  const isConfigured = WEB_CLIENT_ID.length > 0 && IOS_CLIENT_ID.length > 0;
 
   useEffect(() => {
-    if (response?.type === 'success' && response.params.id_token) {
-      onIdToken(response.params.id_token);
-    }
-  }, [response, onIdToken]);
+    if (!isConfigured) return;
+    GoogleSignin.configure({ webClientId: WEB_CLIENT_ID, iosClientId: IOS_CLIENT_ID });
+  }, [isConfigured]);
 
-  return {
-    isConfigured: GOOGLE_CLIENT_ID.length > 0,
-    canPrompt: !!request,
-    promptAsync,
-    redirectUri,
-  };
+  const promptAsync = useCallback(async () => {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true }).catch(() => {});
+    const response = await GoogleSignin.signIn();
+    if (response.type === 'success' && response.data.idToken) {
+      onIdToken(response.data.idToken);
+    }
+  }, [onIdToken]);
+
+  return { isConfigured, canPrompt: isConfigured, promptAsync };
 }
