@@ -14,6 +14,9 @@ import { useTheme } from '../hooks/useTheme';
 import { Spacing } from '../constants/theme';
 import { NutritionGoal } from '../types';
 import { todayKey } from '../utils/date';
+import { authErrorMessage } from '../lib/authErrors';
+
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
   { label: 'Masse', value: 'bulk' },
@@ -38,10 +41,12 @@ const num = (v: string) => {
 };
 
 export default function OnboardingScreen() {
-  const { updateProfile } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { addBodyWeightEntry } = useData();
   const { colors } = useTheme();
 
+  const [usernameInput, setUsernameInput] = useState(user?.username ?? '');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [heightInput, setHeightInput] = useState('');
   const [weightInput, setWeightInput] = useState('');
   const [goal, setGoal] = useState<NutritionGoal>('maintain');
@@ -55,6 +60,14 @@ export default function OnboardingScreen() {
 
   const finish = async (skip: boolean) => {
     Keyboard.dismiss();
+    setUsernameError(null);
+
+    const trimmedUsername = usernameInput.trim();
+    if (!skip && !USERNAME_RE.test(trimmedUsername)) {
+      setUsernameError('3 à 20 caractères (lettres, chiffres, _).');
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (skip) {
@@ -68,6 +81,7 @@ export default function OnboardingScreen() {
         measurementsEnabled,
         onboardingCompleted: true,
       };
+      if (trimmedUsername !== user?.username) patch.username = trimmedUsername;
       const heightCm = num(heightInput);
       if (heightCm > 0) patch.heightCm = heightCm;
       await updateProfile(patch);
@@ -76,6 +90,8 @@ export default function OnboardingScreen() {
       if (weightKg > 0) {
         await addBodyWeightEntry({ date: todayKey(), weightKg });
       }
+    } catch (err) {
+      setUsernameError(authErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -95,6 +111,30 @@ export default function OnboardingScreen() {
                 <ThemedText variant="subhead" color="secondary" style={{ textAlign: 'center' }}>
                   Quelques infos pour préparer ton suivi — tu peux tout changer plus tard dans Profil.
                 </ThemedText>
+              </View>
+
+              <View style={{ gap: Spacing.sm }}>
+                <ThemedText variant="headline">Ton pseudo</ThemedText>
+                <ThemedText variant="footnote" color="tertiary">
+                  Visible par les autres joueurs dans le classement.
+                </ThemedText>
+                <Card>
+                  <Input
+                    value={usernameInput}
+                    onChangeText={(v) => {
+                      setUsernameInput(v);
+                      setUsernameError(null);
+                    }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    placeholder="3 à 20 caractères"
+                  />
+                </Card>
+                {usernameError && (
+                  <ThemedText variant="footnote" style={{ color: colors.negative }}>
+                    {usernameError}
+                  </ThemedText>
+                )}
               </View>
 
               <View style={{ gap: Spacing.sm }}>

@@ -11,12 +11,8 @@ import { apiFetch, clearTokens, getTokens, publicFetch, setTokens } from '../lib
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  signup: (email: string, username: string, password: string) => Promise<void>;
-  login: (identifier: string, password: string) => Promise<void>;
   loginWithGoogleIdToken: (idToken: string) => Promise<void>;
   loginWithAppleIdToken: (idToken: string) => Promise<void>;
-  linkGoogleIdToken: (idToken: string) => Promise<void>;
-  linkAppleIdToken: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<{
     displayName: string;
@@ -69,28 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const signup = useCallback(
-    async (email: string, username: string, password: string) => {
-      const data = await publicFetch('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify({ email, username, password }),
-      });
-      await applyAuthResponse(data);
-    },
-    [applyAuthResponse]
-  );
-
-  const login = useCallback(
-    async (identifier: string, password: string) => {
-      const data = await publicFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ identifier, password }),
-      });
-      await applyAuthResponse(data);
-    },
-    [applyAuthResponse]
-  );
-
   const loginWithGoogleIdToken = useCallback(
     async (idToken: string) => {
       const data = await publicFetch('/auth/oauth/google', {
@@ -112,22 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [applyAuthResponse]
   );
-
-  const linkGoogleIdToken = useCallback(async (idToken: string) => {
-    const me = await apiFetch('/auth/link/google', {
-      method: 'POST',
-      body: JSON.stringify({ idToken }),
-    });
-    setUser(me);
-  }, []);
-
-  const linkAppleIdToken = useCallback(async (idToken: string) => {
-    const me = await apiFetch('/auth/link/apple', {
-      method: 'POST',
-      body: JSON.stringify({ idToken }),
-    });
-    setUser(me);
-  }, []);
 
   const logout = useCallback(async () => {
     const { refreshToken } = await getTokens();
@@ -171,12 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         loading,
-        signup,
-        login,
         loginWithGoogleIdToken,
         loginWithAppleIdToken,
-        linkGoogleIdToken,
-        linkAppleIdToken,
         logout,
         updateProfile,
         uploadAvatar,

@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -28,6 +29,7 @@ export default function DashboardScreen() {
   const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const trainingDays = user?.trainingDays ?? [];
   const measurementsEnabled = user?.measurementsEnabled ?? false;
@@ -157,7 +159,7 @@ export default function DashboardScreen() {
           )}
         </ScrollView>
 
-        <GuidedTour visible={showTour} onFinish={finishTour} />
+        <GuidedTour visible={showTour} onFinish={finishTour} tabBarHeight={tabBarHeight} />
       </SafeAreaView>
     </ThemedView>
   );

@@ -3,20 +3,15 @@ import { ApiError } from './api';
 const MESSAGES: Record<string, string> = {
   invalid_email: 'Adresse email invalide.',
   invalid_username: 'Le pseudo doit faire 3 à 20 caractères (lettres, chiffres, _).',
-  weak_password: 'Le mot de passe doit faire au moins 8 caractères.',
-  account_exists: 'Un compte existe déjà avec cet email ou ce pseudo.',
   username_taken: 'Ce pseudo est déjà pris.',
   email_taken: 'Cet email est déjà utilisé par un autre compte.',
   invalid_file: 'Format de fichier invalide.',
   invalid_file_type: 'Le fichier doit être une image.',
   missing_file: 'Aucune image sélectionnée.',
   no_push_token: 'Les notifications ne sont pas encore activées.',
-  missing_credentials: 'Renseigne ton identifiant et ton mot de passe.',
-  invalid_credentials: 'Identifiant ou mot de passe incorrect.',
   unauthenticated: 'Session expirée, reconnecte-toi.',
   google_verification_failed: 'Connexion Google impossible pour le moment.',
   apple_verification_failed: 'Connexion Apple impossible pour le moment.',
-  already_linked: 'Ce compte Google/Apple est déjà lié à un autre profil Tanren.',
   timeout: 'Le serveur ne répond pas, réessaie.',
 };
 

@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { SplashView } from './SplashView';
 
-// Long enough for SplashView's kanji-split-to-wordmark animation (~850ms) to always finish
-// before the real screen swaps in, even when data/auth resolve almost instantly.
-const MIN_SPLASH_MS = 950;
+// Long enough for SplashView's ninja-pop-in + kanji-split-to-wordmark animation (~1130ms) to
+// always finish before the real screen swaps in, even when data/auth resolve almost instantly.
+const MIN_SPLASH_MS = 1250;
 
 export function AppShell() {
   const { loading: dataLoading } = useData();
