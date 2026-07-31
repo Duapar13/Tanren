@@ -153,6 +153,8 @@ export interface User {
   onboardingCompleted: boolean;
   avatarUrl: string | null;
   pushNotificationsEnabled: boolean;
+  googleLinked: boolean;
+  appleLinked: boolean;
 }
 
 export interface ExercisePR {

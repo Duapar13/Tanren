@@ -15,6 +15,8 @@ interface AuthContextValue {
   login: (identifier: string, password: string) => Promise<void>;
   loginWithGoogleIdToken: (idToken: string) => Promise<void>;
   loginWithAppleIdToken: (idToken: string) => Promise<void>;
+  linkGoogleIdToken: (idToken: string) => Promise<void>;
+  linkAppleIdToken: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<{
     displayName: string;
@@ -111,6 +113,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [applyAuthResponse]
   );
 
+  const linkGoogleIdToken = useCallback(async (idToken: string) => {
+    const me = await apiFetch('/auth/link/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+    setUser(me);
+  }, []);
+
+  const linkAppleIdToken = useCallback(async (idToken: string) => {
+    const me = await apiFetch('/auth/link/apple', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+    setUser(me);
+  }, []);
+
   const logout = useCallback(async () => {
     const { refreshToken } = await getTokens();
     await clearTokens();
@@ -157,6 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         loginWithGoogleIdToken,
         loginWithAppleIdToken,
+        linkGoogleIdToken,
+        linkAppleIdToken,
         logout,
         updateProfile,
         uploadAvatar,

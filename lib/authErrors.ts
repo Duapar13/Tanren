@@ -16,6 +16,7 @@ const MESSAGES: Record<string, string> = {
   unauthenticated: 'Session expirée, reconnecte-toi.',
   google_verification_failed: 'Connexion Google impossible pour le moment.',
   apple_verification_failed: 'Connexion Apple impossible pour le moment.',
+  already_linked: 'Ce compte Google/Apple est déjà lié à un autre profil Tanren.',
   timeout: 'Le serveur ne répond pas, réessaie.',
 };
 

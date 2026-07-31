@@ -51,6 +51,8 @@ function publicUser(row) {
     onboardingCompleted: !!row.onboarding_completed,
     avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
     pushNotificationsEnabled: !!row.expo_push_token,
+    googleLinked: !!row.google_sub,
+    appleLinked: !!row.apple_sub,
   };
 }
 

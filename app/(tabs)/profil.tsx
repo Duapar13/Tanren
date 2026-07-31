@@ -3,6 +3,8 @@ import { Alert, Image, Keyboard, Pressable, ScrollView, Switch, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { useGoogleAuth } from '../../hooks/useGoogleAuth';
+import { useAppleAuth } from '../../hooks/useAppleAuth';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -41,8 +43,58 @@ const WEEKDAYS: { label: string; dow: number }[] = [
 
 export default function ProfilScreen() {
   const { exercises, addExercise, updateExercise, removeExercise } = useData();
-  const { user, updateProfile, uploadAvatar, logout } = useAuth();
+  const { user, updateProfile, uploadAvatar, linkGoogleIdToken, linkAppleIdToken, logout } = useAuth();
   const { colors } = useTheme();
+
+  const [linkingProvider, setLinkingProvider] = useState<'google' | 'apple' | null>(null);
+
+  const google = useGoogleAuth(async (idToken) => {
+    try {
+      await linkGoogleIdToken(idToken);
+    } catch (err) {
+      Alert.alert('Lier Google', authErrorMessage(err));
+    } finally {
+      setLinkingProvider(null);
+    }
+  });
+
+  const apple = useAppleAuth(async (idToken) => {
+    try {
+      await linkAppleIdToken(idToken);
+    } catch (err) {
+      Alert.alert('Lier Apple', authErrorMessage(err));
+    } finally {
+      setLinkingProvider(null);
+    }
+  });
+
+  const handleLinkGoogle = async () => {
+    if (!google.isConfigured) {
+      Alert.alert('Bientôt disponible', "La connexion Google n'est pas encore configurée.");
+      return;
+    }
+    setLinkingProvider('google');
+    try {
+      await google.promptAsync();
+    } catch (err) {
+      Alert.alert('Lier Google', authErrorMessage(err));
+      setLinkingProvider(null);
+    }
+  };
+
+  const handleLinkApple = async () => {
+    if (!apple.isConfigured) {
+      Alert.alert('Indisponible', "La connexion Apple n'est pas disponible sur cet appareil.");
+      return;
+    }
+    setLinkingProvider('apple');
+    try {
+      await apple.promptAsync();
+    } catch (err) {
+      Alert.alert('Lier Apple', authErrorMessage(err));
+      setLinkingProvider(null);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('Se déconnecter ?', undefined, [
@@ -317,6 +369,52 @@ export default function ProfilScreen() {
                   </Pressable>
                 </View>
               )}
+            </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Comptes liés
+            </ThemedText>
+            <ThemedText variant="footnote" color="tertiary" style={{ marginBottom: Spacing.sm }}>
+              Lie Google et/ou Apple à ce compte pour pouvoir te reconnecter avec, une fois le
+              mot de passe classique retiré.
+            </ThemedText>
+            <Card style={{ gap: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <Ionicons name="logo-google" size={18} color={colors.text} />
+                  <ThemedText variant="subhead">Google</ThemedText>
+                </View>
+                {user?.googleLinked ? (
+                  <ThemedText variant="footnote" weight="600" color="accent">
+                    Lié ✓
+                  </ThemedText>
+                ) : (
+                  <Pressable onPress={handleLinkGoogle} disabled={linkingProvider === 'google'}>
+                    <ThemedText variant="footnote" weight="600" color="accent">
+                      {linkingProvider === 'google' ? 'Liaison…' : 'Lier'}
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <Ionicons name="logo-apple" size={18} color={colors.text} />
+                  <ThemedText variant="subhead">Apple</ThemedText>
+                </View>
+                {user?.appleLinked ? (
+                  <ThemedText variant="footnote" weight="600" color="accent">
+                    Lié ✓
+                  </ThemedText>
+                ) : (
+                  <Pressable onPress={handleLinkApple} disabled={linkingProvider === 'apple'}>
+                    <ThemedText variant="footnote" weight="600" color="accent">
+                      {linkingProvider === 'apple' ? 'Liaison…' : 'Lier'}
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
             </Card>
           </View>
 

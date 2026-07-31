@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { pool } from '../db.js';
 import { signAccessToken, generateRefreshToken, hashRefreshToken } from '../utils/jwt.js';
 import { verifyGoogleIdToken, verifyAppleIdToken } from '../utils/oauth.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -38,6 +39,8 @@ function publicUser(row) {
     onboardingCompleted: !!row.onboarding_completed,
     avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
     pushNotificationsEnabled: !!row.expo_push_token,
+    googleLinked: !!row.google_sub,
+    appleLinked: !!row.apple_sub,
   };
 }
 
@@ -151,6 +154,39 @@ router.post('/oauth/apple', async (req, res) => {
     const user = await findOrCreateOAuthUser({ provider: 'apple', sub, email });
     const tokens = await issueTokens(user.id);
     res.json({ user: publicUser(user), ...tokens });
+  } catch (err) {
+    res.status(401).json({ error: 'apple_verification_failed', detail: err.message });
+  }
+});
+
+/** Links an OAuth identity to the *currently signed-in* account instead of creating a
+ * separate one — used to move a password-only account onto Apple/Google before password
+ * login gets removed, so the switch doesn't strand anyone's existing data. */
+router.post('/link/google', requireAuth, async (req, res) => {
+  const { idToken } = req.body ?? {};
+  if (!idToken) return res.status(400).json({ error: 'missing_id_token' });
+  try {
+    const { sub } = await verifyGoogleIdToken(idToken);
+    const [clash] = await pool.query('SELECT id FROM users WHERE google_sub = ? AND id != ?', [sub, req.userId]);
+    if (clash.length > 0) return res.status(409).json({ error: 'already_linked' });
+    await pool.query('UPDATE users SET google_sub = ? WHERE id = ?', [sub, req.userId]);
+    const [[user]] = await pool.query('SELECT * FROM users WHERE id = ?', [req.userId]);
+    res.json(publicUser(user));
+  } catch (err) {
+    res.status(401).json({ error: 'google_verification_failed', detail: err.message });
+  }
+});
+
+router.post('/link/apple', requireAuth, async (req, res) => {
+  const { idToken } = req.body ?? {};
+  if (!idToken) return res.status(400).json({ error: 'missing_id_token' });
+  try {
+    const { sub } = await verifyAppleIdToken(idToken);
+    const [clash] = await pool.query('SELECT id FROM users WHERE apple_sub = ? AND id != ?', [sub, req.userId]);
+    if (clash.length > 0) return res.status(409).json({ error: 'already_linked' });
+    await pool.query('UPDATE users SET apple_sub = ? WHERE id = ?', [sub, req.userId]);
+    const [[user]] = await pool.query('SELECT * FROM users WHERE id = ?', [req.userId]);
+    res.json(publicUser(user));
   } catch (err) {
     res.status(401).json({ error: 'apple_verification_failed', detail: err.message });
   }
