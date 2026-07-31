@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { isValidReps, isValidWeightKg } from '../utils/validate.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -32,6 +33,9 @@ router.patch('/:id', async (req, res) => {
   if (!existing) return res.status(404).json({ error: 'not_found' });
 
   const { reps, weightKg, rpe } = req.body ?? {};
+  if (reps !== undefined && !isValidReps(reps)) return res.status(400).json({ error: 'invalid_reps' });
+  if (weightKg !== undefined && !isValidWeightKg(weightKg)) return res.status(400).json({ error: 'invalid_weight' });
+
   const fields = [];
   const values = [];
   if (reps !== undefined) { fields.push('reps = ?'); values.push(reps); }

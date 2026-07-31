@@ -18,6 +18,12 @@ CREATE TABLE IF NOT EXISTS users (
   custom_carbs_g DECIMAL(6,1) NULL,
   custom_fat_g DECIMAL(6,1) NULL,
   onboarding_completed TINYINT(1) NOT NULL DEFAULT 0,
+  avatar_path VARCHAR(255) NULL,
+  season_number INT NULL,
+  season_points INT NULL,
+  season_rank VARCHAR(20) NULL,
+  season_division VARCHAR(5) NULL,
+  expo_push_token VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

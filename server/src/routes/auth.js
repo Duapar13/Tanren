@@ -36,6 +36,8 @@ function publicUser(row) {
     customCarbsG: row.custom_carbs_g !== null ? Number(row.custom_carbs_g) : null,
     customFatG: row.custom_fat_g !== null ? Number(row.custom_fat_g) : null,
     onboardingCompleted: !!row.onboarding_completed,
+    avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
+    pushNotificationsEnabled: !!row.expo_push_token,
   };
 }
 

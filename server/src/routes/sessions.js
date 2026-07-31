@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { computeTrainingStreak } from '../utils/streak.js';
+import { sendExpoPush } from '../utils/push.js';
+import { isValidReps, isValidWeightKg } from '../utils/validate.js';
+
+const STREAK_MILESTONES = [3, 5, 7, 10, 14, 21, 30, 60, 100, 365];
 
 const router = Router();
 router.use(requireAuth);
@@ -28,6 +33,24 @@ function publicSet(row) {
   };
 }
 
+async function notifyStreakMilestone(userId) {
+  const [[user]] = await pool.query(
+    'SELECT training_days, expo_push_token FROM users WHERE id = ?',
+    [userId]
+  );
+  if (!user?.expo_push_token) return;
+
+  const trainingDays = user.training_days ? user.training_days.split(',').filter(Boolean).map(Number) : [];
+  const streak = await computeTrainingStreak(userId, trainingDays);
+  if (!STREAK_MILESTONES.includes(streak)) return;
+
+  await sendExpoPush(
+    user.expo_push_token,
+    'GG 🔥',
+    `${streak} séances d'affilée sans en manquer une — continue comme ça !`
+  );
+}
+
 router.get('/', async (req, res) => {
   const [rows] = await pool.query(
     'SELECT * FROM sessions WHERE user_id = ? ORDER BY date DESC, id DESC',
@@ -51,6 +74,12 @@ router.post('/', async (req, res) => {
   const { date, category, notes, sets } = req.body ?? {};
   if (!date || !['upper', 'lower', 'custom'].includes(category)) {
     return res.status(400).json({ error: 'invalid_session' });
+  }
+  if (
+    Array.isArray(sets) &&
+    sets.some((s) => (s.reps !== undefined && !isValidReps(s.reps)) || (s.weightKg !== undefined && !isValidWeightKg(s.weightKg)))
+  ) {
+    return res.status(400).json({ error: 'invalid_set' });
   }
 
   const conn = await pool.getConnection();
@@ -76,6 +105,9 @@ router.post('/', async (req, res) => {
     const [[session]] = await conn.query('SELECT * FROM sessions WHERE id = ?', [sessionId]);
     const [savedSets] = await conn.query('SELECT * FROM sets WHERE session_id = ? ORDER BY id', [sessionId]);
     res.status(201).json({ ...publicSession(session), sets: savedSets.map(publicSet) });
+
+    // Fire-and-forget: a streak congratulations push shouldn't ever block or fail the request.
+    notifyStreakMilestone(req.userId).catch((err) => console.error('[push] streak check failed', err));
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -93,6 +125,9 @@ router.post('/:id/sets', async (req, res) => {
 
   const { exerciseId, setNumber, reps, weightKg, rpe } = req.body ?? {};
   if (!exerciseId || !setNumber) {
+    return res.status(400).json({ error: 'invalid_set' });
+  }
+  if ((reps !== undefined && !isValidReps(reps)) || (weightKg !== undefined && !isValidWeightKg(weightKg))) {
     return res.status(400).json({ error: 'invalid_set' });
   }
 
