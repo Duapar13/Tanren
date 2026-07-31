@@ -21,7 +21,7 @@ const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
   { label: 'Maintien', value: 'maintain' },
 ];
 
-// Lundi en premier pour matcher WeekStrip/CalendarHeatmap ; dow = index JS (0=dimanche..6=samedi).
+// Lundi en premier pour matcher WeekStrip ; dow = index JS (0=dimanche..6=samedi).
 const WEEKDAYS: { label: string; dow: number }[] = [
   { label: 'L', dow: 1 },
   { label: 'M', dow: 2 },

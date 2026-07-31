@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { StatTile } from '../../components/StatTile';
 import { Button } from '../../components/Button';
 import { ProgressBar } from '../../components/ProgressBar';
 import { WeekStrip } from '../../components/WeekStrip';
+import { GuidedTour } from '../../components/GuidedTour';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
@@ -19,6 +20,7 @@ import { isTrainingDay } from '../../utils/program';
 import { toDateKey, todayKey } from '../../utils/date';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
 import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
+import { hasSeenTour, markTourSeen } from '../../lib/tour';
 
 const SKILL_LABELS = { streak: 'Régularité', pr: 'Force', nutrition: 'Nutrition', measurement: 'Mensurations' } as const;
 
@@ -29,6 +31,19 @@ export default function DashboardScreen() {
 
   const trainingDays = user?.trainingDays ?? [];
   const measurementsEnabled = user?.measurementsEnabled ?? false;
+
+  const [showTour, setShowTour] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    hasSeenTour(user.id).then((seen) => {
+      if (!seen) setShowTour(true);
+    });
+  }, [user]);
+
+  const finishTour = () => {
+    setShowTour(false);
+    if (user) markTourSeen(user.id);
+  };
 
   const isRestToday = !isTrainingDay(new Date(), trainingDays);
 
@@ -141,6 +156,8 @@ export default function DashboardScreen() {
             </Card>
           )}
         </ScrollView>
+
+        <GuidedTour visible={showTour} onFinish={finishTour} />
       </SafeAreaView>
     </ThemedView>
   );
