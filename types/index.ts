@@ -133,6 +133,7 @@ export interface User {
   trainingDays: number[]; // 0=dimanche..6=samedi (convention JS Date.getDay())
   rpeEnabled: boolean;
   measurementsEnabled: boolean;
+  createdAt: string;
 }
 
 export interface ExercisePR {

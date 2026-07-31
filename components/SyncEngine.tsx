@@ -72,10 +72,17 @@ export function SyncEngine() {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active' && user) runSync(db);
+      if (next !== 'active') return;
+      // A `new Date()` computed during a render only updates on the next render — if the
+      // app sat backgrounded across midnight with nothing else triggering a re-render,
+      // "today" stays stuck on whatever day it was when the app was last foregrounded.
+      // reload() gives every consumer of useData() a fresh array reference, which forces
+      // that re-render (and every date.getSessionTypeForDate/todayKey() call along with it).
+      reload();
+      if (user) runSync(db);
     });
     return () => sub.remove();
-  }, [db, user]);
+  }, [db, user, reload]);
 
   return null;
 }

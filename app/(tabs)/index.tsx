@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
+import { toDateKey, todayKey } from '../../utils/date';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
 import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
 
@@ -44,6 +45,7 @@ export default function DashboardScreen() {
         measurementsEnabled,
         trainingDays,
         goal: user?.goal ?? 'maintain',
+        accountCreatedAt: user?.createdAt ? toDateKey(new Date(user.createdAt)) : todayKey(),
       }),
     [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, measurementsEnabled, trainingDays, user]
   );

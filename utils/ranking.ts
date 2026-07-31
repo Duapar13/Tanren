@@ -128,13 +128,17 @@ export interface RankEvent {
 function computeStreakEvents(
   sessions: WorkoutSession[],
   trainingDays: number[],
+  accountCreatedAt: string,
   rangeStart: string,
   rangeEnd: string
 ): RankEvent[] {
   if (trainingDays.length === 0) return [];
   const loggedDates = new Set(sessions.map((s) => s.date));
   const events: RankEvent[] = [];
-  let cursor = new Date(`${rangeStart}T00:00:00`);
+  // Never penalize days before the account existed — a brand-new user shouldn't inherit
+  // "missed" days from earlier in the season just because the season started before they signed up.
+  const effectiveStart = rangeStart < accountCreatedAt ? accountCreatedAt : rangeStart;
+  let cursor = new Date(`${effectiveStart}T00:00:00`);
   let cursorKey = toDateKey(cursor);
   const today = todayKey();
   while (cursorKey <= rangeEnd) {
@@ -151,6 +155,20 @@ function computeStreakEvents(
   return events;
 }
 
+interface SessionExerciseBest {
+  date: string;
+  exerciseId: number;
+  exerciseName: string;
+  est: number;
+}
+
+/**
+ * PRs are compared session-to-session, not set-to-set: a session's best estimated 1RM per
+ * exercise is measured against the best from earlier sessions only. This avoids a single
+ * session (especially the very first one, or a pyramid set that gets heavier each set)
+ * generating a stack of "PRs" against itself — there's nothing to have "broken" yet the
+ * first time an exercise is ever logged, so that session just sets the baseline.
+ */
 function computePRPoints(
   sets: SetWithExercise[],
   sessions: WorkoutSession[],
@@ -158,26 +176,40 @@ function computePRPoints(
   rangeEnd: string
 ): RankEvent[] {
   const dateBySession = new Map(sessions.map((s) => [s.id, s.date]));
-  const sorted = [...sets].sort((a, b) => {
-    const da = dateBySession.get(a.sessionId) ?? a.createdAt.slice(0, 10);
-    const db = dateBySession.get(b.sessionId) ?? b.createdAt.slice(0, 10);
-    if (da !== db) return da < db ? -1 : 1;
-    return a.id - b.id;
-  });
 
-  const bestByExercise = new Map<number, number>();
-  const events: RankEvent[] = [];
-  for (const s of sorted) {
+  const bestBySessionExercise = new Map<string, SessionExerciseBest>();
+  for (const s of sets) {
     const date = dateBySession.get(s.sessionId) ?? s.createdAt.slice(0, 10);
     const est = estimate1RM(s.weightKg, s.reps);
-    const prevBest = bestByExercise.get(s.exerciseId) ?? 0;
-    if (est > prevBest) {
-      if (date >= rangeStart && date <= rangeEnd) {
-        const points =
-          prevBest === 0 ? 15 : Math.min(40, 10 + Math.round(((est - prevBest) / prevBest) * 100));
-        events.push({ date, label: `Record battu · ${s.exerciseName}`, points, source: 'pr' });
+    const key = `${s.sessionId}:${s.exerciseId}`;
+    const existing = bestBySessionExercise.get(key);
+    if (!existing || est > existing.est) {
+      bestBySessionExercise.set(key, { date, exerciseId: s.exerciseId, exerciseName: s.exerciseName, est });
+    }
+  }
+
+  const bestsByExercise = new Map<number, SessionExerciseBest[]>();
+  for (const best of bestBySessionExercise.values()) {
+    if (!bestsByExercise.has(best.exerciseId)) bestsByExercise.set(best.exerciseId, []);
+    bestsByExercise.get(best.exerciseId)!.push(best);
+  }
+
+  const events: RankEvent[] = [];
+  for (const sessionBests of bestsByExercise.values()) {
+    const sorted = [...sessionBests].sort((a, b) => (a.date === b.date ? 0 : a.date < b.date ? -1 : 1));
+    let allTimeBest = 0;
+    for (const sb of sorted) {
+      if (allTimeBest === 0) {
+        allTimeBest = sb.est;
+        continue;
       }
-      bestByExercise.set(s.exerciseId, est);
+      if (sb.est > allTimeBest) {
+        if (sb.date >= rangeStart && sb.date <= rangeEnd) {
+          const points = Math.min(40, 10 + Math.round(((sb.est - allTimeBest) / allTimeBest) * 100));
+          events.push({ date: sb.date, label: `Record battu · ${sb.exerciseName}`, points, source: 'pr' });
+        }
+        allTimeBest = sb.est;
+      }
     }
   }
   return events;
@@ -267,10 +299,17 @@ export interface RankingParams {
   measurementsEnabled: boolean;
   trainingDays: number[];
   goal: NutritionGoal;
+  accountCreatedAt: string;
 }
 
 function computeEventsForRange(params: RankingParams, rangeStart: string, rangeEnd: string): RankEvent[] {
-  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, rangeStart, rangeEnd);
+  const streakEvents = computeStreakEvents(
+    params.sessions,
+    params.trainingDays,
+    params.accountCreatedAt,
+    rangeStart,
+    rangeEnd
+  );
   const prEvents = computePRPoints(params.sets, params.sessions, rangeStart, rangeEnd);
   const nutritionEvents = computeNutritionEvents(
     params.nutritionEntries,
@@ -300,7 +339,13 @@ export function computeSeasonRanking(
   const today = todayKey();
   const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
 
-  const streakEvents = computeStreakEvents(params.sessions, params.trainingDays, seasonInfo.startDate, effectiveEnd);
+  const streakEvents = computeStreakEvents(
+    params.sessions,
+    params.trainingDays,
+    params.accountCreatedAt,
+    seasonInfo.startDate,
+    effectiveEnd
+  );
   const prEvents = computePRPoints(params.sets, params.sessions, seasonInfo.startDate, effectiveEnd);
   const nutritionEvents = computeNutritionEvents(
     params.nutritionEntries,

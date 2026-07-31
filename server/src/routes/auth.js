@@ -31,6 +31,7 @@ function publicUser(row) {
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
   };
 }
 

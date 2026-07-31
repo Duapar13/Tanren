@@ -25,6 +25,7 @@ import {
   type SeasonRanking,
 } from '../../utils/ranking';
 import { computeBadgeStatuses, type BadgeStatus } from '../../utils/badges';
+import { toDateKey, todayKey } from '../../utils/date';
 
 function formatPoints(points: number): string {
   return `${points >= 0 ? '+' : ''}${points} pt${Math.abs(points) > 1 ? 's' : ''}`;
@@ -60,6 +61,7 @@ export default function RangScreen() {
       measurementsEnabled: user?.measurementsEnabled ?? false,
       trainingDays: user?.trainingDays ?? [],
       goal: user?.goal ?? ('maintain' as const),
+      accountCreatedAt: user?.createdAt ? toDateKey(new Date(user.createdAt)) : todayKey(),
     }),
     [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, user]
   );
