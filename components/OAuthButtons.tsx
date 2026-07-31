@@ -6,10 +6,12 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useAppleAuth } from '../hooks/useAppleAuth';
 import { Radius, Spacing } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { authErrorMessage } from '../lib/authErrors';
 
 export function OAuthButtons() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { loginWithGoogleIdToken, loginWithAppleIdToken } = useAuth();
 
   const google = useGoogleAuth(async (idToken) => {
@@ -70,7 +72,7 @@ export function OAuthButtons() {
       >
         <Ionicons name="logo-google" size={18} color={colors.text} />
         <ThemedText variant="body" weight="600">
-          Continuer avec Google
+          {t.login.continueWithGoogle}
         </ThemedText>
       </Pressable>
 
@@ -90,7 +92,7 @@ export function OAuthButtons() {
         >
           <Ionicons name="logo-apple" size={20} color={colors.background} />
           <ThemedText variant="body" weight="600" style={{ color: colors.background }}>
-            Continuer avec Apple
+            {t.login.continueWithApple}
           </ThemedText>
         </Pressable>
       )}

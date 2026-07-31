@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { Spacing } from '../constants/theme';
 import { SetWithExercise } from '../types';
 import { todayKey } from '../utils/date';
+import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
 
 function groupByExercise(setsForSession: SetWithExercise[]) {
   const byExercise = new Map<number, SetWithExercise[]>();
@@ -30,6 +31,7 @@ export function TodaySessionsReview() {
   const { sessions, sets, removeSet, updateSet, removeSession } = useData();
   const { user } = useAuth();
   const rpeEnabled = user?.rpeEnabled ?? false;
+  const weightUnit = user?.weightUnit ?? 'kg';
 
   const [editingSetId, setEditingSetId] = useState<number | null>(null);
   const [editReps, setEditReps] = useState('');
@@ -65,7 +67,7 @@ export function TodaySessionsReview() {
   const startEdit = (set: SetWithExercise) => {
     setEditingSetId(set.id);
     setEditReps(String(set.reps));
-    setEditWeight(String(set.weightKg));
+    setEditWeight(String(Math.round(kgToDisplay(set.weightKg, weightUnit) * 10) / 10));
     setEditRpe(set.rpe != null ? String(set.rpe) : '');
   };
 
@@ -73,7 +75,7 @@ export function TodaySessionsReview() {
     if (editingSetId === null || !editReps || !editWeight) return;
     updateSet(editingSetId, {
       reps: Math.round(num(editReps)),
-      weightKg: num(editWeight),
+      weightKg: displayToKg(num(editWeight), weightUnit),
       rpe: rpeEnabled && editRpe ? num(editRpe) : null,
     });
     Keyboard.dismiss();
@@ -127,7 +129,7 @@ export function TodaySessionsReview() {
                         </View>
                         <View style={{ flex: 1 }}>
                           <ThemedText variant="caption" color="tertiary">
-                            Poids (kg)
+                            Poids ({weightUnit})
                           </ThemedText>
                           <Input
                             keyboardType="decimal-pad"
@@ -168,7 +170,7 @@ export function TodaySessionsReview() {
                     >
                       <Pressable onPress={() => startEdit(s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
                         <ThemedText variant="footnote" color="secondary">
-                          Série {i + 1} · {s.reps} reps × {s.weightKg} kg
+                          Série {i + 1} · {s.reps} reps × {formatWeight(s.weightKg, weightUnit)}
                           {s.rpe ? ` · RPE ${s.rpe}` : ''}
                         </ThemedText>
                       </Pressable>

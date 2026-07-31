@@ -62,6 +62,8 @@ export function AppShell() {
           name="food-search"
           options={{ title: 'Ajouter un aliment', presentation: 'modal' }}
         />
+        <Stack.Screen name="session-detail" options={{ title: 'Séance' }} />
+        <Stack.Screen name="month-recap" options={{ title: 'Résumé du mois' }} />
       </Stack.Protected>
     </Stack>
   );

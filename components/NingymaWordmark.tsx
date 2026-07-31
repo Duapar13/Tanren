@@ -6,7 +6,7 @@ interface Props {
   style?: TextStyle;
 }
 
-export function TanrenWordmark({ size = 36, style }: Props) {
+export function NingymaWordmark({ size = 36, style }: Props) {
   return (
     <Text
       style={[
@@ -19,7 +19,7 @@ export function TanrenWordmark({ size = 36, style }: Props) {
         style,
       ]}
     >
-      Tanren
+      Ningyma
     </Text>
   );
 }

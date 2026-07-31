@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error('Tanren crashed:', error, info.componentStack);
+    console.error('Ningyma crashed:', error, info.componentStack);
   }
 
   render() {

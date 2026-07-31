@@ -1,15 +1,18 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { SetEntry, SetEntryInput, SetWithExercise } from '../types';
 
+// LEFT JOIN (not JOIN) on purpose: a set whose exercise was later deleted must still show up
+// everywhere — losing visibility into a logged, already-saved set because its exercise
+// definition is gone is exactly the kind of silent data loss this app can't afford.
 export async function getAllSets(db: SQLiteDatabase): Promise<SetWithExercise[]> {
   return db.getAllAsync<SetWithExercise>(`
     SELECT
       sets.*,
-      exercises.name AS exerciseName,
-      exercises.category AS exerciseCategory,
-      exercises.muscleGroup AS exerciseMuscleGroup
+      COALESCE(exercises.name, 'Exercice supprimé') AS exerciseName,
+      COALESCE(exercises.category, 'upper') AS exerciseCategory,
+      COALESCE(exercises.muscleGroup, 'pecs') AS exerciseMuscleGroup
     FROM sets
-    JOIN exercises ON exercises.id = sets.exerciseId
+    LEFT JOIN exercises ON exercises.id = sets.exerciseId
     ORDER BY sets.createdAt ASC
   `);
 }
@@ -21,11 +24,11 @@ export async function getSetsForSession(
   return db.getAllAsync<SetWithExercise>(
     `SELECT
       sets.*,
-      exercises.name AS exerciseName,
-      exercises.category AS exerciseCategory,
-      exercises.muscleGroup AS exerciseMuscleGroup
+      COALESCE(exercises.name, 'Exercice supprimé') AS exerciseName,
+      COALESCE(exercises.category, 'upper') AS exerciseCategory,
+      COALESCE(exercises.muscleGroup, 'pecs') AS exerciseMuscleGroup
     FROM sets
-    JOIN exercises ON exercises.id = sets.exerciseId
+    LEFT JOIN exercises ON exercises.id = sets.exerciseId
     WHERE sets.sessionId = ?
     ORDER BY sets.exerciseId ASC, sets.setNumber ASC`,
     sessionId

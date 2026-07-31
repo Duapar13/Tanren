@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { TanrenWordmark } from './TanrenWordmark';
+import { NingymaWordmark } from './NingymaWordmark';
 import { NinjaMascot } from './NinjaMascot';
 import { useTheme } from '../hooks/useTheme';
 import { GOLD_ACCENT } from '../constants/theme';
@@ -25,8 +25,9 @@ const kanjiTextStyle = {
 };
 
 /**
- * The ninja mascot pops in first, then the two kanji Tanren is named after (鍛錬) hold briefly
- * and part ways — top character up, bottom character down — revealing the Latin wordmark.
+ * The ninja mascot pops in first, then the two kanji 鍛錬 (tanren, "forging through training" —
+ * the app's original namesake and still the mascot's dojo motif) hold briefly and part ways —
+ * top character up, bottom character down — revealing the Latin wordmark.
  */
 export function SplashView({ style }: { style?: StyleProp<ViewStyle> }) {
   const { colors } = useTheme();
@@ -105,7 +106,7 @@ export function SplashView({ style }: { style?: StyleProp<ViewStyle> }) {
           <Animated.Text style={[kanjiTextStyle, bottomStyle]}>錬</Animated.Text>
         </View>
         <Animated.View style={wordmarkStyle}>
-          <TanrenWordmark size={56} />
+          <NingymaWordmark size={56} />
         </Animated.View>
       </View>
     </View>

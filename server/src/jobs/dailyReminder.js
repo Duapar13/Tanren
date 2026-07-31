@@ -28,7 +28,7 @@ async function runDailyReminder() {
     );
     if (existing) continue;
 
-    await sendExpoPush(user.expo_push_token, 'Tanren', "C'est un jour d'entraînement — n'oublie pas ta séance !");
+    await sendExpoPush(user.expo_push_token, 'Ningyma', "C'est un jour d'entraînement — n'oublie pas ta séance !");
   }
 }
 

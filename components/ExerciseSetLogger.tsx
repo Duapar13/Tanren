@@ -9,6 +9,7 @@ import { Card } from './Card';
 import { Input } from './Input';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
+import { displayToKg, formatWeight, kgToDisplay, WeightUnit } from '../utils/units';
 
 export interface DraftSet {
   reps: number;
@@ -21,6 +22,7 @@ interface Props {
   draftSets: DraftSet[];
   validated: boolean;
   rpeEnabled: boolean;
+  weightUnit: WeightUnit;
   onToggleValidated: () => void;
   onAddSet: (set: DraftSet) => void;
   onEditSet: (index: number, set: DraftSet) => void;
@@ -38,6 +40,7 @@ export function ExerciseSetLogger({
   draftSets,
   validated,
   rpeEnabled,
+  weightUnit,
   onToggleValidated,
   onAddSet,
   onEditSet,
@@ -58,7 +61,7 @@ export function ExerciseSetLogger({
     if (!reps || !weight) return;
     onAddSet({
       reps: Math.round(num(reps)),
-      weightKg: num(weight),
+      weightKg: displayToKg(num(weight), weightUnit),
       rpe: rpeEnabled && rpe ? num(rpe) : null,
     });
     setReps('');
@@ -69,7 +72,7 @@ export function ExerciseSetLogger({
   const startEdit = (index: number, set: DraftSet) => {
     setEditingIndex(index);
     setEditReps(String(set.reps));
-    setEditWeight(String(set.weightKg));
+    setEditWeight(String(Math.round(kgToDisplay(set.weightKg, weightUnit) * 10) / 10));
     setEditRpe(set.rpe != null ? String(set.rpe) : '');
   };
 
@@ -77,7 +80,7 @@ export function ExerciseSetLogger({
     if (editingIndex === null || !editReps || !editWeight) return;
     onEditSet(editingIndex, {
       reps: Math.round(num(editReps)),
-      weightKg: num(editWeight),
+      weightKg: displayToKg(num(editWeight), weightUnit),
       rpe: rpeEnabled && editRpe ? num(editRpe) : null,
     });
     Keyboard.dismiss();
@@ -147,7 +150,7 @@ export function ExerciseSetLogger({
           }}
         >
           <ThemedText variant="subhead" color="secondary">
-            Dernière série : {last.reps} reps × {last.weightKg} kg
+            Dernière série : {last.reps} reps × {formatWeight(last.weightKg, weightUnit)}
           </ThemedText>
         </View>
       </View>
@@ -187,7 +190,7 @@ export function ExerciseSetLogger({
                 </View>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Poids (kg)
+                    Poids ({weightUnit})
                   </ThemedText>
                   <Input
                     keyboardType="decimal-pad"
@@ -228,7 +231,7 @@ export function ExerciseSetLogger({
             >
               <Pressable onPress={() => startEdit(i, s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
                 <ThemedText variant="subhead" color="secondary">
-                  Série {i + 1} · {s.reps} reps × {s.weightKg} kg
+                  Série {i + 1} · {s.reps} reps × {formatWeight(s.weightKg, weightUnit)}
                   {s.rpe ? ` · RPE ${s.rpe}` : ''}
                 </ThemedText>
               </Pressable>
@@ -253,7 +256,7 @@ export function ExerciseSetLogger({
           </View>
           <View style={{ flex: 1 }}>
             <ThemedText variant="caption" color="tertiary">
-              Poids (kg)
+              Poids ({weightUnit})
             </ThemedText>
             <Input
               keyboardType="decimal-pad"

@@ -4,23 +4,18 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
-
-interface Step {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  description: string;
-}
 
 // Mirrors the real tab order in app/(tabs)/_layout.tsx — the highlight ring below slides to
 // whichever position matches the tab bar icon it's currently describing.
-const STEPS: Step[] = [
-  { icon: 'home', title: 'Accueil', description: "Ta séance du jour et un aperçu de ton rang, en un coup d'œil." },
-  { icon: 'barbell', title: 'Séance', description: 'Logge tes séries pendant l’entraînement, exercice par exercice.' },
-  { icon: 'trending-up', title: 'Progression', description: 'Ton historique, tes records personnels et tes stats mensuelles.' },
-  { icon: 'shield', title: 'Rang', description: 'Gagne des points, débloque des badges, grimpe le classement.' },
-  { icon: 'nutrition', title: 'Nutrition', description: 'Calories, macros, poids de corps et mensurations.' },
-  { icon: 'person', title: 'Profil', description: 'Ton compte, ton programme, tes réglages.' },
+const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
+  'home',
+  'barbell',
+  'trending-up',
+  'shield',
+  'nutrition',
+  'person',
 ];
 
 const RING_SIZE = 56;
@@ -33,8 +28,10 @@ interface Props {
 
 export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const [stepIndex, setStepIndex] = useState(0);
+  const STEPS = t.tour.steps.map((s, i) => ({ ...s, icon: STEP_ICONS[i] }));
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
 
@@ -130,7 +127,7 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
               {!isLast ? (
                 <Pressable onPress={onFinish}>
                   <ThemedText variant="footnote" color="tertiary">
-                    Passer
+                    {t.tour.skip}
                   </ThemedText>
                 </Pressable>
               ) : (
@@ -159,7 +156,7 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
                 }}
               >
                 <ThemedText variant="footnote" weight="600" style={{ color: '#FFFFFF' }}>
-                  {isLast ? "C'est parti" : 'Suivant'}
+                  {isLast ? t.tour.start : t.tour.next}
                 </ThemedText>
               </Pressable>
             </View>

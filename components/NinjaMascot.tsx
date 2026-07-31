@@ -101,7 +101,7 @@ function Accessory({ reaction }: { reaction: NinjaReaction }) {
   }
 }
 
-/** Flat-vector ninja bust in the app's gold-on-black palette — Tanren's mascot. Each tab gives
+/** Flat-vector ninja bust in the app's gold-on-black palette — Ningyma's mascot. Each tab gives
  * it a different `reaction` so it feels alive rather than a static logo pasted everywhere. */
 export function NinjaMascot({ size = 96, reaction = 'default' }: Props) {
   return (

@@ -51,6 +51,8 @@ function publicUser(row) {
     onboardingCompleted: !!row.onboarding_completed,
     avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
     pushNotificationsEnabled: !!row.expo_push_token,
+    weightUnit: row.weight_unit,
+    lengthUnit: row.length_unit,
   };
 }
 
@@ -76,10 +78,18 @@ router.patch('/me', async (req, res) => {
     customFatG,
     onboardingCompleted,
     pushToken,
+    weightUnit,
+    lengthUnit,
   } = req.body ?? {};
 
   if (goal !== undefined && !['bulk', 'cut', 'maintain'].includes(goal)) {
     return res.status(400).json({ error: 'invalid_goal' });
+  }
+  if (weightUnit !== undefined && !['kg', 'lbs'].includes(weightUnit)) {
+    return res.status(400).json({ error: 'invalid_weight_unit' });
+  }
+  if (lengthUnit !== undefined && !['cm', 'in'].includes(lengthUnit)) {
+    return res.status(400).json({ error: 'invalid_length_unit' });
   }
   if (
     trainingDays !== undefined &&
@@ -115,6 +125,8 @@ router.patch('/me', async (req, res) => {
   if (customFatG !== undefined) { fields.push('custom_fat_g = ?'); values.push(customFatG); }
   if (onboardingCompleted !== undefined) { fields.push('onboarding_completed = ?'); values.push(onboardingCompleted ? 1 : 0); }
   if (pushToken !== undefined) { fields.push('expo_push_token = ?'); values.push(pushToken); }
+  if (weightUnit !== undefined) { fields.push('weight_unit = ?'); values.push(weightUnit); }
+  if (lengthUnit !== undefined) { fields.push('length_unit = ?'); values.push(lengthUnit); }
 
   if (fields.length > 0) {
     values.push(req.userId);

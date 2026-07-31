@@ -153,6 +153,8 @@ export interface User {
   onboardingCompleted: boolean;
   avatarUrl: string | null;
   pushNotificationsEnabled: boolean;
+  weightUnit: 'kg' | 'lbs';
+  lengthUnit: 'cm' | 'in';
 }
 
 export interface ExercisePR {

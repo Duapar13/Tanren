@@ -16,9 +16,19 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { Exercise, NutritionGoal } from '../../types';
-import { API_URL, apiFetch } from '../../lib/api';
+import { API_URL } from '../../lib/api';
 import { authErrorMessage } from '../../lib/authErrors';
 import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
+import { cmToDisplay, displayToCm } from '../../utils/units';
+
+const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
+  { label: 'kg', value: 'kg' },
+  { label: 'lbs', value: 'lbs' },
+];
+const LENGTH_UNIT_OPTIONS: { label: string; value: 'cm' | 'in' }[] = [
+  { label: 'cm', value: 'cm' },
+  { label: 'in', value: 'in' },
+];
 
 const REST_DURATIONS = [60, 90, 120, 180];
 // Short forms so all three fit on one line in the segmented control (full names in utils/nutrition.ts's GOAL_LABELS).
@@ -106,7 +116,6 @@ export default function ProfilScreen() {
   };
 
   const [togglingPush, setTogglingPush] = useState(false);
-  const [sendingTestPush, setSendingTestPush] = useState(false);
 
   const handleTogglePush = async (enabled: boolean) => {
     setTogglingPush(true);
@@ -116,7 +125,7 @@ export default function ProfilScreen() {
         if (!token) {
           Alert.alert(
             'Permission requise',
-            'Autorise les notifications pour Tanren dans les réglages de ton téléphone.'
+            'Autorise les notifications pour Ningyma dans les réglages de ton téléphone.'
           );
           return;
         }
@@ -131,18 +140,6 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleTestPush = async () => {
-    setSendingTestPush(true);
-    try {
-      await apiFetch('/notifications/test', { method: 'POST' });
-      Alert.alert('Envoyée', 'Notification de test envoyée — elle devrait arriver dans quelques secondes.');
-    } catch (err) {
-      Alert.alert('Notifications', authErrorMessage(err));
-    } finally {
-      setSendingTestPush(false);
-    }
-  };
-
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState<'upper' | 'lower'>('upper');
@@ -151,15 +148,23 @@ export default function ProfilScreen() {
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState<'upper' | 'lower'>('upper');
 
-  const [heightInput, setHeightInput] = useState(user?.heightCm ? String(user.heightCm) : '');
+  const lengthUnit = user?.lengthUnit ?? 'cm';
+  const weightUnit = user?.weightUnit ?? 'kg';
+
+  const [heightInput, setHeightInput] = useState(
+    user?.heightCm ? String(Math.round(cmToDisplay(user.heightCm, lengthUnit) * 10) / 10) : ''
+  );
   useEffect(() => {
-    setHeightInput(user?.heightCm ? String(user.heightCm) : '');
-  }, [user?.heightCm]);
+    setHeightInput(
+      user?.heightCm ? String(Math.round(cmToDisplay(user.heightCm, lengthUnit) * 10) / 10) : ''
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.heightCm, lengthUnit]);
 
   const saveHeight = () => {
     Keyboard.dismiss();
-    const cm = parseFloat(heightInput.replace(',', '.'));
-    if (Number.isFinite(cm) && cm > 0) updateProfile({ heightCm: cm });
+    const value = parseFloat(heightInput.replace(',', '.'));
+    if (Number.isFinite(value) && value > 0) updateProfile({ heightCm: displayToCm(value, lengthUnit) });
   };
 
   const toggleTrainingDay = (dow: number) => {
@@ -218,7 +223,10 @@ export default function ProfilScreen() {
               Compte
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+              <Pressable
+                onPress={() => (editingAccount ? setEditingAccount(false) : startEditAccount())}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}
+              >
                 <Pressable onPress={handlePickAvatar} disabled={uploadingAvatar}>
                   {user?.avatarUrl ? (
                     <Image
@@ -270,7 +278,12 @@ export default function ProfilScreen() {
                     {user?.email}
                   </ThemedText>
                 </View>
-              </View>
+                <Ionicons
+                  name={editingAccount ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color={colors.textTertiary}
+                />
+              </Pressable>
 
               {editingAccount ? (
                 <View style={{ gap: Spacing.sm }}>
@@ -308,14 +321,7 @@ export default function ProfilScreen() {
                   </View>
                 </View>
               ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                  <Button title="Modifier pseudo / email" variant="plain" onPress={startEditAccount} style={{ flex: 1 }} />
-                  <Pressable onPress={handleLogout}>
-                    <ThemedText variant="footnote" weight="600" style={{ color: colors.negative }}>
-                      Se déconnecter
-                    </ThemedText>
-                  </Pressable>
-                </View>
+                <Button title="Déconnexion" variant="destructive" onPress={handleLogout} />
               )}
             </Card>
           </View>
@@ -327,7 +333,7 @@ export default function ProfilScreen() {
             <Card style={{ gap: Spacing.md }}>
               <View>
                 <ThemedText variant="caption" color="tertiary">
-                  Taille (cm)
+                  Taille ({lengthUnit})
                 </ThemedText>
                 <Input
                   keyboardType="decimal-pad"
@@ -336,7 +342,7 @@ export default function ProfilScreen() {
                   onSubmitEditing={saveHeight}
                   onEndEditing={saveHeight}
                   returnKeyType="done"
-                  placeholder="ex. 178"
+                  placeholder={lengthUnit === 'cm' ? 'ex. 178' : 'ex. 70'}
                 />
               </View>
               <View>
@@ -347,6 +353,34 @@ export default function ProfilScreen() {
                   options={GOAL_OPTIONS}
                   value={user?.goal ?? 'maintain'}
                   onChange={(goal) => updateProfile({ goal })}
+                />
+              </View>
+            </Card>
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
+              Unités
+            </ThemedText>
+            <Card style={{ gap: Spacing.md }}>
+              <View>
+                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+                  Poids
+                </ThemedText>
+                <SegmentedControl
+                  options={WEIGHT_UNIT_OPTIONS}
+                  value={weightUnit}
+                  onChange={(weightUnit) => updateProfile({ weightUnit })}
+                />
+              </View>
+              <View>
+                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+                  Taille & mensurations
+                </ThemedText>
+                <SegmentedControl
+                  options={LENGTH_UNIT_OPTIONS}
+                  value={lengthUnit}
+                  onChange={(lengthUnit) => updateProfile({ lengthUnit })}
                 />
               </View>
             </Card>
@@ -496,14 +530,6 @@ export default function ProfilScreen() {
                   trackColor={{ true: colors.accent }}
                 />
               </View>
-              {user?.pushNotificationsEnabled && (
-                <Button
-                  title={sendingTestPush ? 'Envoi…' : 'Envoyer une notification test'}
-                  variant="plain"
-                  onPress={handleTestPush}
-                  disabled={sendingTestPush}
-                />
-              )}
             </Card>
           </View>
 

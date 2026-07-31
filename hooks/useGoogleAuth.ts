@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
@@ -20,7 +21,9 @@ export function useGoogleAuth(onIdToken: (idToken: string) => void) {
   }, [isConfigured]);
 
   const promptAsync = useCallback(async () => {
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true }).catch(() => {});
+    if (Platform.OS === 'android') {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    }
     const response = await GoogleSignin.signIn();
     if (response.type === 'success' && response.data.idToken) {
       onIdToken(response.data.idToken);

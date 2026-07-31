@@ -30,6 +30,8 @@ interface AuthContextValue {
     customFatG: number | null;
     onboardingCompleted: boolean;
     pushToken: string | null;
+    weightUnit: User['weightUnit'];
+    lengthUnit: User['lengthUnit'];
   }>) => Promise<void>;
   uploadAvatar: (uri: string) => Promise<void>;
 }

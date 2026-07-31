@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { TanrenWordmark } from './TanrenWordmark';
+import { NingymaWordmark } from './NingymaWordmark';
 import { NinjaMascot, NinjaReaction } from './NinjaMascot';
 import { Spacing } from '../constants/theme';
 
@@ -20,7 +20,7 @@ export function ScreenHeader({ right, mascot }: Props) {
         paddingBottom: Spacing.sm,
       }}
     >
-      <TanrenWordmark size={32} />
+      <NingymaWordmark size={32} />
       {right ?? (mascot && <NinjaMascot size={34} reaction={mascot} />)}
     </View>
   );

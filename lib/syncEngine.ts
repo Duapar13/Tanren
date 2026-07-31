@@ -423,12 +423,23 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
 
   const now = new Date().toISOString();
 
-  for (const se of serverExercises.filter((e) => e.isCustom)) {
+  // Insert every server exercise this device doesn't already have a serverId match for — not
+  // just custom ones. The name-match pass above can miss a default exercise (any drift between
+  // this build's seed list and the server's), and a set whose exercise never resolves locally
+  // gets silently skipped below — this guarantees full coverage so that can't happen.
+  const alreadyMatched = new Set(
+    (
+      await db.getAllAsync<{ serverId: number }>('SELECT serverId FROM exercises WHERE serverId IS NOT NULL')
+    ).map((r) => r.serverId)
+  );
+  for (const se of serverExercises) {
+    if (alreadyMatched.has(se.id)) continue;
     await db.runAsync(
-      'INSERT INTO exercises (name, category, muscleGroup, isCustom, createdAt, serverId) VALUES (?, ?, ?, 1, ?, ?)',
+      'INSERT INTO exercises (name, category, muscleGroup, isCustom, createdAt, serverId) VALUES (?, ?, ?, ?, ?, ?)',
       se.name,
       se.category,
       se.muscleGroup ?? 'pecs',
+      se.isCustom ? 1 : 0,
       now,
       se.id
     );

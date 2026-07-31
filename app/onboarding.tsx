@@ -7,22 +7,17 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { SegmentedControl } from '../components/SegmentedControl';
-import { TanrenWordmark } from '../components/TanrenWordmark';
+import { NingymaWordmark } from '../components/NingymaWordmark';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { NutritionGoal } from '../types';
 import { todayKey } from '../utils/date';
 import { authErrorMessage } from '../lib/authErrors';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
-
-const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
-  { label: 'Masse', value: 'bulk' },
-  { label: 'Sèche', value: 'cut' },
-  { label: 'Maintien', value: 'maintain' },
-];
 
 // Lundi en premier pour matcher WeekStrip ; dow = index JS (0=dimanche..6=samedi).
 const WEEKDAYS: { label: string; dow: number }[] = [
@@ -44,6 +39,13 @@ export default function OnboardingScreen() {
   const { user, updateProfile } = useAuth();
   const { addBodyWeightEntry } = useData();
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
+    { label: t.onboarding.goalBulk, value: 'bulk' },
+    { label: t.onboarding.goalCut, value: 'cut' },
+    { label: t.onboarding.goalMaintain, value: 'maintain' },
+  ];
 
   const [usernameInput, setUsernameInput] = useState(user?.username ?? '');
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -107,16 +109,16 @@ export default function OnboardingScreen() {
               contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl }}
             >
               <View style={{ alignItems: 'center', gap: Spacing.xs }}>
-                <TanrenWordmark size={44} />
+                <NingymaWordmark size={44} />
                 <ThemedText variant="subhead" color="secondary" style={{ textAlign: 'center' }}>
-                  Quelques infos pour préparer ton suivi — tu peux tout changer plus tard dans Profil.
+                  {t.onboarding.subtitle}
                 </ThemedText>
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Ton pseudo</ThemedText>
+                <ThemedText variant="headline">{t.onboarding.usernameTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
-                  Visible par les autres joueurs dans le classement.
+                  {t.onboarding.usernameHint}
                 </ThemedText>
                 <Card>
                   <Input
@@ -127,7 +129,7 @@ export default function OnboardingScreen() {
                     }}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    placeholder="3 à 20 caractères"
+                    placeholder={t.onboarding.usernamePlaceholder}
                   />
                 </Card>
                 {usernameError && (
@@ -138,15 +140,15 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Ton corps</ThemedText>
+                <ThemedText variant="headline">{t.onboarding.bodyTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
-                  Sert à calculer tes objectifs de calories et macros, et ton IMC.
+                  {t.onboarding.bodyHint}
                 </ThemedText>
                 <Card style={{ gap: Spacing.md }}>
                   <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        Taille (cm)
+                        {t.onboarding.heightLabel} (cm)
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
@@ -157,7 +159,7 @@ export default function OnboardingScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        Poids actuel (kg)
+                        {t.onboarding.weightLabel} (kg)
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
@@ -171,16 +173,16 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Ton objectif</ThemedText>
+                <ThemedText variant="headline">{t.onboarding.goalTitle}</ThemedText>
                 <Card>
                   <SegmentedControl options={GOAL_OPTIONS} value={goal} onChange={setGoal} />
                 </Card>
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Ton programme</ThemedText>
+                <ThemedText variant="headline">{t.onboarding.programTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
-                  Les jours où tu vas t'entraîner — ça compte pour ta régularité dans le classement.
+                  {t.onboarding.programHint}
                 </ThemedText>
                 <Card>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -210,12 +212,12 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Mensurations</ThemedText>
+                <ThemedText variant="headline">{t.onboarding.measurementsTitle}</ThemedText>
                 <Card style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
-                    <ThemedText variant="subhead">Suivre bras, taille, torse, cuisses...</ThemedText>
+                    <ThemedText variant="subhead">{t.onboarding.measurementsToggleLabel}</ThemedText>
                     <ThemedText variant="caption" color="tertiary">
-                      Activable ou désactivable à tout moment dans Profil
+                      {t.onboarding.measurementsHint}
                     </ThemedText>
                   </View>
                   <Switch value={measurementsEnabled} onValueChange={setMeasurementsEnabled} trackColor={{ true: colors.accent }} />
@@ -224,13 +226,13 @@ export default function OnboardingScreen() {
 
               <View style={{ gap: Spacing.md }}>
                 <Button
-                  title={submitting ? 'Un instant…' : 'C’est parti'}
+                  title={submitting ? '…' : t.onboarding.ctaStart}
                   onPress={() => finish(false)}
                   disabled={submitting}
                 />
                 <Pressable onPress={() => finish(true)} disabled={submitting} style={{ alignItems: 'center', paddingVertical: Spacing.sm }}>
                   <ThemedText variant="subhead" color="secondary">
-                    Passer pour l’instant
+                    {t.onboarding.ctaSkip}
                   </ThemedText>
                 </Pressable>
               </View>

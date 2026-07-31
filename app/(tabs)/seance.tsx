@@ -316,6 +316,7 @@ export default function SeanceScreen() {
                     draftSets={draftSets[exerciseId] ?? []}
                     validated={validatedExerciseIds.has(exerciseId)}
                     rpeEnabled={user?.rpeEnabled ?? false}
+                    weightUnit={user?.weightUnit ?? 'kg'}
                     onToggleValidated={() => toggleValidated(exerciseId)}
                     onAddSet={(set) => addSet(exerciseId, set)}
                     onEditSet={(i, set) => editSet(exerciseId, i, set)}

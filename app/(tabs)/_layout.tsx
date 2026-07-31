@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -20,7 +22,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Accueil',
+          title: t.tabs.home,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -29,7 +31,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="seance"
         options={{
-          title: 'Séance',
+          title: t.tabs.session,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="barbell-outline" size={size} color={color} />
           ),
@@ -38,7 +40,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="progression"
         options={{
-          title: 'Progression',
+          title: t.tabs.progression,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trending-up-outline" size={size} color={color} />
           ),
@@ -47,7 +49,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="rang"
         options={{
-          title: 'Rang',
+          title: t.tabs.rank,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="shield-outline" size={size} color={color} />
           ),
@@ -56,7 +58,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="nutrition"
         options={{
-          title: 'Nutrition',
+          title: t.tabs.nutrition,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="nutrition-outline" size={size} color={color} />
           ),
@@ -65,7 +67,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profil"
         options={{
-          title: 'Profil',
+          title: t.tabs.profile,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),

@@ -10,15 +10,13 @@ import { Card } from '../../components/Card';
 import { ChipSelector } from '../../components/ChipSelector';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { MonthlyCalendar } from '../../components/MonthlyCalendar';
-import { SessionDetailPopup } from '../../components/SessionDetailPopup';
-import { MonthStatsPopup } from '../../components/MonthStatsPopup';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { Spacing } from '../../constants/theme';
 import { computeExerciseSeries } from '../../utils/exerciseSeries';
 import { computeExercisePRs } from '../../utils/prStats';
-import { computeMonthlyRecap } from '../../utils/monthlyStats';
+import { formatWeight } from '../../utils/units';
 
 type Metric = '1RM' | 'weight' | 'volume';
 
@@ -28,43 +26,19 @@ const METRIC_OPTIONS: { label: string; value: Metric }[] = [
   { label: 'Volume', value: 'volume' },
 ];
 
-const CATEGORY_OPTIONS: { label: string; value: 'upper' | 'lower' }[] = [
-  { label: 'Haut', value: 'upper' },
-  { label: 'Bas', value: 'lower' },
-];
-
 export default function ProgressionScreen() {
   const { exercises, sets, sessions } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const [category, setCategory] = useState<'upper' | 'lower'>('upper');
-
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [showMonthStats, setShowMonthStats] = useState(false);
-
-  const monthlyRecap = useMemo(
-    () => computeMonthlyRecap(sets, sessions, viewYear, viewMonth),
-    [sets, sessions, viewYear, viewMonth]
-  );
-  const monthLabelText = useMemo(() => {
-    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    return label.charAt(0).toUpperCase() + label.slice(1);
-  }, [viewYear, viewMonth]);
-
-  const selectedDaySets = useMemo(() => {
-    if (!selectedDay) return [];
-    const sessionIds = new Set(sessions.filter((s) => s.date === selectedDay).map((s) => s.id));
-    return sets.filter((s) => sessionIds.has(s.sessionId));
-  }, [selectedDay, sessions, sets]);
 
   const exercisesWithData = useMemo(() => {
     const idsWithSets = new Set(sets.map((s) => s.exerciseId));
-    return exercises.filter((e) => idsWithSets.has(e.id) && e.category === category);
-  }, [exercises, sets, category]);
+    return exercises.filter((e) => idsWithSets.has(e.id));
+  }, [exercises, sets]);
 
   const [selectedName, setSelectedName] = useState<string>('');
   const selectedExercise =
@@ -107,24 +81,15 @@ export default function ProgressionScreen() {
                   setViewYear(y);
                   setViewMonth(m);
                 }}
-                onDayPress={setSelectedDay}
-                onStatsPress={() => setShowMonthStats(true)}
+                onDayPress={(date) => router.push({ pathname: '/session-detail', params: { date } })}
+                onStatsPress={() =>
+                  router.push({
+                    pathname: '/month-recap',
+                    params: { year: String(viewYear), month: String(viewMonth) },
+                  })
+                }
               />
             </Card>
-          </View>
-
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Exercice
-            </ThemedText>
-            <SegmentedControl
-              options={CATEGORY_OPTIONS}
-              value={category}
-              onChange={(v) => {
-                setCategory(v);
-                setSelectedName('');
-              }}
-            />
           </View>
 
           {exercisesWithData.length === 0 ? (
@@ -195,15 +160,19 @@ export default function ProgressionScreen() {
                     Records personnels
                   </ThemedText>
                   <Card style={{ gap: Spacing.sm }}>
-                    <PRRow label="Poids max" value={`${pr.maxWeightKg} kg`} date={pr.maxWeightDate} />
+                    <PRRow
+                      label="Poids max"
+                      value={formatWeight(pr.maxWeightKg, user?.weightUnit ?? 'kg')}
+                      date={pr.maxWeightDate}
+                    />
                     <PRRow
                       label="1RM estimée"
-                      value={`${pr.bestEstimated1RM.toFixed(1)} kg`}
+                      value={formatWeight(pr.bestEstimated1RM, user?.weightUnit ?? 'kg')}
                       date={pr.bestEstimated1RMDate}
                     />
                     <PRRow
                       label="Volume (1 séance)"
-                      value={`${pr.maxSessionVolume.toFixed(0)} kg`}
+                      value={formatWeight(pr.maxSessionVolume, user?.weightUnit ?? 'kg', 0)}
                       date={pr.maxSessionVolumeDate}
                     />
                   </Card>
@@ -212,19 +181,6 @@ export default function ProgressionScreen() {
             </>
           )}
         </ScrollView>
-
-        <SessionDetailPopup
-          visible={!!selectedDay}
-          onClose={() => setSelectedDay(null)}
-          date={selectedDay}
-          sets={selectedDaySets}
-        />
-        <MonthStatsPopup
-          visible={showMonthStats}
-          onClose={() => setShowMonthStats(false)}
-          monthLabel={monthLabelText}
-          recap={monthlyRecap}
-        />
       </SafeAreaView>
     </ThemedView>
   );

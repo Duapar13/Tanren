@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Tanren Dojo",
+    "name": "Ningyma",
     "slug": "Tanren",
     "scheme": "tanren",
     "version": "1.0.0",
@@ -68,7 +68,13 @@
           "color": "#C4881F"
         }
       ],
-      "@react-native-google-signin/google-signin"
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.478362984917-7dh52m9chltp23k2ti6jqq4ev48g8dl5"
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
