@@ -6,6 +6,7 @@ import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { ShareCard } from '../components/ShareCard';
+import { ExerciseCard } from '../components/ExerciseCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
@@ -67,15 +68,14 @@ export default function SessionDetailScreen() {
         ) : (
           <View style={{ width: '100%', gap: Spacing.md }}>
             {grouped.map(([exerciseId, exerciseSets]) => (
-              <Card key={exerciseId} style={{ gap: 6 }}>
-                <ThemedText variant="headline">{exerciseSets[0].exerciseName}</ThemedText>
+              <ExerciseCard key={exerciseId} title={exerciseSets[0].exerciseName}>
                 {exerciseSets.map((s, i) => (
                   <ThemedText key={s.id} variant="subhead" color="secondary">
                     {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                     {s.rpe ? ` · RPE ${s.rpe}` : ''}
                   </ThemedText>
                 ))}
-              </Card>
+              </ExerciseCard>
             ))}
           </View>
         )}

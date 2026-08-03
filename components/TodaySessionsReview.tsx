@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, Keyboard, Pressable, View } from 'react-native';
-import { Card } from './Card';
+import { ExerciseCard } from './ExerciseCard';
 import { ThemedText } from './ThemedText';
 import { Input } from './Input';
 import { Button } from './Button';
@@ -92,7 +92,7 @@ export function TodaySessionsReview() {
         const grouped = groupByExercise(setsForSession);
 
         return (
-          <Card key={session.id} style={{ gap: Spacing.sm }}>
+          <View key={session.id} style={{ gap: Spacing.sm }}>
             <View
               style={{
                 flexDirection: 'row',
@@ -111,8 +111,7 @@ export function TodaySessionsReview() {
             </View>
 
             {grouped.map(([exerciseId, exerciseSets]) => (
-              <View key={exerciseId} style={{ gap: 4 }}>
-                <ThemedText variant="subhead">{exerciseSets[0].exerciseName}</ThemedText>
+              <ExerciseCard key={exerciseId} title={exerciseSets[0].exerciseName}>
                 {exerciseSets.map((s, i) =>
                   editingSetId === s.id ? (
                     <View key={s.id} style={{ gap: Spacing.sm }}>
@@ -131,7 +130,7 @@ export function TodaySessionsReview() {
                         </View>
                         <View style={{ flex: 1 }}>
                           <ThemedText variant="caption" color="tertiary">
-                            Poids ({weightUnit})
+                            {t.profil.weight} ({weightUnit})
                           </ThemedText>
                           <Input
                             keyboardType="decimal-pad"
@@ -157,7 +156,7 @@ export function TodaySessionsReview() {
                         )}
                       </View>
                       <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                        <Button title="Enregistrer" onPress={saveEdit} style={{ flex: 1 }} />
+                        <Button title={t.common.save} onPress={saveEdit} style={{ flex: 1 }} />
                         <IconButton name="close" onPress={() => setEditingSetId(null)} />
                       </View>
                     </View>
@@ -185,9 +184,9 @@ export function TodaySessionsReview() {
                     </View>
                   )
                 )}
-              </View>
+              </ExerciseCard>
             ))}
-          </Card>
+          </View>
         );
       })}
     </View>

@@ -21,7 +21,7 @@ export function ScreenHeader({ right, mascot }: Props) {
       }}
     >
       <NingymaWordmark size={32} />
-      {right ?? (mascot && <NinjaMascot size={34} reaction={mascot} />)}
+      {right ?? (mascot && <NinjaMascot size={52} reaction={mascot} />)}
     </View>
   );
 }

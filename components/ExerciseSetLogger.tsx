@@ -192,7 +192,7 @@ export function ExerciseSetLogger({
                 </View>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Poids ({weightUnit})
+                    {t.profil.weight} ({weightUnit})
                   </ThemedText>
                   <Input
                     keyboardType="decimal-pad"
@@ -218,7 +218,7 @@ export function ExerciseSetLogger({
                 )}
               </View>
               <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                <Button title="Enregistrer" onPress={saveEdit} style={{ flex: 1 }} />
+                <Button title={t.common.save} onPress={saveEdit} style={{ flex: 1 }} />
                 <IconButton name="close" onPress={() => setEditingIndex(null)} />
               </View>
             </View>
