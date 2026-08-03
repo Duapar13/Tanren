@@ -33,3 +33,11 @@ export function formatDayLabel(date: Date): string {
     month: 'long',
   });
 }
+
+/** yyyy-mm-dd -> a locale-appropriate long date ("31 juillet 2026" / "July 31, 2026" / ...) —
+ * for shareable cards and other places a raw ISO date shouldn't be shown as-is. */
+export function formatLongDate(dateKey: string, locale: string): string {
+  const date = new Date(`${dateKey}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateKey;
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+}

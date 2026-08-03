@@ -9,13 +9,11 @@ import { ShareCard } from '../components/ShareCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
-import { useTranslation } from '../hooks/useTranslation';
+import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { computeMonthlyRecap } from '../utils/monthlyStats';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
-
-const LOCALES = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' } as const;
 
 export default function MonthRecapScreen() {
   const { year, month } = useLocalSearchParams<{ year: string; month: string }>();
@@ -37,7 +35,7 @@ export default function MonthRecapScreen() {
   const viewMonth = Number(month);
 
   const monthLabel = useMemo(() => {
-    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString(LOCALES[lang], { month: 'long', year: 'numeric' });
+    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString(LOCALE_MAP[lang], { month: 'long', year: 'numeric' });
     return label.charAt(0).toUpperCase() + label.slice(1);
   }, [viewYear, viewMonth, lang]);
 

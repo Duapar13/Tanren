@@ -2,13 +2,12 @@ import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
-import { useTranslation } from '../hooks/useTranslation';
+import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { WorkoutSession } from '../types';
 import { toDateKey, todayKey } from '../utils/date';
 import { isTrainingDay } from '../utils/program';
 
-const LOCALES = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' } as const;
 const WEEKDAY_LABELS: Record<string, string[]> = {
   fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
   en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
@@ -65,7 +64,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </Pressable>
         <ThemedText variant="subhead" weight="700">
-          {monthLabel(year, month, LOCALES[lang])}
+          {monthLabel(year, month, LOCALE_MAP[lang])}
         </ThemedText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           <Pressable onPress={goNext} hitSlop={8} style={{ padding: 4 }}>

@@ -8,6 +8,15 @@ export type SupportedLanguage = 'fr' | 'en' | 'it' | 'es';
 
 const DICTS = { fr, en, it, es };
 
+/** JS locale for each supported language — used for toLocaleDateString/toLocaleString
+ * formatting (calendar months, weekday names, long-form dates on shared cards, etc.). */
+export const LOCALE_MAP: Record<SupportedLanguage, string> = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  it: 'it-IT',
+  es: 'es-ES',
+};
+
 /** Same "compute, don't store" pattern as useTheme's dark/light detection — the device's own
  * language setting is the single source of truth, so there's nothing to persist or sync. */
 export function useTranslation() {

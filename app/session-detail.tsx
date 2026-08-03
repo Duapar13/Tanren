@@ -9,10 +9,11 @@ import { ShareCard } from '../components/ShareCard';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation } from '../hooks/useTranslation';
+import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
+import { formatLongDate } from '../utils/date';
 import { SetWithExercise } from '../types';
 
 function groupByExercise(sets: SetWithExercise[]) {
@@ -28,7 +29,7 @@ export default function SessionDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const { sessions, sets } = useData();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const weightUnit = user?.weightUnit ?? 'kg';
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
@@ -56,7 +57,7 @@ export default function SessionDetailScreen() {
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.lg, alignItems: 'center' }}>
         <ThemedText variant="title1" style={{ alignSelf: 'flex-start' }}>
-          {date}
+          {date ? formatLongDate(date, LOCALE_MAP[lang]) : ''}
         </ThemedText>
 
         {grouped.length === 0 ? (

@@ -7,7 +7,8 @@ import { Radius, Spacing, GOLD_ACCENT } from '../constants/theme';
 import { SetWithExercise } from '../types';
 import { MonthlyBest } from '../utils/monthlyStats';
 import { formatWeight, WeightUnit } from '../utils/units';
-import { useTranslation } from '../hooks/useTranslation';
+import { formatLongDate } from '../utils/date';
+import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 
 const BG = '#000000';
 const CARD_WIDTH = 340;
@@ -43,7 +44,7 @@ type Props = SessionCardProps | MonthCardProps;
 /** Fixed-layout branded card, captured to PNG by lib/shareCard.ts and pushed to the native
  * share sheet — the app's "brag about your training" export for Instagram/Snap stories. */
 export const ShareCard = forwardRef<View, Props>((props, ref) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const grouped = props.variant === 'session' ? groupByExercise(props.sets).slice(0, 6) : [];
   const totalVolume =
     props.variant === 'session'
@@ -72,7 +73,7 @@ export const ShareCard = forwardRef<View, Props>((props, ref) => {
 
       <View style={{ alignItems: 'center' }}>
         <ThemedText variant="title3" weight="700" style={{ color: '#FFFFFF', textAlign: 'center' }}>
-          {props.variant === 'session' ? props.date : props.monthLabel}
+          {props.variant === 'session' ? formatLongDate(props.date, LOCALE_MAP[lang]) : props.monthLabel}
         </ThemedText>
       </View>
 

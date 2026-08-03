@@ -8,13 +8,14 @@ import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { ProgressBar } from '../../components/ProgressBar';
-import { StatTile } from '../../components/StatTile';
+import { SkillBanner } from '../../components/SkillBanner';
+import { XPBadge } from '../../components/XPBadge';
 import { Popup } from '../../components/Popup';
 import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
-import { useTranslation } from '../../hooks/useTranslation';
+import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import {
   computeSeasonMedalHistory,
@@ -68,7 +69,7 @@ export default function RangScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
-  const locale = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' }[lang];
+  const locale = LOCALE_MAP[lang];
 
   const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
   const [selectedMedal, setSelectedMedal] = useState<MedalSelection | null>(null);
@@ -100,13 +101,11 @@ export default function RangScreen() {
   useEffect(() => {
     apiFetch('/leaderboard/report', {
       method: 'POST',
-      body: JSON.stringify({
-        seasonNumber: ranking.seasonInfo.seasonNumber,
-        points: ranking.totalPoints,
-        rank: state.rank,
-        division: state.division,
-      }),
+      body: JSON.stringify({ seasonNumber: ranking.seasonInfo.seasonNumber }),
     }).catch(() => {});
+    // Only the trigger to recompute needs to fire on real changes — the server derives the
+    // actual points/rank/division itself from synced data, ignoring anything the client sends.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ranking.seasonInfo.seasonNumber, ranking.totalPoints, state.rank, state.division]);
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -178,12 +177,12 @@ export default function RangScreen() {
             </ThemedText>
           </Card>
 
-          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-            <StatTile label={t.skills.streak} value={formatPoints(ranking.breakdown.streak)} />
-            <StatTile label={t.skills.pr} value={formatPoints(ranking.breakdown.pr)} />
-            <StatTile label={t.skills.nutrition} value={formatPoints(ranking.breakdown.nutrition)} />
+          <View style={{ gap: Spacing.sm }}>
+            <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
+            <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
+            <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
             {user?.measurementsEnabled && (
-              <StatTile label={t.skills.measurement} value={formatPoints(ranking.breakdown.measurement)} />
+              <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
             )}
           </View>
 
@@ -332,13 +331,7 @@ export default function RangScreen() {
                         {e.date}
                       </ThemedText>
                     </View>
-                    <ThemedText
-                      variant="subhead"
-                      weight="700"
-                      style={{ color: e.points >= 0 ? colors.positive : colors.negative }}
-                    >
-                      {formatPoints(e.points)}
-                    </ThemedText>
+                    <XPBadge points={e.points} size="sm" />
                   </View>
                 ))}
               </Card>

@@ -1,24 +1,70 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { computeSeasonRanking, currentSeasonInfo, seasonInfoForNumber } from '../utils/ranking.js';
 
 const router = Router();
 router.use(requireAuth);
 
 /**
- * Ranking is computed entirely client-side (season points, rank, division) from each
- * user's own synced data — there's no server-side scoring engine. The leaderboard just
- * stores whatever a client last reported for itself, so it's only as fresh as the last
- * time each user's app computed and reported its own score (which rang.tsx does on load).
+ * Ranking used to be entirely client-reported (a client would just POST whatever points/rank
+ * it computed for itself) — trivially fakeable by anyone willing to call the API directly.
+ * The client still computes its own ranking locally for instant/offline display, but what
+ * lands on the leaderboard is now always recomputed here from the user's actual synced rows
+ * (utils/ranking.js, a straight port of the client formula), so this endpoint only takes a
+ * trigger to recompute "now" — the season number is optional and just picks which season to
+ * (re)score, never the score itself.
  */
 router.post('/report', async (req, res) => {
-  const { seasonNumber, points, rank, division } = req.body ?? {};
-  if (!Number.isInteger(seasonNumber) || !Number.isFinite(points)) {
-    return res.status(400).json({ error: 'invalid_report' });
-  }
+  const { seasonNumber } = req.body ?? {};
+  const seasonInfo = Number.isInteger(seasonNumber) ? seasonInfoForNumber(seasonNumber) : currentSeasonInfo();
+
+  const [[user]] = await pool.query(
+    'SELECT training_days, goal, measurements_enabled, created_at FROM users WHERE id = ?',
+    [req.userId]
+  );
+  if (!user) return res.status(404).json({ error: 'not_found' });
+
+  const [sessions] = await pool.query('SELECT id, date FROM sessions WHERE user_id = ?', [req.userId]);
+  const [sets] = await pool.query(
+    `SELECT sets.session_id AS sessionId, sets.exercise_id AS exerciseId,
+            sets.weight_kg AS weightKg, sets.reps AS reps
+     FROM sets
+     JOIN sessions ON sessions.id = sets.session_id
+     WHERE sessions.user_id = ?`,
+    [req.userId]
+  );
+  const [nutritionEntries] = await pool.query(
+    'SELECT date, protein_g AS proteinG, carbs_g AS carbsG, fat_g AS fatG FROM nutrition_entries WHERE user_id = ?',
+    [req.userId]
+  );
+  const [measurementEntries] = await pool.query(
+    'SELECT id, date, type, value_cm AS valueCm FROM measurement_entries WHERE user_id = ?',
+    [req.userId]
+  );
+  const [bodyWeightEntries] = await pool.query(
+    'SELECT weight_kg AS weightKg FROM body_weight_entries WHERE user_id = ? ORDER BY date DESC, id DESC',
+    [req.userId]
+  );
+
+  const ranking = computeSeasonRanking(
+    {
+      sessions,
+      sets,
+      nutritionEntries,
+      measurementEntries,
+      bodyWeightEntries,
+      measurementsEnabled: !!user.measurements_enabled,
+      trainingDays: user.training_days ? user.training_days.split(',').filter(Boolean).map(Number) : [],
+      goal: user.goal,
+      accountCreatedAt: String(user.created_at).slice(0, 10),
+    },
+    seasonInfo
+  );
+
   await pool.query(
     'UPDATE users SET season_number = ?, season_points = ?, season_rank = ?, season_division = ? WHERE id = ?',
-    [seasonNumber, Math.round(points), rank ?? null, division ?? null, req.userId]
+    [seasonInfo.seasonNumber, ranking.totalPoints, ranking.rank, ranking.division, req.userId]
   );
   res.status(204).end();
 });
