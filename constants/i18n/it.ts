@@ -237,6 +237,8 @@ export const it: TranslationDict = {
   foodSearch: {
     scan: 'Scansiona',
     search: 'Cerca',
+    recent: 'Recenti',
+    noRecentFoods: 'Gli alimenti aggiunti tramite ricerca o scansione appariranno qui per un’aggiunta rapida.',
     productNotFound: 'Nessun prodotto trovato per questo codice a barre.',
     contactError: 'Impossibile contattare Open Food Facts, riprova.',
     noResults: 'Nessun risultato.',
@@ -281,5 +283,11 @@ export const it: TranslationDict = {
     exerciseLibrary: 'Libreria esercizi',
     exerciseNamePlaceholder: 'Nome dell’esercizio',
     deleteExerciseConfirmTitle: 'Elimina esercizio',
+    dangerZone: 'Zona pericolosa',
+    deleteAccount: 'Elimina il mio account',
+    deleteAccountConfirmTitle: 'Eliminare definitivamente il tuo account?',
+    deleteAccountConfirmBody:
+      'Tutti i tuoi allenamenti, serie, misurazioni, dati nutrizionali e la tua posizione in classifica verranno eliminati definitivamente. Questa azione è irreversibile.',
+    deleteAccountError: 'Impossibile eliminare l’account al momento, riprova.',
   },
 };

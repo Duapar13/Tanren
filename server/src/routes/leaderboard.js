@@ -69,6 +69,17 @@ router.post('/report', async (req, res) => {
   res.status(204).end();
 });
 
+function publicEntry(r) {
+  return {
+    userId: r.id,
+    username: r.username,
+    displayName: r.display_name,
+    points: r.season_points,
+    rank: r.season_rank,
+    division: r.season_division,
+  };
+}
+
 router.get('/', async (req, res) => {
   const seasonNumber = Number(req.query.seasonNumber);
   if (!Number.isInteger(seasonNumber)) return res.status(400).json({ error: 'invalid_season' });
@@ -81,16 +92,22 @@ router.get('/', async (req, res) => {
      LIMIT 100`,
     [seasonNumber]
   );
-  res.json(
-    rows.map((r) => ({
-      userId: r.id,
-      username: r.username,
-      displayName: r.display_name,
-      points: r.season_points,
-      rank: r.season_rank,
-      division: r.season_division,
-    }))
+
+  // The caller's own line, plus its position — even when it falls outside the top 100 the
+  // client still has something to pin at the bottom instead of the caller wondering where
+  // they rank at all.
+  const [[me]] = await pool.query(
+    `SELECT u.id, u.username, u.display_name, u.season_points, u.season_rank, u.season_division,
+       (SELECT COUNT(*) + 1 FROM users u2 WHERE u2.season_number = ? AND u2.season_points > u.season_points) AS position
+     FROM users u
+     WHERE u.id = ? AND u.season_number = ?`,
+    [seasonNumber, req.userId, seasonNumber]
   );
+
+  res.json({
+    entries: rows.map(publicEntry),
+    me: me ? { ...publicEntry(me), position: me.position } : null,
+  });
 });
 
 export default router;

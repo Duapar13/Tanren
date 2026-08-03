@@ -156,4 +156,17 @@ router.post('/me/avatar', (req, res, next) => {
   res.json(publicUser(user));
 });
 
+/** Every child table (sessions, sets via sessions, exercises, body weight, measurements,
+ * nutrition, refresh tokens) has ON DELETE CASCADE back to users — deleting the row here is
+ * enough to erase everything. Only the avatar file on disk isn't covered by that and needs
+ * an explicit cleanup. Required for App Store review (guideline 5.1.1v: in-app account deletion). */
+router.delete('/me', async (req, res) => {
+  const [[user]] = await pool.query('SELECT avatar_path FROM users WHERE id = ?', [req.userId]);
+  await pool.query('DELETE FROM users WHERE id = ?', [req.userId]);
+  if (user?.avatar_path) {
+    fs.unlink(path.join(UPLOADS_DIR, user.avatar_path), () => {});
+  }
+  res.status(204).end();
+});
+
 export default router;

@@ -16,7 +16,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
-import { Spacing } from '../../constants/theme';
+import { Radius, Spacing } from '../../constants/theme';
 import {
   computeSeasonMedalHistory,
   computeSeasonRanking,
@@ -46,6 +46,10 @@ interface LeaderboardEntry {
   points: number;
   rank: string;
   division: string;
+}
+
+interface MyLeaderboardEntry extends LeaderboardEntry {
+  position: number;
 }
 
 function formatPoints(points: number): string {
@@ -109,14 +113,20 @@ export default function RangScreen() {
   }, [ranking.seasonInfo.seasonNumber, ranking.totalPoints, state.rank, state.division]);
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [myEntry, setMyEntry] = useState<MyLeaderboardEntry | null>(null);
   useFocusEffect(
     useCallback(() => {
       apiFetch(`/leaderboard?seasonNumber=${ranking.seasonInfo.seasonNumber}`)
-        .then(setLeaderboard)
+        .then((res: { entries: LeaderboardEntry[]; me: MyLeaderboardEntry | null }) => {
+          setLeaderboard(res.entries);
+          setMyEntry(res.me);
+        })
         .catch(() => {});
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ranking.seasonInfo.seasonNumber])
   );
+
+  const showPinnedMe = !!myEntry && !leaderboard.some((e) => e.userId === myEntry.userId);
 
   const selectedStats: SeasonRanking | null = useMemo(() => {
     if (!selectedMedal) return null;
@@ -276,6 +286,36 @@ export default function RangScreen() {
                   );
                 })}
               </Card>
+            )}
+            {showPinnedMe && myEntry && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: Spacing.sm,
+                  marginTop: Spacing.sm,
+                  padding: Spacing.md,
+                  borderRadius: Radius.md,
+                  backgroundColor: colors.accent + '14',
+                  borderWidth: 1,
+                  borderColor: colors.accent + '40',
+                }}
+              >
+                <ThemedText variant="subhead" weight="700" color="accent" style={{ width: 32 }}>
+                  #{myEntry.position}
+                </ThemedText>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <ThemedText variant="subhead" weight="700" numberOfLines={1}>
+                    {myEntry.displayName ?? myEntry.username}
+                  </ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    {myEntry.rank} {myEntry.division}
+                  </ThemedText>
+                </View>
+                <ThemedText variant="subhead" weight="700">
+                  {myEntry.points} pts
+                </ThemedText>
+              </View>
             )}
           </View>
 

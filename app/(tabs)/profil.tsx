@@ -35,9 +35,10 @@ const WEEKDAY_LABELS: Record<string, string[]> = {
 
 export default function ProfilScreen() {
   const { exercises, addExercise, updateExercise, removeExercise } = useData();
-  const { user, updateProfile, uploadAvatar, logout } = useAuth();
+  const { user, updateProfile, uploadAvatar, logout, deleteAccount } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
     { label: 'kg', value: 'kg' },
@@ -59,6 +60,26 @@ export default function ProfilScreen() {
     Alert.alert(t.profil.logoutConfirmTitle, undefined, [
       { text: t.common.cancel, style: 'cancel' },
       { text: t.profil.logout, style: 'destructive', onPress: () => logout() },
+    ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(t.profil.deleteAccountConfirmTitle, t.profil.deleteAccountConfirmBody, [
+      { text: t.common.cancel, style: 'cancel' },
+      {
+        text: t.profil.deleteAccount,
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingAccount(true);
+          try {
+            await deleteAccount();
+          } catch {
+            Alert.alert(t.profil.deleteAccountConfirmTitle, t.profil.deleteAccountError);
+          } finally {
+            setDeletingAccount(false);
+          }
+        },
+      },
     ]);
   };
 
@@ -596,6 +617,17 @@ export default function ProfilScreen() {
                 </Card>
               )
             )}
+          </View>
+
+          <View>
+            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm, color: colors.negative }}>
+              {t.profil.dangerZone}
+            </ThemedText>
+            <Pressable onPress={handleDeleteAccount} disabled={deletingAccount} style={{ paddingVertical: Spacing.sm }}>
+              <ThemedText variant="subhead" weight="600" style={{ color: colors.negative, opacity: deletingAccount ? 0.5 : 1 }}>
+                {t.profil.deleteAccount}
+              </ThemedText>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>

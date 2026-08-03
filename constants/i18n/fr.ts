@@ -235,6 +235,8 @@ export const fr = {
   foodSearch: {
     scan: 'Scanner',
     search: 'Rechercher',
+    recent: 'Récents',
+    noRecentFoods: "Les aliments que tu ajoutes via recherche ou scan apparaîtront ici pour un ajout rapide.",
     productNotFound: 'Produit non trouvé pour ce code-barre.',
     contactError: 'Impossible de contacter Open Food Facts, réessaie.',
     noResults: 'Aucun résultat.',
@@ -279,6 +281,12 @@ export const fr = {
     exerciseLibrary: 'Bibliothèque d’exercices',
     exerciseNamePlaceholder: 'Nom de l’exercice',
     deleteExerciseConfirmTitle: 'Supprimer l’exercice',
+    dangerZone: 'Zone de danger',
+    deleteAccount: 'Supprimer mon compte',
+    deleteAccountConfirmTitle: 'Supprimer définitivement ton compte ?',
+    deleteAccountConfirmBody:
+      'Toutes tes séances, séries, mesures, données nutritionnelles et ton classement seront supprimés définitivement. Cette action est irréversible.',
+    deleteAccountError: 'Impossible de supprimer le compte pour le moment, réessaie.',
   },
 };
 

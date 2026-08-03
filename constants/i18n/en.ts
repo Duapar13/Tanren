@@ -237,6 +237,8 @@ export const en: TranslationDict = {
   foodSearch: {
     scan: 'Scan',
     search: 'Search',
+    recent: 'Recent',
+    noRecentFoods: 'Foods you add via search or scan will show up here for quick re-adding.',
     productNotFound: 'No product found for this barcode.',
     contactError: 'Could not reach Open Food Facts, try again.',
     noResults: 'No results.',
@@ -281,5 +283,11 @@ export const en: TranslationDict = {
     exerciseLibrary: 'Exercise library',
     exerciseNamePlaceholder: 'Exercise name',
     deleteExerciseConfirmTitle: 'Delete exercise',
+    dangerZone: 'Danger zone',
+    deleteAccount: 'Delete my account',
+    deleteAccountConfirmTitle: 'Permanently delete your account?',
+    deleteAccountConfirmBody:
+      'All your workouts, sets, measurements, nutrition data, and your leaderboard standing will be permanently deleted. This cannot be undone.',
+    deleteAccountError: 'Could not delete the account right now, try again.',
   },
 };

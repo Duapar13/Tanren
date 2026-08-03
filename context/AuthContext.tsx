@@ -14,6 +14,7 @@ interface AuthContextValue {
   loginWithGoogleIdToken: (idToken: string) => Promise<void>;
   loginWithAppleIdToken: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateProfile: (patch: Partial<{
     displayName: string;
     username: string;
@@ -101,6 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    await apiFetch('/users/me', { method: 'DELETE' });
+    const { refreshToken } = await getTokens();
+    await clearTokens();
+    setUser(null);
+    if (refreshToken) {
+      publicFetch('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
+      }).catch(() => {});
+    }
+  }, []);
+
   const updateProfile = useCallback(async (patch: Parameters<AuthContextValue['updateProfile']>[0]) => {
     const me = await apiFetch('/users/me', {
       method: 'PATCH',
@@ -134,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithGoogleIdToken,
         loginWithAppleIdToken,
         logout,
+        deleteAccount,
         updateProfile,
         uploadAvatar,
       }}

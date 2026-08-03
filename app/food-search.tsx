@@ -17,12 +17,37 @@ import { Radius, Spacing } from '../constants/theme';
 import { fetchProductByBarcode, OFFProduct, searchProducts } from '../lib/openFoodFacts';
 import { todayKey } from '../utils/date';
 
-type Mode = 'scan' | 'search';
+type Mode = 'scan' | 'search' | 'recent';
+
+/** Reconstructs a per-100 "product" from past logged entries so a previously eaten food can
+ * be re-added the same way a scanned/searched one is — most recent occurrence per distinct
+ * name wins, and only entries with a name+grams (i.e. from this same screen) qualify. */
+function recentFoodsFromEntries(entries: { foodName: string | null; grams: number | null; unit: 'g' | 'ml' | null; barcode: string | null; proteinG: number; carbsG: number; fatG: number }[]): OFFProduct[] {
+  const seen = new Set<string>();
+  const results: OFFProduct[] = [];
+  for (const e of entries) {
+    if (!e.foodName || !e.grams || e.grams <= 0) continue;
+    const key = e.foodName.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({
+      barcode: e.barcode ?? '',
+      name: e.foodName,
+      proteinPer100g: Math.round(((e.proteinG / e.grams) * 100) * 10) / 10,
+      carbsPer100g: Math.round(((e.carbsG / e.grams) * 100) * 10) / 10,
+      fatPer100g: Math.round(((e.fatG / e.grams) * 100) * 10) / 10,
+      unit: e.unit === 'ml' ? 'ml' : 'g',
+    });
+    if (results.length >= 20) break;
+  }
+  return results;
+}
 
 export default function FoodSearchScreen() {
-  const { addNutritionEntry } = useData();
+  const { addNutritionEntry, nutritionEntries } = useData();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const recentFoods = recentFoodsFromEntries(nutritionEntries);
   const [mode, setMode] = useState<Mode>('scan');
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(true);
@@ -138,6 +163,7 @@ export default function FoodSearchScreen() {
             options={[
               { label: t.foodSearch.scan, value: 'scan' as const },
               { label: t.foodSearch.search, value: 'search' as const },
+              { label: t.foodSearch.recent, value: 'recent' as const },
             ]}
             value={mode}
             onChange={(m) => {
@@ -190,7 +216,7 @@ export default function FoodSearchScreen() {
               </Card>
             )}
           </View>
-        ) : (
+        ) : mode === 'search' ? (
           <View style={{ flex: 1, paddingHorizontal: Spacing.lg, gap: Spacing.md }}>
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <Input
@@ -235,6 +261,29 @@ export default function FoodSearchScreen() {
                 </Pressable>
               ))}
             </ScrollView>
+          </View>
+        ) : (
+          <View style={{ flex: 1, paddingHorizontal: Spacing.lg }}>
+            {recentFoods.length === 0 ? (
+              <ThemedText color="secondary" style={{ textAlign: 'center', marginTop: Spacing.lg }}>
+                {t.foodSearch.noRecentFoods}
+              </ThemedText>
+            ) : (
+              <ScrollView contentContainerStyle={{ gap: Spacing.sm, paddingBottom: Spacing.xxl }}>
+                {recentFoods.map((p) => (
+                  <Pressable key={p.barcode + p.name} onPress={() => setSelected(p)}>
+                    <Card style={{ gap: 2 }}>
+                      <ThemedText variant="subhead" weight="600">
+                        {p.name}
+                      </ThemedText>
+                      <ThemedText variant="caption" color="tertiary">
+                        {t.foodSearch.per100(p.unit)} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
+                      </ThemedText>
+                    </Card>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
           </View>
         )}
       </SafeAreaView>
