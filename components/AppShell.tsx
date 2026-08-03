@@ -66,6 +66,7 @@ export function AppShell() {
         />
         <Stack.Screen name="session-detail" options={{ title: t.screenTitles.session }} />
         <Stack.Screen name="month-recap" options={{ title: t.screenTitles.monthRecap }} />
+        <Stack.Screen name="support" options={{ title: t.screenTitles.support, presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>
   );

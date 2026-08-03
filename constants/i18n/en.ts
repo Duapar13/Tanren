@@ -28,6 +28,7 @@ export const en: TranslationDict = {
     addFood: 'Add food',
     session: 'Workout',
     monthRecap: 'Month recap',
+    support: 'Support the app',
   },
   tour: {
     steps: [
@@ -289,5 +290,17 @@ export const en: TranslationDict = {
     deleteAccountConfirmBody:
       'All your workouts, sets, measurements, nutrition data, and your leaderboard standing will be permanently deleted. This cannot be undone.',
     deleteAccountError: 'Could not delete the account right now, try again.',
+  },
+  support: {
+    title: 'Support Ningyma',
+    subtitle:
+      'Ningyma will always stay free and ad-free. If the app is useful to you, a small donation or subscription helps keep it going.',
+    noOfferings: 'Nothing to show right now, check back later.',
+    purchasing: 'One moment…',
+    thankYouTitle: 'Thank you so much! 🙏',
+    thankYouBody: 'Your support really means a lot and helps keep Ningyma alive.',
+    errorTitle: 'Payment',
+    errorBody: 'The payment could not go through, try again later.',
+    disclaimer: 'Optional donation or subscription — unlocks nothing, the app stays entirely free for everyone.',
   },
 };

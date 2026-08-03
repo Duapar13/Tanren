@@ -15,8 +15,10 @@ import { SyncEngine } from '../components/SyncEngine';
 import { AppShell } from '../components/AppShell';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useTheme } from '../hooks/useTheme';
+import { configurePurchases } from '../lib/purchases';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+configurePurchases();
 
 // Without this, a push arriving while the app is open is silently swallowed instead of
 // showing a banner — makes testing (and real reminders received mid-session) invisible.

@@ -26,6 +26,7 @@ export const fr = {
     addFood: 'Ajouter un aliment',
     session: 'Séance',
     monthRecap: 'Résumé du mois',
+    support: 'Soutenir l’app',
   },
   tour: {
     steps: [
@@ -287,6 +288,18 @@ export const fr = {
     deleteAccountConfirmBody:
       'Toutes tes séances, séries, mesures, données nutritionnelles et ton classement seront supprimés définitivement. Cette action est irréversible.',
     deleteAccountError: 'Impossible de supprimer le compte pour le moment, réessaie.',
+  },
+  support: {
+    title: 'Soutenir Ningyma',
+    subtitle:
+      'Ningyma restera toujours gratuite et sans publicité. Si l’app te sert, un petit don ou un abonnement m’aide à continuer à l’améliorer.',
+    noOfferings: 'Rien à afficher pour le moment, reviens un peu plus tard.',
+    purchasing: 'Un instant…',
+    thankYouTitle: 'Merci beaucoup ! 🙏',
+    thankYouBody: 'Ton soutien fait vraiment plaisir et aide à faire vivre Ningyma.',
+    errorTitle: 'Paiement',
+    errorBody: 'Le paiement n’a pas pu aboutir, réessaie plus tard.',
+    disclaimer: 'Don ou abonnement facultatif — ne débloque aucune fonctionnalité, l’app reste entièrement gratuite pour tout le monde.',
   },
 };
 

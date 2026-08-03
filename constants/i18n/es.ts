@@ -28,6 +28,7 @@ export const es: TranslationDict = {
     addFood: 'Añadir alimento',
     session: 'Entreno',
     monthRecap: 'Resumen del mes',
+    support: 'Apoyar la app',
   },
   tour: {
     steps: [
@@ -289,5 +290,17 @@ export const es: TranslationDict = {
     deleteAccountConfirmBody:
       'Todos tus entrenos, series, medidas, datos nutricionales y tu posición en la clasificación se eliminarán definitivamente. Esta acción no se puede deshacer.',
     deleteAccountError: 'No se pudo eliminar la cuenta en este momento, inténtalo de nuevo.',
+  },
+  support: {
+    title: 'Apoyar a Ningyma',
+    subtitle:
+      'Ningyma seguirá siendo siempre gratuita y sin anuncios. Si la app te resulta útil, una pequeña donación o suscripción ayuda a que siga adelante.',
+    noOfferings: 'Nada que mostrar por ahora, vuelve más tarde.',
+    purchasing: 'Un momento…',
+    thankYouTitle: '¡Muchas gracias! 🙏',
+    thankYouBody: 'Tu apoyo significa mucho y ayuda a mantener Ningyma en marcha.',
+    errorTitle: 'Pago',
+    errorBody: 'El pago no se pudo completar, inténtalo de nuevo más tarde.',
+    disclaimer: 'Donación o suscripción opcional — no desbloquea nada, la app sigue siendo totalmente gratuita para todos.',
   },
 };

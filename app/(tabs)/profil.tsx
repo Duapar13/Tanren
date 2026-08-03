@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Image, Keyboard, Pressable, ScrollView, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -618,6 +619,26 @@ export default function ProfilScreen() {
               )
             )}
           </View>
+
+          <Pressable
+            onPress={() => router.push('/support')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacing.sm,
+              padding: Spacing.md,
+              borderRadius: 12,
+              backgroundColor: colors.accent + '14',
+              borderWidth: 1,
+              borderColor: colors.accent + '40',
+            }}
+          >
+            <Ionicons name="heart" size={20} color={colors.accent} />
+            <ThemedText variant="subhead" weight="600" color="accent" style={{ flex: 1 }}>
+              {t.screenTitles.support}
+            </ThemedText>
+            <Ionicons name="chevron-forward" size={18} color={colors.accent} />
+          </Pressable>
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm, color: colors.negative }}>
