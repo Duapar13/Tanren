@@ -115,10 +115,14 @@ function countNutritionTargetDaysHit(
   return count;
 }
 
+export type BadgeProgress =
+  | { kind: 'plain' | 'kg' | 'days'; current: number; target: number }
+  | { kind: 'rank'; unlocked: boolean; rank: string };
+
 export interface BadgeStatus {
   badge: Badge;
   unlocked: boolean;
-  progress: string;
+  progress: BadgeProgress;
 }
 
 export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
@@ -130,17 +134,32 @@ export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
   const seasonRank = computeSeasonRanking(params).state.rank;
   const rankIndex = RANKS.indexOf(seasonRank);
 
-  const values: Record<string, { unlocked: boolean; progress: string }> = {
-    'first-session': { unlocked: params.sessions.length >= 1, progress: `${Math.min(params.sessions.length, 1)}/1` },
-    'bar-100': { unlocked: maxWeight >= 100, progress: `${Math.min(maxWeight, 100).toFixed(0)}/100 kg` },
-    'streak-7': { unlocked: streak >= 7, progress: `${Math.min(streak, 7)}/7 jours` },
-    'sessions-20': { unlocked: params.sessions.length >= 20, progress: `${Math.min(params.sessions.length, 20)}/20` },
-    'prs-10': { unlocked: prCount >= 10, progress: `${Math.min(prCount, 10)}/10` },
-    'nutrition-14': { unlocked: nutritionDays >= 14, progress: `${Math.min(nutritionDays, 14)}/14 jours` },
-    'bodyweight-10': { unlocked: bodyWeightDays >= 10, progress: `${Math.min(bodyWeightDays, 10)}/10 jours` },
+  const values: Record<string, { unlocked: boolean; progress: BadgeProgress }> = {
+    'first-session': {
+      unlocked: params.sessions.length >= 1,
+      progress: { kind: 'plain', current: Math.min(params.sessions.length, 1), target: 1 },
+    },
+    'bar-100': {
+      unlocked: maxWeight >= 100,
+      progress: { kind: 'kg', current: Math.round(Math.min(maxWeight, 100)), target: 100 },
+    },
+    'streak-7': { unlocked: streak >= 7, progress: { kind: 'days', current: Math.min(streak, 7), target: 7 } },
+    'sessions-20': {
+      unlocked: params.sessions.length >= 20,
+      progress: { kind: 'plain', current: Math.min(params.sessions.length, 20), target: 20 },
+    },
+    'prs-10': { unlocked: prCount >= 10, progress: { kind: 'plain', current: Math.min(prCount, 10), target: 10 } },
+    'nutrition-14': {
+      unlocked: nutritionDays >= 14,
+      progress: { kind: 'days', current: Math.min(nutritionDays, 14), target: 14 },
+    },
+    'bodyweight-10': {
+      unlocked: bodyWeightDays >= 10,
+      progress: { kind: 'days', current: Math.min(bodyWeightDays, 10), target: 10 },
+    },
     'rank-acier': {
       unlocked: rankIndex >= 2,
-      progress: rankIndex >= 2 ? 'Débloqué' : `Rang actuel : ${seasonRank}`,
+      progress: { kind: 'rank', unlocked: rankIndex >= 2, rank: seasonRank },
     },
   };
 

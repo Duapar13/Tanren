@@ -14,6 +14,7 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { Exercise, NutritionGoal } from '../../types';
 import { API_URL } from '../../lib/api';
@@ -21,43 +22,43 @@ import { authErrorMessage } from '../../lib/authErrors';
 import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
 import { cmToDisplay, displayToCm } from '../../utils/units';
 
-const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
-  { label: 'kg', value: 'kg' },
-  { label: 'lbs', value: 'lbs' },
-];
-const LENGTH_UNIT_OPTIONS: { label: string; value: 'cm' | 'in' }[] = [
-  { label: 'cm', value: 'cm' },
-  { label: 'in', value: 'in' },
-];
-
 const REST_DURATIONS = [60, 90, 120, 180];
-// Short forms so all three fit on one line in the segmented control (full names in utils/nutrition.ts's GOAL_LABELS).
-const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
-  { label: 'Masse', value: 'bulk' },
-  { label: 'Sèche', value: 'cut' },
-  { label: 'Maintien', value: 'maintain' },
-];
 
 // Lundi en premier pour matcher WeekStrip ; dow = index JS (0=dimanche..6=samedi).
-const WEEKDAYS: { label: string; dow: number }[] = [
-  { label: 'L', dow: 1 },
-  { label: 'M', dow: 2 },
-  { label: 'M', dow: 3 },
-  { label: 'J', dow: 4 },
-  { label: 'V', dow: 5 },
-  { label: 'S', dow: 6 },
-  { label: 'D', dow: 0 },
-];
+const WEEKDAY_DOWS = [1, 2, 3, 4, 5, 6, 0];
+const WEEKDAY_LABELS: Record<string, string[]> = {
+  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+  es: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+};
 
 export default function ProfilScreen() {
   const { exercises, addExercise, updateExercise, removeExercise } = useData();
   const { user, updateProfile, uploadAvatar, logout } = useAuth();
   const { colors } = useTheme();
+  const { t, lang } = useTranslation();
+
+  const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
+    { label: 'kg', value: 'kg' },
+    { label: 'lbs', value: 'lbs' },
+  ];
+  const LENGTH_UNIT_OPTIONS: { label: string; value: 'cm' | 'in' }[] = [
+    { label: 'cm', value: 'cm' },
+    { label: 'in', value: 'in' },
+  ];
+  // Short forms so all three fit on one line in the segmented control.
+  const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
+    { label: t.onboarding.goalBulk, value: 'bulk' },
+    { label: t.onboarding.goalCut, value: 'cut' },
+    { label: t.onboarding.goalMaintain, value: 'maintain' },
+  ];
+  const WEEKDAYS = WEEKDAY_DOWS.map((dow, i) => ({ dow, label: WEEKDAY_LABELS[lang][i] }));
 
   const handleLogout = () => {
-    Alert.alert('Se déconnecter ?', undefined, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Se déconnecter', style: 'destructive', onPress: () => logout() },
+    Alert.alert(t.profil.logoutConfirmTitle, undefined, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.profil.logout, style: 'destructive', onPress: () => logout() },
     ]);
   };
 
@@ -95,7 +96,7 @@ export default function ProfilScreen() {
   const handlePickAvatar = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission requise', 'Autorise l’accès à tes photos pour changer ta photo de profil.');
+      Alert.alert(t.common.permissionRequired, t.profil.photoPermissionBody);
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -123,10 +124,7 @@ export default function ProfilScreen() {
       if (enabled) {
         const token = await registerForPushNotificationsAsync();
         if (!token) {
-          Alert.alert(
-            'Permission requise',
-            'Autorise les notifications pour Ningyma dans les réglages de ton téléphone.'
-          );
+          Alert.alert(t.common.permissionRequired, t.profil.pushPermissionBody);
           return;
         }
         await updateProfile({ pushToken: token });
@@ -134,7 +132,7 @@ export default function ProfilScreen() {
         await updateProfile({ pushToken: null });
       }
     } catch {
-      Alert.alert('Notifications', 'Impossible de mettre à jour ce réglage pour le moment.');
+      Alert.alert(t.profil.notifications, t.profil.notificationsUpdateError);
     } finally {
       setTogglingPush(false);
     }
@@ -186,9 +184,9 @@ export default function ProfilScreen() {
   };
 
   const handleDeleteExercise = (id: number, exName: string) => {
-    Alert.alert('Supprimer l’exercice', exName, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => removeExercise(id) },
+    Alert.alert(t.profil.deleteExerciseConfirmTitle, exName, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.common.delete, style: 'destructive', onPress: () => removeExercise(id) },
     ]);
   };
 
@@ -220,7 +218,7 @@ export default function ProfilScreen() {
         >
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Compte
+              {t.profil.account}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <Pressable
@@ -289,13 +287,13 @@ export default function ProfilScreen() {
                 <View style={{ gap: Spacing.sm }}>
                   <View>
                     <ThemedText variant="caption" color="tertiary">
-                      Pseudo
+                      {t.profil.username}
                     </ThemedText>
                     <Input value={editUsername} onChangeText={setEditUsername} autoCapitalize="none" autoCorrect={false} />
                   </View>
                   <View>
                     <ThemedText variant="caption" color="tertiary">
-                      Email
+                      {t.profil.email}
                     </ThemedText>
                     <Input
                       value={editEmail}
@@ -312,7 +310,7 @@ export default function ProfilScreen() {
                   )}
                   <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                     <Button
-                      title={savingAccount ? 'Enregistrement…' : 'Enregistrer'}
+                      title={savingAccount ? t.common.saving : t.common.save}
                       onPress={saveAccountEdits}
                       disabled={savingAccount}
                       style={{ flex: 1 }}
@@ -321,19 +319,19 @@ export default function ProfilScreen() {
                   </View>
                 </View>
               ) : (
-                <Button title="Déconnexion" variant="destructive" onPress={handleLogout} />
+                <Button title={t.profil.logout} variant="destructive" onPress={handleLogout} />
               )}
             </Card>
           </View>
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Corps &amp; objectif
+              {t.profil.bodyAndGoal}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View>
                 <ThemedText variant="caption" color="tertiary">
-                  Taille ({lengthUnit})
+                  {t.profil.height} ({lengthUnit})
                 </ThemedText>
                 <Input
                   keyboardType="decimal-pad"
@@ -347,7 +345,7 @@ export default function ProfilScreen() {
               </View>
               <View>
                 <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  Objectif
+                  {t.profil.goal}
                 </ThemedText>
                 <SegmentedControl
                   options={GOAL_OPTIONS}
@@ -360,12 +358,12 @@ export default function ProfilScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Unités
+              {t.profil.units}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View>
                 <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  Poids
+                  {t.profil.weight}
                 </ThemedText>
                 <SegmentedControl
                   options={WEIGHT_UNIT_OPTIONS}
@@ -375,7 +373,7 @@ export default function ProfilScreen() {
               </View>
               <View>
                 <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  Taille & mensurations
+                  {t.profil.lengthUnits}
                 </ThemedText>
                 <SegmentedControl
                   options={LENGTH_UNIT_OPTIONS}
@@ -388,12 +386,12 @@ export default function ProfilScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Programme
+              {t.profil.program}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View>
                 <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  Jours d’entraînement
+                  {t.profil.trainingDays}
                 </ThemedText>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   {WEEKDAYS.map(({ label, dow }) => {
@@ -428,14 +426,14 @@ export default function ProfilScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Séance
+              {t.profil.session}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">Timer de repos</ThemedText>
+                  <ThemedText variant="subhead">{t.profil.restTimer}</ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    Décompte affiché après chaque série ajoutée
+                    {t.profil.restTimerHint}
                   </ThemedText>
                 </View>
                 <Switch
@@ -476,9 +474,9 @@ export default function ProfilScreen() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">RPE</ThemedText>
+                  <ThemedText variant="subhead">{t.common.rpe}</ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    Champ d’intensité perçue (1-10) sur chaque série
+                    {t.profil.rpeHint}
                   </ThemedText>
                 </View>
                 <Switch
@@ -492,14 +490,14 @@ export default function ProfilScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Mensurations
+              {t.profil.measurements}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">Suivi des mensurations</ThemedText>
+                  <ThemedText variant="subhead">{t.profil.measurementsToggle}</ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    Bras, taille, torse, cuisses — affiche le suivi dans Nutrition et compte dans les points de rang
+                    {t.profil.measurementsToggleHint}
                   </ThemedText>
                 </View>
                 <Switch
@@ -513,14 +511,14 @@ export default function ProfilScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Notifications
+              {t.profil.notifications}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">Notifications push</ThemedText>
+                  <ThemedText variant="subhead">{t.profil.pushNotifications}</ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    Rappels de séance et félicitations de série en cours
+                    {t.profil.pushNotificationsHint}
                   </ThemedText>
                 </View>
                 <Switch
@@ -534,26 +532,26 @@ export default function ProfilScreen() {
           </View>
 
           <View style={{ gap: Spacing.sm }}>
-            <ThemedText variant="headline">Bibliothèque d’exercices</ThemedText>
+            <ThemedText variant="headline">{t.profil.exerciseLibrary}</ThemedText>
 
             {showAddExercise ? (
               <Card style={{ gap: Spacing.sm }}>
-                <Input placeholder="Nom de l’exercice" value={name} onChangeText={setName} />
+                <Input placeholder={t.profil.exerciseNamePlaceholder} value={name} onChangeText={setName} />
                 <SegmentedControl
                   options={[
-                    { label: 'Haut du corps', value: 'upper' as const },
-                    { label: 'Bas du corps', value: 'lower' as const },
+                    { label: t.common.upperBody, value: 'upper' as const },
+                    { label: t.common.lowerBody, value: 'lower' as const },
                   ]}
                   value={category}
                   onChange={setCategory}
                 />
                 <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  <Button title="Ajouter" onPress={handleAddExercise} style={{ flex: 1 }} />
+                  <Button title={t.common.add} onPress={handleAddExercise} style={{ flex: 1 }} />
                   <IconButton name="close" onPress={() => setShowAddExercise(false)} />
                 </View>
               </Card>
             ) : (
-              <Button title="Ajouter un exercice" onPress={() => setShowAddExercise(true)} />
+              <Button title={t.seance.addExercise} onPress={() => setShowAddExercise(true)} />
             )}
 
             {customExercises.map((ex) =>
@@ -562,14 +560,14 @@ export default function ProfilScreen() {
                   <Input value={editName} onChangeText={setEditName} />
                   <SegmentedControl
                     options={[
-                      { label: 'Haut du corps', value: 'upper' as const },
-                      { label: 'Bas du corps', value: 'lower' as const },
+                      { label: t.common.upperBody, value: 'upper' as const },
+                      { label: t.common.lowerBody, value: 'lower' as const },
                     ]}
                     value={editCategory}
                     onChange={setEditCategory}
                   />
                   <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                    <Button title="Enregistrer" onPress={saveEditExercise} style={{ flex: 1 }} />
+                    <Button title={t.common.save} onPress={saveEditExercise} style={{ flex: 1 }} />
                     <IconButton name="close" onPress={() => setEditingExerciseId(null)} />
                   </View>
                 </Card>
@@ -583,7 +581,7 @@ export default function ProfilScreen() {
                       {ex.name}
                     </ThemedText>
                     <ThemedText variant="caption" color="tertiary">
-                      {ex.category === 'upper' ? 'Haut du corps' : 'Bas du corps'}
+                      {ex.category === 'upper' ? t.common.upperBody : t.common.lowerBody}
                     </ThemedText>
                   </Pressable>
                   <View style={{ flexDirection: 'row', gap: Spacing.xs }}>

@@ -4,19 +4,25 @@ import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { MUSCLE_GROUP_LABELS } from '../../types';
 import { computeExercisePRs } from '../../utils/prStats';
+import { formatWeight } from '../../utils/units';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { exercises, sets, sessions } = useData();
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const weightUnit = user?.weightUnit ?? 'kg';
   const exercise = exercises.find((e) => e.id === Number(id));
 
   if (!exercise) {
     return (
       <ThemedView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ThemedText color="secondary">Exercice introuvable.</ThemedText>
+        <ThemedText color="secondary">{t.exerciseDetail.notFound}</ThemedText>
       </ThemedView>
     );
   }
@@ -29,22 +35,22 @@ export default function ExerciseDetailScreen() {
         <View>
           <ThemedText variant="title1">{exercise.name}</ThemedText>
           <ThemedText color="secondary">
-            {exercise.category === 'upper' ? 'Haut du corps' : 'Bas du corps'} ·{' '}
+            {exercise.category === 'upper' ? t.common.upperBody : t.common.lowerBody} ·{' '}
             {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
           </ThemedText>
         </View>
 
         {pr && (
           <Card style={{ gap: Spacing.xs }}>
-            <ThemedText variant="headline">Records</ThemedText>
+            <ThemedText variant="headline">{t.exerciseDetail.records}</ThemedText>
             <ThemedText color="secondary">
-              Poids max : {pr.maxWeightKg} kg ({pr.maxWeightDate})
+              {t.exerciseDetail.maxWeight} {formatWeight(pr.maxWeightKg, weightUnit)} ({pr.maxWeightDate})
             </ThemedText>
             <ThemedText color="secondary">
-              1RM estimée : {pr.bestEstimated1RM.toFixed(1)} kg ({pr.bestEstimated1RMDate})
+              {t.exerciseDetail.estimated1RM} {formatWeight(pr.bestEstimated1RM, weightUnit)} ({pr.bestEstimated1RMDate})
             </ThemedText>
             <ThemedText color="secondary">
-              Volume max (1 séance) : {pr.maxSessionVolume.toFixed(0)} kg (
+              {t.exerciseDetail.sessionVolume} {formatWeight(pr.maxSessionVolume, weightUnit, 0)} (
               {pr.maxSessionVolumeDate})
             </ThemedText>
           </Card>

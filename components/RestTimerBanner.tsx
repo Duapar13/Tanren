@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export function RestTimerBanner({ endAt, onDone }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [remaining, setRemaining] = useState(() => Math.max(0, Math.round((endAt - Date.now()) / 1000)));
 
   useEffect(() => {
@@ -41,14 +43,14 @@ export function RestTimerBanner({ endAt, onDone }: Props) {
       }}
     >
       <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
-        Repos
+        {t.restTimer.label}
       </ThemedText>
       <ThemedText variant="title2" weight="700" style={{ color: '#FFFFFF' }}>
         {mm}:{String(ss).padStart(2, '0')}
       </ThemedText>
       <View>
         <ThemedText variant="caption" style={{ color: '#FFFFFF' }}>
-          Toucher pour passer
+          {t.restTimer.tapToSkip}
         </ThemedText>
       </View>
     </Pressable>

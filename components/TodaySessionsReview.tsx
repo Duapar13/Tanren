@@ -11,6 +11,7 @@ import { Spacing } from '../constants/theme';
 import { SetWithExercise } from '../types';
 import { todayKey } from '../utils/date';
 import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
+import { useTranslation } from '../hooks/useTranslation';
 
 function groupByExercise(setsForSession: SetWithExercise[]) {
   const byExercise = new Map<number, SetWithExercise[]>();
@@ -30,6 +31,7 @@ const num = (v: string) => {
 export function TodaySessionsReview() {
   const { sessions, sets, removeSet, updateSet, removeSession } = useData();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const rpeEnabled = user?.rpeEnabled ?? false;
   const weightUnit = user?.weightUnit ?? 'kg';
 
@@ -44,17 +46,17 @@ export function TodaySessionsReview() {
   if (todaysSessions.length === 0) return null;
 
   const confirmDeleteSession = (sessionId: number) => {
-    Alert.alert('Supprimer la séance', 'Toute la séance sera supprimée.', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => removeSession(sessionId) },
+    Alert.alert(t.seance.deleteSessionConfirmTitle, t.seance.deleteSessionConfirmBody, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.common.delete, style: 'destructive', onPress: () => removeSession(sessionId) },
     ]);
   };
 
   const confirmDeleteSet = (set: SetWithExercise) => {
-    Alert.alert('Supprimer la série', undefined, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t.seance.deleteSetConfirmTitle, undefined, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t.common.delete,
         style: 'destructive',
         onPress: () => {
           if (editingSetId === set.id) setEditingSetId(null);
@@ -84,7 +86,7 @@ export function TodaySessionsReview() {
 
   return (
     <View style={{ gap: Spacing.sm }}>
-      <ThemedText variant="headline">Aujourd’hui</ThemedText>
+      <ThemedText variant="headline">{t.dashboard.today}</ThemedText>
       {todaysSessions.map((session) => {
         const setsForSession = sets.filter((s) => s.sessionId === session.id);
         const grouped = groupByExercise(setsForSession);
@@ -99,7 +101,7 @@ export function TodaySessionsReview() {
               }}
             >
               <ThemedText variant="title3" weight="700">
-                {grouped.length} exercice{grouped.length > 1 ? 's' : ''}
+                {t.seance.exerciseCount(grouped.length)}
               </ThemedText>
               <IconButton
                 name="trash-outline"
@@ -117,7 +119,7 @@ export function TodaySessionsReview() {
                       <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                         <View style={{ flex: 1 }}>
                           <ThemedText variant="caption" color="tertiary">
-                            Reps
+                            {t.common.reps}
                           </ThemedText>
                           <Input
                             keyboardType="number-pad"
@@ -170,7 +172,7 @@ export function TodaySessionsReview() {
                     >
                       <Pressable onPress={() => startEdit(s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
                         <ThemedText variant="footnote" color="secondary">
-                          Série {i + 1} · {s.reps} reps × {formatWeight(s.weightKg, weightUnit)}
+                          {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                           {s.rpe ? ` · RPE ${s.rpe}` : ''}
                         </ThemedText>
                       </Pressable>

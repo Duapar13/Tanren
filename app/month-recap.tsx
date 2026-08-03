@@ -9,16 +9,13 @@ import { ShareCard } from '../components/ShareCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { computeMonthlyRecap } from '../utils/monthlyStats';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
 
-function deltaLabel(current: number, reference: number): string {
-  if (reference <= 0) return current > 0 ? 'nouveau' : '—';
-  const pct = Math.round(((current - reference) / reference) * 100);
-  return `${pct >= 0 ? '+' : ''}${pct}%`;
-}
+const LOCALES = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' } as const;
 
 export default function MonthRecapScreen() {
   const { year, month } = useLocalSearchParams<{ year: string; month: string }>();
@@ -26,16 +23,23 @@ export default function MonthRecapScreen() {
   const { user } = useAuth();
   const weightUnit = user?.weightUnit ?? 'kg';
   const { colors } = useTheme();
+  const { t, lang } = useTranslation();
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
+
+  const deltaLabel = (current: number, reference: number): string => {
+    if (reference <= 0) return current > 0 ? t.monthRecap.newLabel : '—';
+    const pct = Math.round(((current - reference) / reference) * 100);
+    return `${pct >= 0 ? '+' : ''}${pct}%`;
+  };
 
   const viewYear = Number(year);
   const viewMonth = Number(month);
 
   const monthLabel = useMemo(() => {
-    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const label = new Date(viewYear, viewMonth, 1).toLocaleDateString(LOCALES[lang], { month: 'long', year: 'numeric' });
     return label.charAt(0).toUpperCase() + label.slice(1);
-  }, [viewYear, viewMonth]);
+  }, [viewYear, viewMonth, lang]);
 
   const recap = useMemo(
     () => computeMonthlyRecap(sets, sessions, viewYear, viewMonth),
@@ -48,7 +52,7 @@ export default function MonthRecapScreen() {
     try {
       await shareCardAsImage(cardRef);
     } catch {
-      Alert.alert('Partage', "Impossible de générer la fiche pour le moment.");
+      Alert.alert(t.sessionDetail.shareErrorTitle, t.sessionDetail.shareErrorBody);
     } finally {
       setSharing(false);
     }
@@ -60,31 +64,31 @@ export default function MonthRecapScreen() {
         <ThemedText variant="title1">{monthLabel}</ThemedText>
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-          <Stat label="Séances" value={String(current.sessionCount)} />
-          <Stat label="Séries" value={String(current.setCount)} />
-          <Stat label="Volume" value={formatWeight(current.totalVolume, weightUnit, 0)} />
+          <Stat label={t.monthRecap.sessions} value={String(current.sessionCount)} />
+          <Stat label={t.monthRecap.sets} value={String(current.setCount)} />
+          <Stat label={t.monthRecap.volume} value={formatWeight(current.totalVolume, weightUnit, 0)} />
         </View>
 
         <View>
           <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            Comparaison du volume
+            {t.monthRecap.volumeComparison}
           </ThemedText>
           <Card style={{ gap: 6 }}>
-            <CompareRow label="Mois précédent" value={deltaLabel(current.totalVolume, previousMonth.totalVolume)} />
-            <CompareRow label="Moyenne 3 derniers mois" value={deltaLabel(current.totalVolume, avg3Months.avgVolume)} />
-            <CompareRow label="Moyenne 6 derniers mois" value={deltaLabel(current.totalVolume, avg6Months.avgVolume)} />
-            <CompareRow label="Moyenne sur l'année" value={deltaLabel(current.totalVolume, avg12Months.avgVolume)} />
+            <CompareRow label={t.monthRecap.previousMonth} value={deltaLabel(current.totalVolume, previousMonth.totalVolume)} />
+            <CompareRow label={t.monthRecap.avg3Months} value={deltaLabel(current.totalVolume, avg3Months.avgVolume)} />
+            <CompareRow label={t.monthRecap.avg6Months} value={deltaLabel(current.totalVolume, avg6Months.avgVolume)} />
+            <CompareRow label={t.monthRecap.avgYear} value={deltaLabel(current.totalVolume, avg12Months.avgVolume)} />
           </Card>
         </View>
 
         <View>
           <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            Meilleures perfs du mois
+            {t.monthRecap.bestOfMonth}
           </ThemedText>
           <Card style={{ gap: 6 }}>
             {current.bestPerformances.length === 0 ? (
               <ThemedText variant="footnote" color="tertiary">
-                Aucun nouveau record ce mois-ci.
+                {t.monthRecap.noNewRecord}
               </ThemedText>
             ) : (
               current.bestPerformances.map((p, i) => (
@@ -103,24 +107,24 @@ export default function MonthRecapScreen() {
 
         <View>
           <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            Stagnations
+            {t.monthRecap.stagnations}
           </ThemedText>
           <Card style={{ gap: 6 }}>
             {current.stagnant.length === 0 ? (
               <ThemedText variant="footnote" color="tertiary">
-                Rien à signaler — tout progresse ou n'a pas encore été retravaillé.
+                {t.monthRecap.noStagnations}
               </ThemedText>
             ) : (
               current.stagnant.map((s) => (
                 <ThemedText key={s.exerciseId} variant="footnote" color="secondary">
-                  {s.exerciseName} — pas de record battu ce mois-ci
+                  {t.monthRecap.noRecordBeatenThisMonth(s.exerciseName)}
                 </ThemedText>
               ))
             )}
           </Card>
         </View>
 
-        <ThemedText variant="headline">Ta fiche</ThemedText>
+        <ThemedText variant="headline">{t.sessionDetail.yourSheet}</ThemedText>
         <View style={{ alignItems: 'center', gap: Spacing.md }}>
           <ShareCard
             ref={cardRef}
@@ -132,7 +136,7 @@ export default function MonthRecapScreen() {
             bestPerformances={current.bestPerformances}
             weightUnit={weightUnit}
           />
-          <Button title={sharing ? 'Génération…' : 'Partager'} onPress={handleShare} disabled={sharing} style={{ width: '100%' }} />
+          <Button title={sharing ? t.sessionDetail.generating : t.sessionDetail.share} onPress={handleShare} disabled={sharing} style={{ width: '100%' }} />
         </View>
       </ScrollView>
     </ThemedView>

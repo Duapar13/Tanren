@@ -10,6 +10,7 @@ import { Input } from './Input';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { displayToKg, formatWeight, kgToDisplay, WeightUnit } from '../utils/units';
+import { useTranslation } from '../hooks/useTranslation';
 
 export interface DraftSet {
   reps: number;
@@ -48,6 +49,7 @@ export function ExerciseSetLogger({
   onRemoveExercise,
 }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
   const [rpe, setRpe] = useState('');
@@ -88,10 +90,10 @@ export function ExerciseSetLogger({
   };
 
   const confirmRemove = (index: number) => {
-    Alert.alert('Supprimer la série', undefined, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t.seance.deleteSetConfirmTitle, undefined, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t.common.delete,
         style: 'destructive',
         onPress: () => {
           if (editingIndex === index) setEditingIndex(null);
@@ -150,7 +152,7 @@ export function ExerciseSetLogger({
           }}
         >
           <ThemedText variant="subhead" color="secondary">
-            Dernière série : {last.reps} reps × {formatWeight(last.weightKg, weightUnit)}
+            {t.seance.lastSet} : {last.reps} {t.common.reps.toLowerCase()} × {formatWeight(last.weightKg, weightUnit)}
           </ThemedText>
         </View>
       </View>
@@ -178,7 +180,7 @@ export function ExerciseSetLogger({
               <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Reps
+                    {t.common.reps}
                   </ThemedText>
                   <Input
                     keyboardType="number-pad"
@@ -231,7 +233,7 @@ export function ExerciseSetLogger({
             >
               <Pressable onPress={() => startEdit(i, s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
                 <ThemedText variant="subhead" color="secondary">
-                  Série {i + 1} · {s.reps} reps × {formatWeight(s.weightKg, weightUnit)}
+                  {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                   {s.rpe ? ` · RPE ${s.rpe}` : ''}
                 </ThemedText>
               </Pressable>
@@ -297,7 +299,7 @@ export function ExerciseSetLogger({
           </Pressable>
         </View>
 
-        <Button title="Retirer l’exercice de la séance" variant="destructive" onPress={onRemoveExercise} />
+        <Button title={t.seance.removeExerciseFromSession} variant="destructive" onPress={onRemoveExercise} />
       </View>
     </View>
   );

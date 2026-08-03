@@ -18,7 +18,7 @@ export function OAuthButtons() {
     try {
       await loginWithGoogleIdToken(idToken);
     } catch (err) {
-      Alert.alert('Connexion Google', authErrorMessage(err));
+      Alert.alert(t.login.continueWithGoogle, authErrorMessage(err));
     }
   });
 
@@ -26,31 +26,31 @@ export function OAuthButtons() {
     try {
       await loginWithAppleIdToken(idToken);
     } catch (err) {
-      Alert.alert('Connexion Apple', authErrorMessage(err));
+      Alert.alert(t.login.continueWithApple, authErrorMessage(err));
     }
   });
 
   const handleGoogle = async () => {
     if (!google.isConfigured) {
-      Alert.alert('Bientôt disponible', "La connexion Google n'est pas encore configurée.");
+      Alert.alert(t.login.notConfiguredTitle, t.login.googleNotConfigured);
       return;
     }
     try {
       await google.promptAsync();
     } catch (err) {
-      Alert.alert('Connexion Google', authErrorMessage(err));
+      Alert.alert(t.login.continueWithGoogle, authErrorMessage(err));
     }
   };
 
   const handleApple = async () => {
     if (!apple.isConfigured) {
-      Alert.alert('Indisponible', "La connexion Apple n'est pas disponible sur cet appareil.");
+      Alert.alert(t.login.notConfiguredTitle, t.login.appleUnavailable);
       return;
     }
     try {
       await apple.promptAsync();
     } catch (err) {
-      Alert.alert('Connexion Apple', authErrorMessage(err));
+      Alert.alert(t.login.continueWithApple, authErrorMessage(err));
     }
   };
 

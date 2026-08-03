@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { SplashView } from './SplashView';
 
 // Long enough for SplashView's ninja-pop-in + kanji-split-to-wordmark animation (~1130ms) to
@@ -14,6 +15,7 @@ export function AppShell() {
   const { user, loading: authLoading } = useAuth();
   const loading = dataLoading || authLoading;
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
@@ -56,14 +58,14 @@ export function AppShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="exercise/[id]"
-          options={{ title: 'Exercice' }}
+          options={{ title: t.screenTitles.exercise }}
         />
         <Stack.Screen
           name="food-search"
-          options={{ title: 'Ajouter un aliment', presentation: 'modal' }}
+          options={{ title: t.screenTitles.addFood, presentation: 'modal' }}
         />
-        <Stack.Screen name="session-detail" options={{ title: 'Séance' }} />
-        <Stack.Screen name="month-recap" options={{ title: 'Résumé du mois' }} />
+        <Stack.Screen name="session-detail" options={{ title: t.screenTitles.session }} />
+        <Stack.Screen name="month-recap" options={{ title: t.screenTitles.monthRecap }} />
       </Stack.Protected>
     </Stack>
   );

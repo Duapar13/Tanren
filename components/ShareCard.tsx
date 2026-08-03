@@ -7,6 +7,7 @@ import { Radius, Spacing, GOLD_ACCENT } from '../constants/theme';
 import { SetWithExercise } from '../types';
 import { MonthlyBest } from '../utils/monthlyStats';
 import { formatWeight, WeightUnit } from '../utils/units';
+import { useTranslation } from '../hooks/useTranslation';
 
 const BG = '#000000';
 const CARD_WIDTH = 340;
@@ -42,6 +43,7 @@ type Props = SessionCardProps | MonthCardProps;
 /** Fixed-layout branded card, captured to PNG by lib/shareCard.ts and pushed to the native
  * share sheet — the app's "brag about your training" export for Instagram/Snap stories. */
 export const ShareCard = forwardRef<View, Props>((props, ref) => {
+  const { t } = useTranslation();
   const grouped = props.variant === 'session' ? groupByExercise(props.sets).slice(0, 6) : [];
   const totalVolume =
     props.variant === 'session'
@@ -76,11 +78,11 @@ export const ShareCard = forwardRef<View, Props>((props, ref) => {
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
         {props.variant === 'session' && (
-          <CardStat value={String(grouped.length)} label="Exercices" />
+          <CardStat value={String(grouped.length)} label={t.shareCard.exercises} />
         )}
-        {props.variant === 'month' && <CardStat value={String(props.sessionCount)} label="Séances" />}
-        <CardStat value={String(setCount)} label="Séries" />
-        <CardStat value={formatWeight(totalVolume, props.weightUnit, 0)} label="Volume" />
+        {props.variant === 'month' && <CardStat value={String(props.sessionCount)} label={t.monthRecap.sessions} />}
+        <CardStat value={String(setCount)} label={t.shareCard.sets} />
+        <CardStat value={formatWeight(totalVolume, props.weightUnit, 0)} label={t.shareCard.volume} />
       </View>
 
       {props.variant === 'session' ? (
@@ -103,7 +105,7 @@ export const ShareCard = forwardRef<View, Props>((props, ref) => {
         <View style={{ gap: 6 }}>
           {props.bestPerformances.length === 0 ? (
             <ThemedText variant="footnote" style={{ color: '#8E8E93', textAlign: 'center' }}>
-              Encore aucun record ce mois-ci.
+              {t.shareCard.noRecordYet}
             </ThemedText>
           ) : (
             props.bestPerformances.slice(0, 6).map((p, i) => (
@@ -121,7 +123,7 @@ export const ShareCard = forwardRef<View, Props>((props, ref) => {
       )}
 
       <ThemedText variant="caption" style={{ color: '#5C5C5E', textAlign: 'center' }}>
-        Forge ton corps, série après série.
+        {t.shareCard.tagline}
       </ThemedText>
     </View>
   );

@@ -9,11 +9,13 @@ export function bmi(weightKg: number, heightCm: number): number {
   return weightKg / (heightM * heightM);
 }
 
-export function bmiCategory(value: number): string {
-  if (value < 18.5) return 'Insuffisance pondérale';
-  if (value < 25) return 'Poids normal';
-  if (value < 30) return 'Surpoids';
-  return 'Obésité';
+export type BmiCategory = 'underweight' | 'normal' | 'overweight' | 'obese';
+
+export function bmiCategory(value: number): BmiCategory {
+  if (value < 18.5) return 'underweight';
+  if (value < 25) return 'normal';
+  if (value < 30) return 'overweight';
+  return 'obese';
 }
 
 const GOAL_CALORIE_MULTIPLIER: Record<NutritionGoal, number> = {

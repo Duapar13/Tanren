@@ -12,6 +12,7 @@ import { Input } from '../components/Input';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { fetchProductByBarcode, OFFProduct, searchProducts } from '../lib/openFoodFacts';
 import { todayKey } from '../utils/date';
@@ -21,6 +22,7 @@ type Mode = 'scan' | 'search';
 export default function FoodSearchScreen() {
   const { addNutritionEntry } = useData();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('scan');
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(true);
@@ -44,10 +46,10 @@ export default function FoodSearchScreen() {
       if (product) {
         setSelected(product);
       } else {
-        setError('Produit non trouvé pour ce code-barre.');
+        setError(t.foodSearch.productNotFound);
       }
     } catch {
-      setError('Impossible de contacter Open Food Facts, réessaie.');
+      setError(t.foodSearch.contactError);
     } finally {
       setLoading(false);
     }
@@ -60,9 +62,9 @@ export default function FoodSearchScreen() {
     try {
       const products = await searchProducts(query);
       setResults(products);
-      if (products.length === 0) setError('Aucun résultat.');
+      if (products.length === 0) setError(t.foodSearch.noResults);
     } catch {
-      setError('Impossible de contacter Open Food Facts, réessaie.');
+      setError(t.foodSearch.contactError);
     } finally {
       setSearching(false);
     }
@@ -103,12 +105,12 @@ export default function FoodSearchScreen() {
               {selected.name}
             </ThemedText>
             <ThemedText variant="caption" color="tertiary">
-              Pour 100{selected.unit} : P {selected.proteinPer100g}g · G {selected.carbsPer100g}g · L{' '}
+              {t.foodSearch.per100(selected.unit)} : P {selected.proteinPer100g}g · G {selected.carbsPer100g}g · L{' '}
               {selected.fatPer100g}g
             </ThemedText>
             <View>
               <ThemedText variant="caption" color="tertiary">
-                {selected.unit === 'ml' ? 'Millilitres consommés' : 'Grammes consommés'}
+                {selected.unit === 'ml' ? t.foodSearch.millilitersConsumed : t.foodSearch.gramsConsumed}
               </ThemedText>
               <Input
                 keyboardType="decimal-pad"
@@ -120,8 +122,8 @@ export default function FoodSearchScreen() {
             <ThemedText variant="subhead" color="secondary">
               → P {previewProtein.toFixed(1)}g · G {previewCarbs.toFixed(1)}g · L {previewFat.toFixed(1)}g
             </ThemedText>
-            <Button title="Ajouter au journal" onPress={handleAdd} disabled={gramsNum <= 0} />
-            <Button title="Choisir un autre aliment" variant="plain" onPress={resetSelection} />
+            <Button title={t.foodSearch.addToLog} onPress={handleAdd} disabled={gramsNum <= 0} />
+            <Button title={t.foodSearch.chooseAnotherFood} variant="plain" onPress={resetSelection} />
           </Card>
         </SafeAreaView>
       </ThemedView>
@@ -134,8 +136,8 @@ export default function FoodSearchScreen() {
         <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
           <SegmentedControl
             options={[
-              { label: 'Scanner', value: 'scan' as const },
-              { label: 'Rechercher', value: 'search' as const },
+              { label: t.foodSearch.scan, value: 'scan' as const },
+              { label: t.foodSearch.search, value: 'search' as const },
             ]}
             value={mode}
             onChange={(m) => {
@@ -152,9 +154,9 @@ export default function FoodSearchScreen() {
             ) : !permission.granted ? (
               <Card style={{ gap: Spacing.md, alignItems: 'center' }}>
                 <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  Autorise l’accès à la caméra pour scanner un code-barre.
+                  {t.foodSearch.cameraPermissionPrompt}
                 </ThemedText>
-                <Button title="Autoriser la caméra" onPress={requestPermission} />
+                <Button title={t.foodSearch.allowCamera} onPress={requestPermission} />
               </Card>
             ) : (
               <View style={{ flex: 1, borderRadius: Radius.lg, overflow: 'hidden' }}>
@@ -182,7 +184,7 @@ export default function FoodSearchScreen() {
                 </ThemedText>
                 <Pressable onPress={resetSelection}>
                   <ThemedText variant="subhead" weight="600" color="accent">
-                    Réessayer
+                    {t.foodSearch.retry}
                   </ThemedText>
                 </Pressable>
               </Card>
@@ -193,7 +195,7 @@ export default function FoodSearchScreen() {
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <Input
                 style={{ flex: 1 }}
-                placeholder="Rechercher un aliment"
+                placeholder={t.foodSearch.searchPlaceholder}
                 value={query}
                 onChangeText={setQuery}
                 returnKeyType="search"
@@ -227,7 +229,7 @@ export default function FoodSearchScreen() {
                       {p.name}
                     </ThemedText>
                     <ThemedText variant="caption" color="tertiary">
-                      /100{p.unit} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
+                      {t.foodSearch.per100(p.unit)} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
                     </ThemedText>
                   </Card>
                 </Pressable>

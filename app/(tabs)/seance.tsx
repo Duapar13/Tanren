@@ -18,19 +18,21 @@ import { RestTimerBanner } from '../../components/RestTimerBanner';
 import { TodaySessionsReview } from '../../components/TodaySessionsReview';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { todayKey } from '../../utils/date';
-
-const EXERCISE_FILTER_OPTIONS: { label: string; value: 'all' | 'upper' | 'lower' }[] = [
-  { label: 'Tout', value: 'all' },
-  { label: 'Haut', value: 'upper' },
-  { label: 'Bas', value: 'lower' },
-];
 
 export default function SeanceScreen() {
   const { exercises, sessions, addSession, addSetsToSession, addExercise: createExercise } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const EXERCISE_FILTER_OPTIONS: { label: string; value: 'all' | 'upper' | 'lower' }[] = [
+    { label: t.seance.all, value: 'all' },
+    { label: t.seance.upperShort, value: 'upper' },
+    { label: t.seance.lowerShort, value: 'lower' },
+  ];
 
   const todaysSessions = useMemo(
     () => sessions.filter((s) => s.date === todayKey()),
@@ -164,21 +166,21 @@ export default function SeanceScreen() {
     Keyboard.dismiss();
     if (resumeTarget && resuming) {
       Alert.alert(
-        'Ajouter à la séance ?',
-        `${totalSets} série${totalSets > 1 ? 's' : ''} de plus.`,
+        t.seance.addToSessionConfirmTitle,
+        t.seance.addToSessionConfirmBody(totalSets),
         [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Ajouter', onPress: commitSession },
+          { text: t.common.cancel, style: 'cancel' },
+          { text: t.common.add, onPress: commitSession },
         ]
       );
       return;
     }
     Alert.alert(
-      'Terminer la séance ?',
-      `${totalSets} série${totalSets > 1 ? 's' : ''} enregistrée${totalSets > 1 ? 's' : ''}.`,
+      t.seance.finishSessionConfirmTitle,
+      t.seance.finishSessionConfirmBody(totalSets),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Terminer', onPress: commitSession },
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.seance.finishSession, onPress: commitSession },
       ]
     );
   };
@@ -197,7 +199,7 @@ export default function SeanceScreen() {
           >
             <TodaySessionsReview />
             <Button
-              title="Ajouter un exercice oublié"
+              title={t.seance.addForgottenExercise}
               variant="plain"
               onPress={() => setResuming(true)}
             />
@@ -236,12 +238,12 @@ export default function SeanceScreen() {
                 <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View>
                     <ThemedText variant="caption" color="tertiary">
-                      Ajout à la séance
+                      {t.seance.addingToSession}
                     </ThemedText>
-                    <ThemedText variant="headline">Séance d’aujourd’hui</ThemedText>
+                    <ThemedText variant="headline">{t.seance.todaysSession}</ThemedText>
                   </View>
                   <Button
-                    title="Annuler"
+                    title={t.common.cancel}
                     variant="plain"
                     onPress={() => {
                       resetBuilder();
@@ -252,7 +254,7 @@ export default function SeanceScreen() {
               )}
 
               <Card style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">Ajouter un exercice</ThemedText>
+                <ThemedText variant="headline">{t.seance.addExercise}</ThemedText>
                 <SegmentedControl
                   options={EXERCISE_FILTER_OPTIONS}
                   value={exerciseFilter}
@@ -270,7 +272,7 @@ export default function SeanceScreen() {
                 {showCreateExercise ? (
                   <View style={{ gap: Spacing.sm, marginTop: Spacing.xs }}>
                     <Input
-                      placeholder="Nom du nouvel exercice"
+                      placeholder={t.seance.newExerciseNamePlaceholder}
                       value={newExerciseName}
                       onChangeText={setNewExerciseName}
                       returnKeyType="done"
@@ -278,15 +280,15 @@ export default function SeanceScreen() {
                     />
                     <SegmentedControl
                       options={[
-                        { label: 'Haut du corps', value: 'upper' as const },
-                        { label: 'Bas du corps', value: 'lower' as const },
+                        { label: t.common.upperBody, value: 'upper' as const },
+                        { label: t.common.lowerBody, value: 'lower' as const },
                       ]}
                       value={newExerciseCategory}
                       onChange={setNewExerciseCategory}
                     />
                     <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                       <Button
-                        title="Créer et ajouter"
+                        title={t.seance.createAndAdd}
                         onPress={handleCreateExercise}
                         style={{ flex: 1 }}
                       />
@@ -300,7 +302,7 @@ export default function SeanceScreen() {
                   >
                     <Ionicons name="add-circle-outline" size={20} color={colors.accent} />
                     <ThemedText variant="subhead" weight="600" color="accent">
-                      Nouvel exercice
+                      {t.seance.newExerciseName}
                     </ThemedText>
                   </Pressable>
                 )}
@@ -329,10 +331,10 @@ export default function SeanceScreen() {
               <Button
                 title={
                   submitting
-                    ? 'Enregistrement…'
+                    ? t.common.saving
                     : resumeTarget && resuming
-                      ? 'Ajouter à la séance'
-                      : 'Terminer la séance'
+                      ? t.seance.addToSession
+                      : t.seance.finishSession
                 }
                 onPress={handleFinish}
                 disabled={submitting || totalSets === 0}

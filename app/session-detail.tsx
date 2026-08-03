@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { ShareCard } from '../components/ShareCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
@@ -26,6 +27,7 @@ export default function SessionDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const { sessions, sets } = useData();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const weightUnit = user?.weightUnit ?? 'kg';
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
@@ -43,7 +45,7 @@ export default function SessionDetailScreen() {
     try {
       await shareCardAsImage(cardRef);
     } catch {
-      Alert.alert('Partage', "Impossible de générer la fiche pour le moment.");
+      Alert.alert(t.sessionDetail.shareErrorTitle, t.sessionDetail.shareErrorBody);
     } finally {
       setSharing(false);
     }
@@ -59,7 +61,7 @@ export default function SessionDetailScreen() {
         {grouped.length === 0 ? (
           <Card style={{ width: '100%' }}>
             <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-              Aucun exercice enregistré ce jour-là.
+              {t.sessionDetail.noExercisesThatDay}
             </ThemedText>
           </Card>
         ) : (
@@ -69,7 +71,7 @@ export default function SessionDetailScreen() {
                 <ThemedText variant="headline">{exerciseSets[0].exerciseName}</ThemedText>
                 {exerciseSets.map((s, i) => (
                   <ThemedText key={s.id} variant="subhead" color="secondary">
-                    Série {i + 1} · {s.reps} reps × {formatWeight(s.weightKg, weightUnit)}
+                    {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                     {s.rpe ? ` · RPE ${s.rpe}` : ''}
                   </ThemedText>
                 ))}
@@ -81,11 +83,11 @@ export default function SessionDetailScreen() {
         {grouped.length > 0 && (
           <>
             <ThemedText variant="headline" style={{ alignSelf: 'flex-start', marginTop: Spacing.md }}>
-              Ta fiche
+              {t.sessionDetail.yourSheet}
             </ThemedText>
             <ShareCard ref={cardRef} variant="session" date={date ?? ''} sets={daySets} weightUnit={weightUnit} />
             <Button
-              title={sharing ? 'Génération…' : 'Partager'}
+              title={sharing ? t.sessionDetail.generating : t.sessionDetail.share}
               onPress={handleShare}
               disabled={sharing}
               style={{ width: '100%' }}

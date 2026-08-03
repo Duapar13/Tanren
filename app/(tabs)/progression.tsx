@@ -13,6 +13,7 @@ import { MonthlyCalendar } from '../../components/MonthlyCalendar';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { computeExerciseSeries } from '../../utils/exerciseSeries';
 import { computeExercisePRs } from '../../utils/prStats';
@@ -20,16 +21,17 @@ import { formatWeight } from '../../utils/units';
 
 type Metric = '1RM' | 'weight' | 'volume';
 
-const METRIC_OPTIONS: { label: string; value: Metric }[] = [
-  { label: '1RM est.', value: '1RM' },
-  { label: 'Poids max', value: 'weight' },
-  { label: 'Volume', value: 'volume' },
-];
-
 export default function ProgressionScreen() {
   const { exercises, sets, sessions } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const METRIC_OPTIONS: { label: string; value: Metric }[] = [
+    { label: t.progression.est1RM, value: '1RM' },
+    { label: t.progression.maxWeight, value: 'weight' },
+    { label: t.progression.volume, value: 'volume' },
+  ];
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -69,7 +71,7 @@ export default function ProgressionScreen() {
         >
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Régularité
+              {t.progression.regularity}
             </ThemedText>
             <Card>
               <MonthlyCalendar
@@ -95,7 +97,7 @@ export default function ProgressionScreen() {
           {exercisesWithData.length === 0 ? (
             <Card>
               <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                Logge des séries pour voir ta progression par exercice ici.
+                {t.progression.noExerciseDataPrompt}
               </ThemedText>
             </Card>
           ) : (
@@ -112,7 +114,7 @@ export default function ProgressionScreen() {
                   {selectedExercise && (
                     <Pressable onPress={() => router.push(`/exercise/${selectedExercise.id}`)}>
                       <ThemedText variant="footnote" weight="600" color="accent">
-                        Voir la fiche
+                        {t.progression.viewSheet}
                       </ThemedText>
                     </Pressable>
                   )}
@@ -149,7 +151,7 @@ export default function ProgressionScreen() {
                   />
                 ) : (
                   <ThemedText color="tertiary" style={{ textAlign: 'center', paddingVertical: Spacing.lg }}>
-                    Pas encore assez de séances pour un graphique.
+                    {t.progression.notEnoughDataForChart}
                   </ThemedText>
                 )}
               </Card>
@@ -157,21 +159,21 @@ export default function ProgressionScreen() {
               {pr && (
                 <View>
                   <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-                    Records personnels
+                    {t.progression.personalRecords}
                   </ThemedText>
                   <Card style={{ gap: Spacing.sm }}>
                     <PRRow
-                      label="Poids max"
+                      label={t.progression.maxWeight}
                       value={formatWeight(pr.maxWeightKg, user?.weightUnit ?? 'kg')}
                       date={pr.maxWeightDate}
                     />
                     <PRRow
-                      label="1RM estimée"
+                      label={t.progression.estimated1RM}
                       value={formatWeight(pr.bestEstimated1RM, user?.weightUnit ?? 'kg')}
                       date={pr.bestEstimated1RMDate}
                     />
                     <PRRow
-                      label="Volume (1 séance)"
+                      label={t.progression.sessionVolume}
                       value={formatWeight(pr.maxSessionVolume, user?.weightUnit ?? 'kg', 0)}
                       date={pr.maxSessionVolumeDate}
                     />

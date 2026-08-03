@@ -14,6 +14,7 @@ import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import {
   computeSeasonMedalHistory,
@@ -21,13 +22,21 @@ import {
   daysUntilNextSeason,
   POINTS_PER_DIVISION,
   RANK_COLORS,
-  seasonLabel,
   type SeasonMedal,
   type SeasonRanking,
 } from '../../utils/ranking';
-import { computeBadgeStatuses, type BadgeStatus } from '../../utils/badges';
+import { computeBadgeStatuses, type BadgeProgress, type BadgeStatus } from '../../utils/badges';
 import { toDateKey, todayKey } from '../../utils/date';
 import { apiFetch } from '../../lib/api';
+import { TranslationDict } from '../../constants/i18n/fr';
+
+function formatBadgeProgress(progress: BadgeProgress, t: TranslationDict): string {
+  if (progress.kind === 'rank') {
+    return progress.unlocked ? t.rang.unlocked : t.rang.currentRank(progress.rank);
+  }
+  const suffix = progress.kind === 'kg' ? ' kg' : progress.kind === 'days' ? ` ${t.rang.daysUnit}` : '';
+  return `${progress.current}/${progress.target}${suffix}`;
+}
 
 interface LeaderboardEntry {
   userId: number;
@@ -42,10 +51,10 @@ function formatPoints(points: number): string {
   return `${points >= 0 ? '+' : ''}${points} pt${Math.abs(points) > 1 ? 's' : ''}`;
 }
 
-function monthLabelForSegment(medal: SeasonMedal, index: number): string {
+function monthLabelForSegment(medal: SeasonMedal, index: number, locale: string): string {
   const start = new Date(`${medal.seasonInfo.startDate}T00:00:00`);
   const d = new Date(start.getFullYear(), start.getMonth() + index, 1);
-  const label = d.toLocaleDateString('fr-FR', { month: 'long' });
+  const label = d.toLocaleDateString(locale, { month: 'long' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -58,6 +67,8 @@ export default function RangScreen() {
   const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t, lang } = useTranslation();
+  const locale = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' }[lang];
 
   const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
   const [selectedMedal, setSelectedMedal] = useState<MedalSelection | null>(null);
@@ -144,45 +155,46 @@ export default function RangScreen() {
               {state.rank} {state.division}
             </ThemedText>
             <ThemedText variant="subhead" color="secondary">
-              {seasonLabel(ranking.seasonInfo)}
+              {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
             </ThemedText>
 
             <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
               {state.isMaxTier ? (
                 <ThemedText variant="footnote" color="accent" weight="600" style={{ textAlign: 'center' }}>
-                  Rang maximum atteint pour cette saison !
+                  {t.rang.maxRankReached}
                 </ThemedText>
               ) : (
                 <>
                   <ProgressBar progress={state.pointsInDivision / POINTS_PER_DIVISION} tintColor={rankColor} />
                   <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
-                    {state.pointsInDivision} / {POINTS_PER_DIVISION} pts vers la division suivante
+                    {t.rang.pointsToNextDivision(state.pointsInDivision, POINTS_PER_DIVISION)}
                   </ThemedText>
                 </>
               )}
             </View>
 
             <ThemedText variant="caption" color="tertiary">
-              Nouvelle saison dans {daysUntilNextSeason()} jour{daysUntilNextSeason() > 1 ? 's' : ''}
+              {t.rang.newSeasonIn(daysUntilNextSeason())}
             </ThemedText>
           </Card>
 
           <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-            <StatTile label="Régularité" value={formatPoints(ranking.breakdown.streak)} />
-            <StatTile label="Force" value={formatPoints(ranking.breakdown.pr)} />
-            <StatTile label="Nutrition" value={formatPoints(ranking.breakdown.nutrition)} />
+            <StatTile label={t.skills.streak} value={formatPoints(ranking.breakdown.streak)} />
+            <StatTile label={t.skills.pr} value={formatPoints(ranking.breakdown.pr)} />
+            <StatTile label={t.skills.nutrition} value={formatPoints(ranking.breakdown.nutrition)} />
             {user?.measurementsEnabled && (
-              <StatTile label="Mensurations" value={formatPoints(ranking.breakdown.measurement)} />
+              <StatTile label={t.skills.measurement} value={formatPoints(ranking.breakdown.measurement)} />
             )}
           </View>
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Badges
+              {t.rang.badges}
             </ThemedText>
             <Card style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
               {badgeStatuses.map((status) => {
                 const { badge, unlocked } = status;
+                const label = t.badges[badge.id as keyof typeof t.badges]?.name ?? badge.name;
                 return (
                   <Pressable
                     key={badge.id}
@@ -209,7 +221,7 @@ export default function RangScreen() {
                       color={unlocked ? 'primary' : 'tertiary'}
                       style={{ textAlign: 'center' }}
                     >
-                      {badge.name}
+                      {label}
                     </ThemedText>
                   </Pressable>
                 );
@@ -219,12 +231,12 @@ export default function RangScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Classement global
+              {t.rang.globalLeaderboard}
             </ThemedText>
             {leaderboard.length === 0 ? (
               <Card>
                 <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  Personne n’a encore de score ce semestre — sois le premier !
+                  {t.rang.noScoreYet}
                 </ThemedText>
               </Card>
             ) : (
@@ -270,7 +282,7 @@ export default function RangScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Historique des saisons
+              {t.rang.seasonHistory}
             </ThemedText>
             <Card>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.lg }}>
@@ -282,7 +294,7 @@ export default function RangScreen() {
                   >
                     <SeasonMedalBadge medal={medal} size={84} />
                     <ThemedText variant="caption" weight="600" color={medal.isComplete ? 'secondary' : 'accent'}>
-                      {medal.isComplete ? 'Terminée' : 'En cours'}
+                      {medal.isComplete ? t.rang.completed : t.rang.inProgress}
                     </ThemedText>
                   </Pressable>
                 ))}
@@ -292,12 +304,12 @@ export default function RangScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Historique de la saison
+              {t.rang.seasonEventHistory}
             </ThemedText>
             {ranking.events.length === 0 ? (
               <Card>
                 <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  Aucun point ce mois-ci pour l’instant — logge une séance pour commencer.
+                  {t.rang.noPointsYet}
                 </ThemedText>
               </Card>
             ) : (
@@ -334,21 +346,25 @@ export default function RangScreen() {
           </View>
         </ScrollView>
 
-        <Popup title={selectedBadge?.badge.name ?? ''} visible={!!selectedBadge} onClose={() => setSelectedBadge(null)}>
+        <Popup
+          title={selectedBadge ? t.badges[selectedBadge.badge.id as keyof typeof t.badges]?.name ?? selectedBadge.badge.name : ''}
+          visible={!!selectedBadge}
+          onClose={() => setSelectedBadge(null)}
+        >
           {selectedBadge && (
             <View style={{ gap: Spacing.sm }}>
               <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                {selectedBadge.badge.description}
+                {t.badges[selectedBadge.badge.id as keyof typeof t.badges]?.description ?? selectedBadge.badge.description}
               </ThemedText>
               <ThemedText weight="600" style={{ textAlign: 'center' }}>
-                {selectedBadge.unlocked ? 'Débloqué ✓' : `Progression : ${selectedBadge.progress}`}
+                {formatBadgeProgress(selectedBadge.progress, t)}
               </ThemedText>
             </View>
           )}
         </Popup>
 
         <Popup
-          title={selectedMedal ? seasonLabel(selectedMedal.medal.seasonInfo) : ''}
+          title={selectedMedal ? t.rang.seasonLabel(selectedMedal.medal.seasonInfo.seasonNumber) : ''}
           visible={!!selectedMedal}
           onClose={() => setSelectedMedal(null)}
         >
@@ -358,16 +374,19 @@ export default function RangScreen() {
                 <SeasonMedalBadge medal={selectedMedal.medal} size={110} />
               </View>
               <ThemedText weight="600" style={{ textAlign: 'center' }}>
-                Rang de pointe :{' '}
+                {t.rang.peakRank}{' '}
                 <ThemedText weight="700" style={{ color: RANK_COLORS[selectedMedal.medal.peakRank] }}>
                   {selectedMedal.medal.peakRank}
                 </ThemedText>
               </ThemedText>
               {selectedStats && (
                 <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  {selectedStats.totalPoints} pts au total · Régularité {formatPoints(selectedStats.breakdown.streak)} ·
-                  Force {formatPoints(selectedStats.breakdown.pr)} · Nutrition{' '}
-                  {formatPoints(selectedStats.breakdown.nutrition)}
+                  {t.rang.totalPointsSummary(
+                    selectedStats.totalPoints,
+                    formatPoints(selectedStats.breakdown.streak),
+                    formatPoints(selectedStats.breakdown.pr),
+                    formatPoints(selectedStats.breakdown.nutrition)
+                  )}
                 </ThemedText>
               )}
               <View style={{ gap: 4 }}>
@@ -376,7 +395,7 @@ export default function RangScreen() {
                     key={i}
                     style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}
                   >
-                    <ThemedText color="secondary">{monthLabelForSegment(selectedMedal.medal, i)}</ThemedText>
+                    <ThemedText color="secondary">{monthLabelForSegment(selectedMedal.medal, i, locale)}</ThemedText>
                     <ThemedText weight="600" style={{ color: rank ? RANK_COLORS[rank] : colors.textTertiary }}>
                       {rank ?? '—'}
                     </ThemedText>

@@ -2,12 +2,19 @@ import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { WorkoutSession } from '../types';
 import { toDateKey, todayKey } from '../utils/date';
 import { isTrainingDay } from '../utils/program';
 
-const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const LOCALES = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES' } as const;
+const WEEKDAY_LABELS: Record<string, string[]> = {
+  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+  es: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+};
 
 interface Props {
   year: number;
@@ -19,13 +26,14 @@ interface Props {
   onStatsPress: () => void;
 }
 
-function monthLabel(year: number, month: number): string {
-  const label = new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+function monthLabel(year: number, month: number, locale: string): string {
+  const label = new Date(year, month, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeMonth, onDayPress, onStatsPress }: Props) {
   const { colors } = useTheme();
+  const { t, lang } = useTranslation();
   const loggedDates = new Set(sessions.map((s) => s.date));
   const today = todayKey();
 
@@ -57,7 +65,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </Pressable>
         <ThemedText variant="subhead" weight="700">
-          {monthLabel(year, month)}
+          {monthLabel(year, month, LOCALES[lang])}
         </ThemedText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           <Pressable onPress={goNext} hitSlop={8} style={{ padding: 4 }}>
@@ -81,7 +89,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
       </View>
 
       <View style={{ flexDirection: 'row' }}>
-        {WEEKDAY_LABELS.map((label, i) => (
+        {WEEKDAY_LABELS[lang].map((label, i) => (
           <ThemedText key={i} variant="caption" color="tertiary" style={{ flex: 1, textAlign: 'center' }}>
             {label}
           </ThemedText>
@@ -132,8 +140,8 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
       </View>
 
       <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: 4 }}>
-        <Legend color={colors.accent} label="Faite" />
-        <Legend color={colors.fillSecondary} label="Manquée" />
+        <Legend color={colors.accent} label={t.monthlyCalendar.done} />
+        <Legend color={colors.fillSecondary} label={t.monthlyCalendar.missed} />
       </View>
     </View>
   );

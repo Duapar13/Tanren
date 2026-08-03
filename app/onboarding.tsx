@@ -20,15 +20,13 @@ import { authErrorMessage } from '../lib/authErrors';
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 // Lundi en premier pour matcher WeekStrip ; dow = index JS (0=dimanche..6=samedi).
-const WEEKDAYS: { label: string; dow: number }[] = [
-  { label: 'L', dow: 1 },
-  { label: 'M', dow: 2 },
-  { label: 'M', dow: 3 },
-  { label: 'J', dow: 4 },
-  { label: 'V', dow: 5 },
-  { label: 'S', dow: 6 },
-  { label: 'D', dow: 0 },
-];
+const WEEKDAY_DOWS = [1, 2, 3, 4, 5, 6, 0];
+const WEEKDAY_LABELS: Record<string, string[]> = {
+  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+  es: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+};
 
 const num = (v: string) => {
   const n = parseFloat(v.replace(',', '.'));
@@ -39,7 +37,8 @@ export default function OnboardingScreen() {
   const { user, updateProfile } = useAuth();
   const { addBodyWeightEntry } = useData();
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const WEEKDAYS = WEEKDAY_DOWS.map((dow, i) => ({ dow, label: WEEKDAY_LABELS[lang][i] }));
 
   const GOAL_OPTIONS: { label: string; value: NutritionGoal }[] = [
     { label: t.onboarding.goalBulk, value: 'bulk' },
@@ -66,7 +65,7 @@ export default function OnboardingScreen() {
 
     const trimmedUsername = usernameInput.trim();
     if (!skip && !USERNAME_RE.test(trimmedUsername)) {
-      setUsernameError('3 à 20 caractères (lettres, chiffres, _).');
+      setUsernameError(t.onboarding.usernameValidationError);
       return;
     }
 

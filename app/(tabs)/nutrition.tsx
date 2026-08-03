@@ -17,6 +17,7 @@ import { ChipSelector } from '../../components/ChipSelector';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Radius, Spacing } from '../../constants/theme';
 import { bmi, bmiCategory, effectiveMacroTargets, macroTargets } from '../../utils/nutrition';
 import {
@@ -28,18 +29,7 @@ import {
 import { todayKey } from '../../utils/date';
 import { MEASUREMENT_TYPE_LABELS, MEASUREMENT_TYPES, MeasurementType, NutritionEntry } from '../../types';
 
-const RANGE_OPTIONS: { label: string; value: string }[] = [
-  { label: '7j', value: '7' },
-  { label: '30j', value: '30' },
-  { label: '90j', value: '90' },
-];
-
 type MacroKey = 'proteinG' | 'carbsG' | 'fatG';
-const MACRO_OPTIONS: { label: string; value: MacroKey }[] = [
-  { label: 'Protéines', value: 'proteinG' },
-  { label: 'Glucides', value: 'carbsG' },
-  { label: 'Lipides', value: 'fatG' },
-];
 
 const chartCommonProps = {
   height: 120,
@@ -82,6 +72,18 @@ export default function NutritionScreen() {
   } = useData();
   const { user, updateProfile } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const RANGE_OPTIONS: { label: string; value: string }[] = [
+    { label: t.nutrition.rangeDays(7), value: '7' },
+    { label: t.nutrition.rangeDays(30), value: '30' },
+    { label: t.nutrition.rangeDays(90), value: '90' },
+  ];
+  const MACRO_OPTIONS: { label: string; value: MacroKey }[] = [
+    { label: t.nutrition.protein, value: 'proteinG' },
+    { label: t.nutrition.carbs, value: 'carbsG' },
+    { label: t.nutrition.fat, value: 'fatG' },
+  ];
 
   const [proteinInput, setProteinInput] = useState('');
   const [carbsInput, setCarbsInput] = useState('');
@@ -235,7 +237,7 @@ export default function NutritionScreen() {
         >
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Aujourd’hui
+              {t.nutrition.today}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               {targets ? (
@@ -245,14 +247,14 @@ export default function NutritionScreen() {
                       {todayTotals.calories.toFixed(0)} kcal
                     </ThemedText>
                     <ThemedText variant="subhead" color="secondary">
-                      Objectif : {targets.calories} kcal
+                      {t.nutrition.objective} : {targets.calories} kcal
                     </ThemedText>
                   </View>
 
                   <View style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <ThemedText variant="footnote" color="secondary">
-                        Protéines
+                        {t.nutrition.protein}
                       </ThemedText>
                       <ThemedText variant="footnote" color="secondary">
                         {todayTotals.proteinG.toFixed(0)} / {targets.proteinG} g
@@ -264,7 +266,7 @@ export default function NutritionScreen() {
                   <View style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <ThemedText variant="footnote" color="secondary">
-                        Glucides
+                        {t.nutrition.carbs}
                       </ThemedText>
                       <ThemedText variant="footnote" color="secondary">
                         {todayTotals.carbsG.toFixed(0)} / {targets.carbsG} g
@@ -276,7 +278,7 @@ export default function NutritionScreen() {
                   <View style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <ThemedText variant="footnote" color="secondary">
-                        Lipides
+                        {t.nutrition.fat}
                       </ThemedText>
                       <ThemedText variant="footnote" color="secondary">
                         {todayTotals.fatG.toFixed(0)} / {targets.fatG} g
@@ -286,9 +288,7 @@ export default function NutritionScreen() {
                   </View>
                 </>
               ) : (
-                <ThemedText color="secondary">
-                  Ajoute ton poids de corps ci-dessous pour calculer tes objectifs de macros.
-                </ThemedText>
+                <ThemedText color="secondary">{t.nutrition.addWeightPrompt}</ThemedText>
               )}
 
               <Pressable
@@ -305,14 +305,14 @@ export default function NutritionScreen() {
               >
                 <Ionicons name="barcode-outline" size={20} color="#FFFFFF" />
                 <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
-                  Scanner ou rechercher un aliment
+                  {t.nutrition.scanOrSearchFood}
                 </ThemedText>
               </Pressable>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: colors.separator }} />
                 <ThemedText variant="caption" color="tertiary">
-                  ou entrer les macros à la main
+                  {t.nutrition.orEnterManually}
                 </ThemedText>
                 <View style={{ flex: 1, height: 1, backgroundColor: colors.separator }} />
               </View>
@@ -320,24 +320,24 @@ export default function NutritionScreen() {
               <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Protéines (g)
+                    {t.nutrition.proteinG}
                   </ThemedText>
                   <Input keyboardType="decimal-pad" value={proteinInput} onChangeText={setProteinInput} placeholder="0" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Glucides (g)
+                    {t.nutrition.carbsG}
                   </ThemedText>
                   <Input keyboardType="decimal-pad" value={carbsInput} onChangeText={setCarbsInput} placeholder="0" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Lipides (g)
+                    {t.nutrition.fatG}
                   </ThemedText>
                   <Input keyboardType="decimal-pad" value={fatInput} onChangeText={setFatInput} placeholder="0" />
                 </View>
               </View>
-              <Button title="Ajouter" onPress={handleAddNutrition} />
+              <Button title={t.common.add} onPress={handleAddNutrition} />
 
               {todayEntries.length > 0 && (
                 <View style={{ gap: Spacing.sm }}>
@@ -350,7 +350,7 @@ export default function NutritionScreen() {
                               {entry.foodName}
                             </ThemedText>
                             <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 4 }}>
-                              Quantité ({entry.unit ?? 'g'})
+                              {t.nutrition.quantity} ({entry.unit ?? 'g'})
                             </ThemedText>
                             <Input keyboardType="decimal-pad" value={editGrams} onChangeText={setEditGrams} />
                           </View>
@@ -371,7 +371,7 @@ export default function NutritionScreen() {
                           </View>
                         )}
                         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                          <Button title="Enregistrer" onPress={() => saveEditEntry(entry)} style={{ flex: 1 }} />
+                          <Button title={t.common.save} onPress={() => saveEditEntry(entry)} style={{ flex: 1 }} />
                           <IconButton name="close" onPress={() => setEditingEntryId(null)} />
                         </View>
                       </View>
@@ -416,14 +416,14 @@ export default function NutritionScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Objectif nutritionnel
+              {t.nutrition.nutritionalGoal}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">Calories et macros personnalisées</ThemedText>
+                  <ThemedText variant="subhead">{t.nutrition.customTargets}</ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    Sinon calculé automatiquement à partir de ton poids et ton objectif
+                    {t.nutrition.autoCalculated}
                   </ThemedText>
                 </View>
                 <Switch
@@ -438,7 +438,7 @@ export default function NutritionScreen() {
                   <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        Protéines (g)
+                        {t.nutrition.proteinG}
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
@@ -448,7 +448,7 @@ export default function NutritionScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        Glucides (g)
+                        {t.nutrition.carbsG}
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
@@ -458,7 +458,7 @@ export default function NutritionScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        Lipides (g)
+                        {t.nutrition.fatG}
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
@@ -468,9 +468,9 @@ export default function NutritionScreen() {
                     </View>
                   </View>
                   <ThemedText variant="caption" color="tertiary">
-                    Soit {Math.round(num(customProteinInput) * 4 + num(customCarbsInput) * 4 + num(customFatInput) * 9)} kcal
+                    {t.nutrition.equivalentKcal} {Math.round(num(customProteinInput) * 4 + num(customCarbsInput) * 4 + num(customFatInput) * 9)} kcal
                   </ThemedText>
-                  <Button title="Enregistrer" onPress={handleSaveCustomTargets} />
+                  <Button title={t.common.save} onPress={handleSaveCustomTargets} />
                 </View>
               )}
             </Card>
@@ -478,7 +478,7 @@ export default function NutritionScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Poids de corps
+              {t.nutrition.bodyWeight}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -486,7 +486,7 @@ export default function NutritionScreen() {
                   {currentWeight ? `${currentWeight} kg` : '—'}
                 </ThemedText>
                 <ThemedText variant="footnote" color="secondary">
-                  Dernière pesée
+                  {t.nutrition.lastWeighIn}
                 </ThemedText>
               </View>
               {weightSeries.length >= 2 && (
@@ -502,7 +502,7 @@ export default function NutritionScreen() {
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-end' }}>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="caption" color="tertiary">
-                    Poids (kg)
+                    {t.nutrition.weight} (kg)
                   </ThemedText>
                   <Input
                     keyboardType="decimal-pad"
@@ -511,7 +511,7 @@ export default function NutritionScreen() {
                     placeholder="0"
                   />
                 </View>
-                <Button title="Ajouter" onPress={handleAddWeight} style={{ paddingHorizontal: Spacing.lg }} />
+                <Button title={t.common.add} onPress={handleAddWeight} style={{ paddingHorizontal: Spacing.lg }} />
               </View>
 
               {recentWeights.length > 0 && (
@@ -544,7 +544,7 @@ export default function NutritionScreen() {
           {user?.measurementsEnabled && (
             <View>
               <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-                Mensurations
+                {t.nutrition.measurements}
               </ThemedText>
               <Card style={{ gap: Spacing.md }}>
                 <ChipSelector
@@ -561,7 +561,7 @@ export default function NutritionScreen() {
                     {latestMeasurement ? `${latestMeasurement.valueCm} cm` : '—'}
                   </ThemedText>
                   <ThemedText variant="footnote" color="secondary">
-                    Dernière mesure
+                    {t.nutrition.lastMeasurement}
                   </ThemedText>
                 </View>
 
@@ -577,7 +577,7 @@ export default function NutritionScreen() {
                       placeholder="0"
                     />
                   </View>
-                  <Button title="Ajouter" onPress={handleAddMeasurement} style={{ paddingHorizontal: Spacing.lg }} />
+                  <Button title={t.common.add} onPress={handleAddMeasurement} style={{ paddingHorizontal: Spacing.lg }} />
                 </View>
 
                 {recentMeasurements.length > 0 && (
@@ -611,14 +611,14 @@ export default function NutritionScreen() {
           {currentBmi != null && (
             <View>
               <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-                IMC
+                {t.nutrition.bmi}
               </ThemedText>
               <Card style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <ThemedText variant="title2" weight="700">
                   {currentBmi.toFixed(1)}
                 </ThemedText>
                 <ThemedText variant="subhead" color="secondary">
-                  {bmiCategory(currentBmi)}
+                  {t.nutrition.bmiCategories[bmiCategory(currentBmi)]}
                 </ThemedText>
               </Card>
             </View>
@@ -626,7 +626,7 @@ export default function NutritionScreen() {
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              Évolution
+              {t.nutrition.evolution}
             </ThemedText>
             <Card style={{ gap: Spacing.md }}>
               <SegmentedControl options={MACRO_OPTIONS} value={macro} onChange={setMacro} />
@@ -641,7 +641,7 @@ export default function NutritionScreen() {
                 />
               ) : (
                 <ThemedText color="tertiary" style={{ textAlign: 'center', paddingVertical: Spacing.lg }}>
-                  Aucune donnée sur cette période.
+                  {t.nutrition.noDataForPeriod}
                 </ThemedText>
               )}
               <SegmentedControl options={RANGE_OPTIONS} value={range} onChange={setRange} />
