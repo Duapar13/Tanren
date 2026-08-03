@@ -27,6 +27,7 @@ export const fr = {
     session: 'Séance',
     monthRecap: 'Résumé du mois',
     support: 'Soutenir l’app',
+    exerciseLibrary: 'Bibliothèque d’exercices',
   },
   tour: {
     steps: [
@@ -280,6 +281,7 @@ export const fr = {
     pushPermissionBody: 'Autorise les notifications pour Ningyma dans les réglages de ton téléphone.',
     notificationsUpdateError: 'Impossible de mettre à jour ce réglage pour le moment.',
     exerciseLibrary: 'Bibliothèque d’exercices',
+    noCustomExercises: 'Aucun exercice personnalisé pour l’instant.',
     exerciseNamePlaceholder: 'Nom de l’exercice',
     deleteExerciseConfirmTitle: 'Supprimer l’exercice',
     dangerZone: 'Zone de danger',

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Pressable } from 'react-native';
+import { Stack, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -66,7 +68,19 @@ export function AppShell() {
         />
         <Stack.Screen name="session-detail" options={{ title: t.screenTitles.session }} />
         <Stack.Screen name="month-recap" options={{ title: t.screenTitles.monthRecap }} />
-        <Stack.Screen name="support" options={{ title: t.screenTitles.support, presentation: 'modal' }} />
+        <Stack.Screen
+          name="support"
+          options={{
+            title: t.screenTitles.support,
+            presentation: 'modal',
+            headerLeft: () => (
+              <Pressable onPress={() => router.back()} hitSlop={12} style={{ marginLeft: -4 }}>
+                <Ionicons name="close" size={26} color={colors.text} />
+              </Pressable>
+            ),
+          }}
+        />
+        <Stack.Screen name="exercise-library" options={{ title: t.screenTitles.exerciseLibrary }} />
       </Stack.Protected>
     </Stack>
   );

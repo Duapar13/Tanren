@@ -29,6 +29,7 @@ export const en: TranslationDict = {
     session: 'Workout',
     monthRecap: 'Month recap',
     support: 'Support the app',
+    exerciseLibrary: 'Exercise library',
   },
   tour: {
     steps: [
@@ -282,6 +283,7 @@ export const en: TranslationDict = {
     pushPermissionBody: 'Allow notifications for Ningyma in your phone settings.',
     notificationsUpdateError: 'Could not update this setting right now.',
     exerciseLibrary: 'Exercise library',
+    noCustomExercises: 'No custom exercises yet.',
     exerciseNamePlaceholder: 'Exercise name',
     deleteExerciseConfirmTitle: 'Delete exercise',
     dangerZone: 'Danger zone',

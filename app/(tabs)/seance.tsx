@@ -213,6 +213,11 @@ export default function SeanceScreen() {
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScreenHeader mascot="focused" />
+        {restTimerEndAt && (
+          <View style={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm }}>
+            <RestTimerBanner endAt={restTimerEndAt} onDone={() => setRestTimerEndAt(null)} />
+          </View>
+        )}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -229,10 +234,6 @@ export default function SeanceScreen() {
               {resumeTarget && resuming ? (
                 <TodaySessionsReview />
               ) : null}
-
-              {restTimerEndAt && (
-                <RestTimerBanner endAt={restTimerEndAt} onDone={() => setRestTimerEndAt(null)} />
-              )}
 
               {resumeTarget && resuming && (
                 <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
-import { Exercise, NutritionGoal } from '../../types';
+import { NutritionGoal } from '../../types';
 import { API_URL } from '../../lib/api';
 import { authErrorMessage } from '../../lib/authErrors';
 import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
@@ -35,7 +35,7 @@ const WEEKDAY_LABELS: Record<string, string[]> = {
 };
 
 export default function ProfilScreen() {
-  const { exercises, addExercise, updateExercise, removeExercise } = useData();
+  const { exercises } = useData();
   const { user, updateProfile, uploadAvatar, logout, deleteAccount } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
@@ -160,14 +160,6 @@ export default function ProfilScreen() {
     }
   };
 
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<'upper' | 'lower'>('upper');
-
-  const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState<'upper' | 'lower'>('upper');
-
   const lengthUnit = user?.lengthUnit ?? 'cm';
   const weightUnit = user?.weightUnit ?? 'kg';
 
@@ -191,38 +183,6 @@ export default function ProfilScreen() {
     const current = user?.trainingDays ?? [];
     const next = current.includes(dow) ? current.filter((d) => d !== dow) : [...current, dow];
     updateProfile({ trainingDays: next });
-  };
-
-  const handleAddExercise = async () => {
-    if (!name.trim()) return;
-    await addExercise({
-      name: name.trim(),
-      category,
-      muscleGroup: category === 'upper' ? 'pecs' : 'quadriceps',
-      isCustom: true,
-    });
-    setName('');
-    setShowAddExercise(false);
-  };
-
-  const handleDeleteExercise = (id: number, exName: string) => {
-    Alert.alert(t.profil.deleteExerciseConfirmTitle, exName, [
-      { text: t.common.cancel, style: 'cancel' },
-      { text: t.common.delete, style: 'destructive', onPress: () => removeExercise(id) },
-    ]);
-  };
-
-  const startEditExercise = (ex: Exercise) => {
-    setEditingExerciseId(ex.id);
-    setEditName(ex.name);
-    setEditCategory(ex.category);
-  };
-
-  const saveEditExercise = async () => {
-    if (editingExerciseId === null || !editName.trim()) return;
-    Keyboard.dismiss();
-    await updateExercise(editingExerciseId, { name: editName.trim(), category: editCategory });
-    setEditingExerciseId(null);
   };
 
   const customExercises = exercises.filter((e) => e.isCustom);
@@ -553,72 +513,30 @@ export default function ProfilScreen() {
             </Card>
           </View>
 
-          <View style={{ gap: Spacing.sm }}>
-            <ThemedText variant="headline">{t.profil.exerciseLibrary}</ThemedText>
-
-            {showAddExercise ? (
-              <Card style={{ gap: Spacing.sm }}>
-                <Input placeholder={t.profil.exerciseNamePlaceholder} value={name} onChangeText={setName} />
-                <SegmentedControl
-                  options={[
-                    { label: t.common.upperBody, value: 'upper' as const },
-                    { label: t.common.lowerBody, value: 'lower' as const },
-                  ]}
-                  value={category}
-                  onChange={setCategory}
-                />
-                <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  <Button title={t.common.add} onPress={handleAddExercise} style={{ flex: 1 }} />
-                  <IconButton name="close" onPress={() => setShowAddExercise(false)} />
-                </View>
-              </Card>
-            ) : (
-              <Button title={t.seance.addExercise} onPress={() => setShowAddExercise(true)} />
-            )}
-
-            {customExercises.map((ex) =>
-              editingExerciseId === ex.id ? (
-                <Card key={ex.id} style={{ gap: Spacing.sm }}>
-                  <Input value={editName} onChangeText={setEditName} />
-                  <SegmentedControl
-                    options={[
-                      { label: t.common.upperBody, value: 'upper' as const },
-                      { label: t.common.lowerBody, value: 'lower' as const },
-                    ]}
-                    value={editCategory}
-                    onChange={setEditCategory}
-                  />
-                  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                    <Button title={t.common.save} onPress={saveEditExercise} style={{ flex: 1 }} />
-                    <IconButton name="close" onPress={() => setEditingExerciseId(null)} />
-                  </View>
-                </Card>
-              ) : (
-                <Card
-                  key={ex.id}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <Pressable onPress={() => startEditExercise(ex)} style={{ flex: 1 }}>
-                    <ThemedText variant="subhead" weight="600">
-                      {ex.name}
-                    </ThemedText>
-                    <ThemedText variant="caption" color="tertiary">
-                      {ex.category === 'upper' ? t.common.upperBody : t.common.lowerBody}
-                    </ThemedText>
-                  </Pressable>
-                  <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
-                    <IconButton name="pencil-outline" size={18} onPress={() => startEditExercise(ex)} />
-                    <IconButton
-                      name="trash-outline"
-                      variant="destructive"
-                      size={18}
-                      onPress={() => handleDeleteExercise(ex.id, ex.name)}
-                    />
-                  </View>
-                </Card>
-              )
-            )}
-          </View>
+          <Pressable
+            onPress={() => router.push('/exercise-library')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacing.sm,
+              padding: Spacing.md,
+              borderRadius: 12,
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="barbell-outline" size={20} color={colors.text} />
+            <View style={{ flex: 1 }}>
+              <ThemedText variant="subhead" weight="600">
+                {t.profil.exerciseLibrary}
+              </ThemedText>
+              <ThemedText variant="caption" color="tertiary">
+                {t.seance.exerciseCount(customExercises.length)}
+              </ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          </Pressable>
 
           <Pressable
             onPress={() => router.push('/support')}

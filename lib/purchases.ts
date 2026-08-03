@@ -13,5 +13,9 @@ const ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
 export function configurePurchases() {
   const apiKey = Platform.OS === 'ios' ? IOS_KEY : ANDROID_KEY;
   if (!apiKey) return;
-  Purchases.configure({ apiKey });
+  try {
+    Purchases.configure({ apiKey });
+  } catch (err) {
+    console.warn('RevenueCat configure failed', err);
+  }
 }
