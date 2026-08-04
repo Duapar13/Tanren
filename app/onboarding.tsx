@@ -16,6 +16,16 @@ import { Spacing } from '../constants/theme';
 import { NutritionGoal } from '../types';
 import { todayKey } from '../utils/date';
 import { authErrorMessage } from '../lib/authErrors';
+import { displayToCm, displayToKg } from '../utils/units';
+
+const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
+  { label: 'kg', value: 'kg' },
+  { label: 'lbs', value: 'lbs' },
+];
+const LENGTH_UNIT_OPTIONS: { label: string; value: 'cm' | 'in' }[] = [
+  { label: 'cm', value: 'cm' },
+  { label: 'in', value: 'in' },
+];
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -50,6 +60,8 @@ export default function OnboardingScreen() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [heightInput, setHeightInput] = useState('');
   const [weightInput, setWeightInput] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [lengthUnit, setLengthUnit] = useState<'cm' | 'in'>('cm');
   const [goal, setGoal] = useState<NutritionGoal>('maintain');
   const [trainingDays, setTrainingDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [measurementsEnabled, setMeasurementsEnabled] = useState(false);
@@ -80,16 +92,18 @@ export default function OnboardingScreen() {
         goal,
         trainingDays,
         measurementsEnabled,
+        weightUnit,
+        lengthUnit,
         onboardingCompleted: true,
       };
       if (trimmedUsername !== user?.username) patch.username = trimmedUsername;
-      const heightCm = num(heightInput);
-      if (heightCm > 0) patch.heightCm = heightCm;
+      const heightValue = num(heightInput);
+      if (heightValue > 0) patch.heightCm = displayToCm(heightValue, lengthUnit);
       await updateProfile(patch);
 
-      const weightKg = num(weightInput);
-      if (weightKg > 0) {
-        await addBodyWeightEntry({ date: todayKey(), weightKg });
+      const weightValue = num(weightInput);
+      if (weightValue > 0) {
+        await addBodyWeightEntry({ date: todayKey(), weightKg: displayToKg(weightValue, weightUnit) });
       }
     } catch (err) {
       setUsernameError(authErrorMessage(err));
@@ -147,25 +161,33 @@ export default function OnboardingScreen() {
                   <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        {t.onboarding.heightLabel} (cm)
+                        {t.onboarding.heightLabel} ({lengthUnit})
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
                         value={heightInput}
                         onChangeText={setHeightInput}
-                        placeholder="ex. 178"
+                        placeholder={lengthUnit === 'cm' ? 'ex. 178' : 'ex. 70'}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText variant="caption" color="tertiary">
-                        {t.onboarding.weightLabel} (kg)
+                        {t.onboarding.weightLabel} ({weightUnit})
                       </ThemedText>
                       <Input
                         keyboardType="decimal-pad"
                         value={weightInput}
                         onChangeText={setWeightInput}
-                        placeholder="ex. 75"
+                        placeholder={weightUnit === 'kg' ? 'ex. 75' : 'ex. 165'}
                       />
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                    <View style={{ flex: 1 }}>
+                      <SegmentedControl options={LENGTH_UNIT_OPTIONS} value={lengthUnit} onChange={setLengthUnit} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <SegmentedControl options={WEIGHT_UNIT_OPTIONS} value={weightUnit} onChange={setWeightUnit} />
                     </View>
                   </View>
                 </Card>
