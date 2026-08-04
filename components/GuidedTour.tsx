@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
 import { NinjaMascotFull } from './NinjaMascotFull';
@@ -10,7 +11,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 
 // Mirrors the real tab order in app/(tabs)/_layout.tsx — the highlight ring below slides to
-// whichever position matches the tab bar icon it's currently describing.
+// whichever position matches the tab bar icon it's currently describing, and the tour actually
+// navigates there too so the real screen shows through behind the tooltip, not just Accueil.
 const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
   'home',
   'barbell',
@@ -19,6 +21,8 @@ const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
   'nutrition',
   'person',
 ];
+
+const STEP_ROUTES = ['/(tabs)', '/(tabs)/seance', '/(tabs)/progression', '/(tabs)/rang', '/(tabs)/nutrition', '/(tabs)/profil'] as const;
 
 // Same reaction each tab's own ScreenHeader uses (see app/(tabs)/*.tsx), so Gyma wears the same
 // expression here as it will once the user actually lands on that tab.
@@ -47,6 +51,10 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
   useEffect(() => {
     if (visible) setStepIndex(0);
   }, [visible]);
+
+  useEffect(() => {
+    if (visible) router.navigate(STEP_ROUTES[stepIndex]);
+  }, [visible, stepIndex]);
 
   useEffect(() => {
     ringX.value = withSpring(segmentWidth * (stepIndex + 0.5), { damping: 16, stiffness: 150 });

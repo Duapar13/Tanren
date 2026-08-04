@@ -20,11 +20,14 @@ export function NinjaMascotFull({ size = 120, reaction = 'default' }: Props) {
       {/* Sash */}
       <Rect x={17} y={106} width={66} height={10} rx={5} fill={GOLD_ACCENT} transform="rotate(-8 50 111)" />
 
-      {/* Arms, raised in a mid-explanation gesture */}
-      <Rect x={63} y={84} width={13} height={36} rx={6.5} fill="#111111" transform="rotate(-35 69.5 102)" />
-      <Circle cx={82} cy={87} r={7.2} fill="#111111" />
-      <Rect x={24} y={84} width={13} height={36} rx={6.5} fill="#111111" transform="rotate(35 30.5 102)" />
-      <Circle cx={18} cy={87} r={7.2} fill="#111111" />
+      {/* Arms, raised out to the sides in a mid-explanation gesture — plain thick strokes from
+          shoulder to hand so the endpoints are exact, no rotated-rect math to get wrong. Shoulders
+          sit well below the hood (which ends at y=86); hands land outside the hood's x-range
+          (16-84) so they never overlap the face. */}
+      <Path d="M70 100 L89 91" stroke="#111111" strokeWidth={12} strokeLinecap="round" />
+      <Circle cx={90} cy={90} r={6.5} fill="#111111" />
+      <Path d="M30 100 L11 91" stroke="#111111" strokeWidth={12} strokeLinecap="round" />
+      <Circle cx={10} cy={90} r={6.5} fill="#111111" />
 
       {/* Headband tails, flowing off the back of the head */}
       <Path d="M18 46 Q3 53 9 68 Q15 58 25 53 Z" fill={GOLD_ACCENT} />
