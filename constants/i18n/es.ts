@@ -184,6 +184,8 @@ export const es: TranslationDict = {
   },
   progression: {
     regularity: 'Constancia',
+    thisYear: 'Este año',
+    missedSessions: 'Sesiones perdidas',
     est1RM: '1RM est.',
     maxWeight: 'Peso máx',
     volume: 'Volumen',
@@ -304,5 +306,11 @@ export const es: TranslationDict = {
     errorTitle: 'Pago',
     errorBody: 'El pago no se pudo completar, inténtalo de nuevo más tarde.',
     disclaimer: 'Donación o suscripción opcional — no desbloquea nada, la app sigue siendo totalmente gratuita para todos.',
+    restorePurchases: 'Restaurar compras',
+    restoring: 'Restaurando…',
+    restoreDoneTitle: 'Restauración completa',
+    restoreDoneBody: 'Tus compras anteriores han sido restauradas.',
+    restoreErrorTitle: 'Restaurar',
+    restoreErrorBody: 'No se pudieron restaurar las compras ahora, inténtalo más tarde.',
   },
 };

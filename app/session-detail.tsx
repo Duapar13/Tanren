@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { IconButton } from '../components/IconButton';
 import { ShareCard } from '../components/ShareCard';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { useData } from '../context/DataContext';
@@ -28,13 +27,12 @@ function groupByExercise(sets: SetWithExercise[]) {
 
 export default function SessionDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
-  const { sessions, sets, removeSession } = useData();
+  const { sessions, sets } = useData();
   const { user } = useAuth();
   const { t, lang } = useTranslation();
   const weightUnit = user?.weightUnit ?? 'kg';
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const daySessions = useMemo(() => sessions.filter((s) => s.date === date), [date, sessions]);
 
@@ -56,35 +54,12 @@ export default function SessionDetailScreen() {
     }
   };
 
-  const handleDelete = () => {
-    if (daySessions.length === 0) return;
-    Alert.alert(t.seance.deleteSessionConfirmTitle, t.seance.deleteSessionConfirmBody, [
-      { text: t.common.cancel, style: 'cancel' },
-      {
-        text: t.common.delete,
-        style: 'destructive',
-        onPress: async () => {
-          setDeleting(true);
-          try {
-            for (const s of daySessions) await removeSession(s.id);
-            router.back();
-          } finally {
-            setDeleting(false);
-          }
-        },
-      },
-    ]);
-  };
-
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.lg, alignItems: 'center' }}>
-        <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <ThemedText variant="title1">{date ? formatLongDate(date, LOCALE_MAP[lang]) : ''}</ThemedText>
-          {daySessions.length > 0 && (
-            <IconButton name="trash-outline" variant="destructive" onPress={handleDelete} disabled={deleting} />
-          )}
-        </View>
+        <ThemedText variant="title1" style={{ width: '100%' }}>
+          {date ? formatLongDate(date, LOCALE_MAP[lang]) : ''}
+        </ThemedText>
 
         {grouped.length === 0 ? (
           <Card style={{ width: '100%' }}>

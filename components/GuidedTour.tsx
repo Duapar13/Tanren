@@ -3,6 +3,8 @@ import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
+import { NinjaMascotFull } from './NinjaMascotFull';
+import { NinjaReaction } from './NinjaMascot';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
@@ -18,6 +20,10 @@ const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
   'person',
 ];
 
+// Same reaction each tab's own ScreenHeader uses (see app/(tabs)/*.tsx), so Gyma wears the same
+// expression here as it will once the user actually lands on that tab.
+const STEP_REACTIONS: NinjaReaction[] = ['default', 'focused', 'excited', 'proud', 'content', 'friendly'];
+
 const RING_SIZE = 56;
 
 interface Props {
@@ -31,7 +37,7 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const [stepIndex, setStepIndex] = useState(0);
-  const STEPS = t.tour.steps.map((s, i) => ({ ...s, icon: STEP_ICONS[i] }));
+  const STEPS = t.tour.steps.map((s, i) => ({ ...s, icon: STEP_ICONS[i], reaction: STEP_REACTIONS[i] }));
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
 
@@ -104,24 +110,18 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
               gap: Spacing.sm,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: colors.accent + '26',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name={step.icon} size={18} color={colors.accent} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+              <NinjaMascotFull size={64} reaction={step.reaction} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name={step.icon} size={14} color={colors.accent} />
+                  <ThemedText variant="title3" weight="700">
+                    {step.title}
+                  </ThemedText>
+                </View>
+                <ThemedText color="secondary">{step.description}</ThemedText>
               </View>
-              <ThemedText variant="title3" weight="700">
-                {step.title}
-              </ThemedText>
             </View>
-            <ThemedText color="secondary">{step.description}</ThemedText>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.xs }}>
               {!isLast ? (

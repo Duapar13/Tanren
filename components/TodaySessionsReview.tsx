@@ -29,7 +29,7 @@ const num = (v: string) => {
 };
 
 export function TodaySessionsReview() {
-  const { sessions, sets, removeSet, updateSet, removeSession } = useData();
+  const { sessions, sets, removeSet, updateSet } = useData();
   const { user } = useAuth();
   const { t } = useTranslation();
   const rpeEnabled = user?.rpeEnabled ?? false;
@@ -44,13 +44,6 @@ export function TodaySessionsReview() {
   const todaysSessions = sessions.filter((s) => s.date === today);
 
   if (todaysSessions.length === 0) return null;
-
-  const confirmDeleteSession = (sessionId: number) => {
-    Alert.alert(t.seance.deleteSessionConfirmTitle, t.seance.deleteSessionConfirmBody, [
-      { text: t.common.cancel, style: 'cancel' },
-      { text: t.common.delete, style: 'destructive', onPress: () => removeSession(sessionId) },
-    ]);
-  };
 
   const confirmDeleteSet = (set: SetWithExercise) => {
     Alert.alert(t.seance.deleteSetConfirmTitle, undefined, [
@@ -93,22 +86,9 @@ export function TodaySessionsReview() {
 
         return (
           <View key={session.id} style={{ gap: Spacing.sm }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <ThemedText variant="title3" weight="700">
-                {t.seance.exerciseCount(grouped.length)}
-              </ThemedText>
-              <IconButton
-                name="trash-outline"
-                variant="destructive"
-                onPress={() => confirmDeleteSession(session.id)}
-              />
-            </View>
+            <ThemedText variant="title3" weight="700">
+              {t.seance.exerciseCount(grouped.length)}
+            </ThemedText>
 
             {grouped.map(([exerciseId, exerciseSets]) => (
               <ExerciseCard key={exerciseId} title={exerciseSets[0].exerciseName}>

@@ -184,6 +184,8 @@ export const en: TranslationDict = {
   },
   progression: {
     regularity: 'Consistency',
+    thisYear: 'This year',
+    missedSessions: 'Missed sessions',
     est1RM: 'Est. 1RM',
     maxWeight: 'Max weight',
     volume: 'Volume',
@@ -304,5 +306,11 @@ export const en: TranslationDict = {
     errorTitle: 'Payment',
     errorBody: 'The payment could not go through, try again later.',
     disclaimer: 'Optional donation or subscription — unlocks nothing, the app stays entirely free for everyone.',
+    restorePurchases: 'Restore purchases',
+    restoring: 'Restoring…',
+    restoreDoneTitle: 'Restore complete',
+    restoreDoneBody: 'Your previous purchases have been restored.',
+    restoreErrorTitle: 'Restore',
+    restoreErrorBody: 'Could not restore purchases right now, try again later.',
   },
 };

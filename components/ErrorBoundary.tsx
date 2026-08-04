@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { View } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Spacing } from '../constants/theme';
@@ -21,6 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error('Ningyma crashed:', error, info.componentStack);
+    Sentry.captureException(error);
   }
 
   render() {

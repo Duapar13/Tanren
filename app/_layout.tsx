@@ -17,9 +17,11 @@ import { AppShell } from '../components/AppShell';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useTheme } from '../hooks/useTheme';
 import { configurePurchases } from '../lib/purchases';
+import { configureSentry } from '../lib/sentry';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 configurePurchases();
+configureSentry();
 setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
 
 // Without this, a push arriving while the app is open is silently swallowed instead of

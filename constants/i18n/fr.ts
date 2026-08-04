@@ -182,6 +182,8 @@ export const fr = {
   },
   progression: {
     regularity: 'Régularité',
+    thisYear: 'Cette année',
+    missedSessions: 'Séances manquées',
     est1RM: '1RM est.',
     maxWeight: 'Poids max',
     volume: 'Volume',
@@ -302,6 +304,12 @@ export const fr = {
     errorTitle: 'Paiement',
     errorBody: 'Le paiement n’a pas pu aboutir, réessaie plus tard.',
     disclaimer: 'Don ou abonnement facultatif — ne débloque aucune fonctionnalité, l’app reste entièrement gratuite pour tout le monde.',
+    restorePurchases: 'Restaurer les achats',
+    restoring: 'Restauration…',
+    restoreDoneTitle: 'Restauration terminée',
+    restoreDoneBody: 'Tes achats précédents ont été restaurés.',
+    restoreErrorTitle: 'Restauration',
+    restoreErrorBody: 'Impossible de restaurer les achats pour le moment, réessaie plus tard.',
   },
 };
 

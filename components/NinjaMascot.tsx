@@ -8,7 +8,7 @@ interface Props {
   reaction?: NinjaReaction;
 }
 
-function Eyes({ reaction }: { reaction: NinjaReaction }) {
+export function Eyes({ reaction }: { reaction: NinjaReaction }) {
   switch (reaction) {
     // Séance — narrowed, determined squint with a short furrowed brow over each eye.
     case 'focused':
@@ -71,7 +71,7 @@ function Eyes({ reaction }: { reaction: NinjaReaction }) {
   }
 }
 
-function Accessory({ reaction }: { reaction: NinjaReaction }) {
+export function Accessory({ reaction }: { reaction: NinjaReaction }) {
   switch (reaction) {
     // Séance — a small dumbbell.
     case 'focused':

@@ -184,6 +184,8 @@ export const it: TranslationDict = {
   },
   progression: {
     regularity: 'Costanza',
+    thisYear: "Quest'anno",
+    missedSessions: 'Sessioni mancate',
     est1RM: '1RM stim.',
     maxWeight: 'Peso max',
     volume: 'Volume',
@@ -304,5 +306,11 @@ export const it: TranslationDict = {
     errorTitle: 'Pagamento',
     errorBody: 'Il pagamento non è andato a buon fine, riprova più tardi.',
     disclaimer: 'Donazione o abbonamento facoltativi — non sbloccano nulla, l’app resta interamente gratuita per tutti.',
+    restorePurchases: 'Ripristina acquisti',
+    restoring: 'Ripristino…',
+    restoreDoneTitle: 'Ripristino completato',
+    restoreDoneBody: 'I tuoi acquisti precedenti sono stati ripristinati.',
+    restoreErrorTitle: 'Ripristino',
+    restoreErrorBody: 'Impossibile ripristinare gli acquisti al momento, riprova più tardi.',
   },
 };

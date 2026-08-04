@@ -14,6 +14,7 @@ export default function SupportScreen() {
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     Purchases.getOfferings()
@@ -33,6 +34,18 @@ export default function SupportScreen() {
       }
     } finally {
       setPurchasingId(null);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      await Purchases.restorePurchases();
+      Alert.alert(t.support.restoreDoneTitle, t.support.restoreDoneBody);
+    } catch {
+      Alert.alert(t.support.restoreErrorTitle, t.support.restoreErrorBody);
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -85,6 +98,13 @@ export default function SupportScreen() {
         <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
           {t.support.disclaimer}
         </ThemedText>
+
+        <Button
+          title={restoring ? t.support.restoring : t.support.restorePurchases}
+          variant="plain"
+          onPress={handleRestore}
+          disabled={restoring}
+        />
       </ScrollView>
     </ThemedView>
   );
