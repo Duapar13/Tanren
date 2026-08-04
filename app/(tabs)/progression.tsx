@@ -31,7 +31,11 @@ export default function ProgressionScreen() {
     const trainingDays = user?.trainingDays ?? [];
     let done = 0;
     let missed = 0;
-    const cursor = new Date(year, 0, 1);
+    // Never count days before the account existed — a fresh account created mid-year
+    // shouldn't show months of "missed" sessions it was never possible to log.
+    const jan1 = new Date(year, 0, 1);
+    const createdAt = user?.createdAt ? new Date(user.createdAt) : jan1;
+    const cursor = createdAt > jan1 ? createdAt : jan1;
     while (cursor.getFullYear() === year) {
       const key = toDateKey(cursor);
       if (key > today) break;
@@ -41,7 +45,7 @@ export default function ProgressionScreen() {
     }
     return { done, missed };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessions, user?.trainingDays]);
+  }, [sessions, user?.trainingDays, user?.createdAt]);
 
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
