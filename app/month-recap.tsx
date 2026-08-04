@@ -1,16 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
-import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { ShareCard } from '../components/ShareCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
-import { Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
 import { computeMonthlyRecap } from '../utils/monthlyStats';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
@@ -25,12 +25,6 @@ export default function MonthRecapScreen() {
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
 
-  const deltaLabel = (current: number, reference: number): string => {
-    if (reference <= 0) return current > 0 ? t.monthRecap.newLabel : '—';
-    const pct = Math.round(((current - reference) / reference) * 100);
-    return `${pct >= 0 ? '+' : ''}${pct}%`;
-  };
-
   const viewYear = Number(year);
   const viewMonth = Number(month);
 
@@ -43,7 +37,17 @@ export default function MonthRecapScreen() {
     () => computeMonthlyRecap(sets, sessions, viewYear, viewMonth),
     [sets, sessions, viewYear, viewMonth]
   );
-  const { current, previousMonth, avg3Months, avg6Months, avg12Months } = recap;
+  const { current, previousMonth } = recap;
+
+  // A single, clear vs-last-month trend instead of stacking 3/6/12-month averages that read
+  // as noise (and can print triple-digit percentages) once there's only a month or two of data.
+  const trend = useMemo(() => {
+    if (previousMonth.totalVolume <= 0) {
+      return current.totalVolume > 0 ? { label: t.monthRecap.newLabel, positive: true } : null;
+    }
+    const pct = Math.round(((current.totalVolume - previousMonth.totalVolume) / previousMonth.totalVolume) * 100);
+    return { label: `${pct >= 0 ? '+' : ''}${pct}%`, positive: pct >= 0 };
+  }, [current.totalVolume, previousMonth.totalVolume, t.monthRecap.newLabel]);
 
   const handleShare = async () => {
     setSharing(true);
@@ -67,59 +71,99 @@ export default function MonthRecapScreen() {
           <Stat label={t.monthRecap.volume} value={formatWeight(current.totalVolume, weightUnit, 0)} />
         </View>
 
-        <View>
-          <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            {t.monthRecap.volumeComparison}
-          </ThemedText>
-          <Card style={{ gap: 6 }}>
-            <CompareRow label={t.monthRecap.previousMonth} value={deltaLabel(current.totalVolume, previousMonth.totalVolume)} />
-            <CompareRow label={t.monthRecap.avg3Months} value={deltaLabel(current.totalVolume, avg3Months.avgVolume)} />
-            <CompareRow label={t.monthRecap.avg6Months} value={deltaLabel(current.totalVolume, avg6Months.avgVolume)} />
-            <CompareRow label={t.monthRecap.avgYear} value={deltaLabel(current.totalVolume, avg12Months.avgVolume)} />
-          </Card>
-        </View>
+        {trend && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              alignSelf: 'center',
+              paddingHorizontal: Spacing.md,
+              paddingVertical: 6,
+              borderRadius: 999,
+              backgroundColor: (trend.positive ? colors.positive : colors.negative) + '1A',
+            }}
+          >
+            <Ionicons
+              name={trend.positive ? 'trending-up' : 'trending-down'}
+              size={14}
+              color={trend.positive ? colors.positive : colors.negative}
+            />
+            <ThemedText variant="footnote" weight="700" style={{ color: trend.positive ? colors.positive : colors.negative }}>
+              {trend.label}
+            </ThemedText>
+            <ThemedText variant="footnote" color="tertiary">
+              {t.monthRecap.vsLastMonth}
+            </ThemedText>
+          </View>
+        )}
 
         <View>
           <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
             {t.monthRecap.bestOfMonth}
           </ThemedText>
-          <Card style={{ gap: 6 }}>
-            {current.bestPerformances.length === 0 ? (
-              <ThemedText variant="footnote" color="tertiary">
-                {t.monthRecap.noNewRecord}
-              </ThemedText>
-            ) : (
-              current.bestPerformances.map((p, i) => (
-                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <ThemedText variant="footnote" color="secondary">
+          {current.bestPerformances.length === 0 ? (
+            <ThemedText variant="footnote" color="tertiary">
+              {t.monthRecap.noNewRecord}
+            </ThemedText>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+              {current.bestPerformances.map((p, i) => (
+                <View
+                  key={i}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: Spacing.sm,
+                    paddingVertical: Spacing.xs,
+                    borderRadius: Radius.md,
+                    backgroundColor: colors.positive + '14',
+                    borderWidth: 1,
+                    borderColor: colors.positive + '33',
+                  }}
+                >
+                  <Ionicons name="trophy" size={14} color={colors.positive} />
+                  <ThemedText variant="footnote" weight="600">
                     {p.exerciseName}
                   </ThemedText>
-                  <ThemedText variant="footnote" weight="600" style={{ color: colors.positive }}>
-                    {formatWeight(p.est1RM, weightUnit)} · {p.date}
+                  <ThemedText variant="footnote" weight="700" style={{ color: colors.positive }}>
+                    {formatWeight(p.est1RM, weightUnit)}
                   </ThemedText>
                 </View>
-              ))
-            )}
-          </Card>
+              ))}
+            </View>
+          )}
         </View>
 
         <View>
           <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            {t.monthRecap.stagnations}
+            {t.monthRecap.toChallenge}
           </ThemedText>
-          <Card style={{ gap: 6 }}>
-            {current.stagnant.length === 0 ? (
-              <ThemedText variant="footnote" color="tertiary">
-                {t.monthRecap.noStagnations}
-              </ThemedText>
-            ) : (
-              current.stagnant.map((s) => (
-                <ThemedText key={s.exerciseId} variant="footnote" color="secondary">
-                  {t.monthRecap.noRecordBeatenThisMonth(s.exerciseName)}
-                </ThemedText>
-              ))
-            )}
-          </Card>
+          {current.stagnant.length === 0 ? (
+            <ThemedText variant="footnote" color="tertiary">
+              {t.monthRecap.noneToChallenge}
+            </ThemedText>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+              {current.stagnant.map((s) => (
+                <View
+                  key={s.exerciseId}
+                  style={{
+                    paddingHorizontal: Spacing.sm,
+                    paddingVertical: Spacing.xs,
+                    borderRadius: Radius.md,
+                    backgroundColor: colors.fill,
+                  }}
+                >
+                  <ThemedText variant="footnote" color="secondary">
+                    {s.exerciseName}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         <ThemedText variant="headline">{t.sessionDetail.yourSheet}</ThemedText>
@@ -149,19 +193,6 @@ function Stat({ label, value }: { label: string; value: string }) {
       </ThemedText>
       <ThemedText variant="caption" color="tertiary">
         {label}
-      </ThemedText>
-    </View>
-  );
-}
-
-function CompareRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <ThemedText variant="footnote" color="secondary">
-        {label}
-      </ThemedText>
-      <ThemedText variant="footnote" weight="600">
-        {value}
       </ThemedText>
     </View>
   );
