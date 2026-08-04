@@ -26,7 +26,11 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -87,6 +91,12 @@
         "projectId": "aa92ef13-ad39-4d5f-bd3a-66f48927e591"
       }
     },
-    "owner": "duapar13s-team"
+    "owner": "duapar13s-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/aa92ef13-ad39-4d5f-bd3a-66f48927e591"
+    }
   }
 }
