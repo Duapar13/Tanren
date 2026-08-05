@@ -116,11 +116,11 @@ export default function OnboardingScreen() {
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl }}
-            >
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={Keyboard.dismiss}
+            contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl }}
+          >
               <View style={{ alignItems: 'center', gap: Spacing.xs }}>
                 <NingymaWordmark size={44} />
                 <ThemedText variant="subhead" color="secondary" style={{ textAlign: 'center' }}>
@@ -257,8 +257,7 @@ export default function OnboardingScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-            </ScrollView>
-          </Pressable>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>

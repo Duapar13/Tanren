@@ -222,15 +222,15 @@ export default function SeanceScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{
-                padding: Spacing.lg,
-                gap: Spacing.lg,
-                paddingBottom: Spacing.xxl,
-              }}
-            >
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={Keyboard.dismiss}
+            contentContainerStyle={{
+              padding: Spacing.lg,
+              gap: Spacing.lg,
+              paddingBottom: Spacing.xxl,
+            }}
+          >
               {resumeTarget && resuming ? (
                 <TodaySessionsReview />
               ) : null}
@@ -340,8 +340,7 @@ export default function SeanceScreen() {
                 onPress={handleFinish}
                 disabled={submitting || totalSets === 0}
               />
-            </ScrollView>
-          </Pressable>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
