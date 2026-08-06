@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Ningyma — Backoffice</title>
+<link rel="icon" href="https://api-tanren.duapar.fr/icon.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <img class="mark" src="https://api-tanren.duapar.fr/icon.png" alt="">
+    <p class="wordmark">Ningyma</p>
+    <p class="tag">Backoffice</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-username">Identifiant</label>
+        <input id="login-username" type="text" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-password">Mot de passe</label>
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn">Se connecter</button>
+      <p id="login-error" class="error-msg"></p>
+    </form>
+  </div>
+</div>
+
+<div id="dashboard" class="hidden">
+  <div class="topbar">
+    <img class="mark" src="https://api-tanren.duapar.fr/icon.png" alt="">
+    <p class="wordmark">Ningyma</p>
+    <span class="tag">Backoffice</span>
+    <div class="spacer"></div>
+    <button id="theme-toggle" class="icon-btn" title="Changer de thème">◐</button>
+    <button id="logout-btn" class="icon-btn" title="Déconnexion">⏻</button>
+  </div>
+
+  <main>
+    <p class="section-title">Vue d'ensemble</p>
+    <div id="tiles" class="tiles"></div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 34px 0 12px;">
+      <p class="section-title" style="margin:0;">Croissance &amp; activité</p>
+      <div style="display:flex; gap:6px;">
+        <button class="period-pill btn-pill" data-days="7">7j</button>
+        <button class="period-pill btn-pill active" data-days="30">30j</button>
+        <button class="period-pill btn-pill" data-days="90">90j</button>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px;">
+      <div id="chart-growth"></div>
+      <div id="chart-sessions"></div>
+    </div>
+    <div id="chart-active"></div>
+
+    <p class="section-title">Compétition &amp; profils</p>
+    <div class="grid-2">
+      <div id="chart-ranks"></div>
+      <div id="chart-goals"></div>
+    </div>
+
+    <p class="section-title">Exercices</p>
+    <div id="chart-exercises"></div>
+
+    <p class="section-title">Derniers inscrits</p>
+    <div class="card">
+      <div id="recent-users-table"></div>
+    </div>
+
+    <p class="section-title">Santé du système</p>
+    <div class="card">
+      <div id="system-health"></div>
+    </div>
+  </main>
+
+  <footer>Ningyma Backoffice · api-tanren.duapar.fr</footer>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,10 +1,53 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { computeSeasonRanking, currentSeasonInfo, seasonInfoForNumber } from '../utils/ranking.js';
+import { computeSeasonRanking, currentSeasonInfo, seasonInfoForNumber, estimate1RM } from '../utils/ranking.js';
 
 const router = Router();
 router.use(requireAuth);
+
+/**
+ * Average best estimated 1RM per exercise NAME, across every user who has logged it — feeds
+ * the "above the community average" bonus. Matched by name rather than exercise_id: every
+ * exercise row in this schema (including the presets that ship with the app) is a per-user
+ * copy with its own id and a real user_id, there's no shared/canonical row to key off — see
+ * exercises table. Two different users' "Développé couché" are different exercise_ids but the
+ * same real-world lift, so name (trimmed, case-insensitive) is the only workable join key.
+ * Scans every user's sets on every report; fine at today's scale, worth revisiting (e.g. a
+ * cached/precomputed table refreshed periodically) if the user base grows a lot.
+ */
+async function fetchGlobalExerciseAverages() {
+  const [rows] = await pool.query(
+    `SELECT sessions.user_id AS userId, LOWER(TRIM(exercises.name)) AS exerciseName,
+            sets.weight_kg AS weightKg, sets.reps AS reps
+     FROM sets
+     JOIN sessions ON sessions.id = sets.session_id
+     JOIN exercises ON exercises.id = sets.exercise_id`
+  );
+
+  const bestByUserExercise = new Map();
+  for (const r of rows) {
+    const key = `${r.userId}:${r.exerciseName}`;
+    const est = estimate1RM(r.weightKg, r.reps);
+    const existing = bestByUserExercise.get(key);
+    if (!existing || est > existing) bestByUserExercise.set(key, est);
+  }
+
+  const sumsByExercise = new Map();
+  for (const [key, best] of bestByUserExercise) {
+    const exerciseName = key.slice(key.indexOf(':') + 1);
+    const agg = sumsByExercise.get(exerciseName) ?? { sum: 0, count: 0 };
+    agg.sum += best;
+    agg.count += 1;
+    sumsByExercise.set(exerciseName, agg);
+  }
+
+  const averages = new Map();
+  for (const [exerciseName, { sum, count }] of sumsByExercise) {
+    averages.set(exerciseName, sum / count);
+  }
+  return averages;
+}
 
 /**
  * Ranking used to be entirely client-reported (a client would just POST whatever points/rank
@@ -28,9 +71,11 @@ router.post('/report', async (req, res) => {
   const [sessions] = await pool.query('SELECT id, date FROM sessions WHERE user_id = ?', [req.userId]);
   const [sets] = await pool.query(
     `SELECT sets.session_id AS sessionId, sets.exercise_id AS exerciseId,
-            sets.weight_kg AS weightKg, sets.reps AS reps
+            sets.weight_kg AS weightKg, sets.reps AS reps,
+            LOWER(TRIM(exercises.name)) AS exerciseName
      FROM sets
      JOIN sessions ON sessions.id = sets.session_id
+     JOIN exercises ON exercises.id = sets.exercise_id
      WHERE sessions.user_id = ?`,
     [req.userId]
   );
@@ -46,6 +91,7 @@ router.post('/report', async (req, res) => {
     'SELECT weight_kg AS weightKg FROM body_weight_entries WHERE user_id = ? ORDER BY date DESC, id DESC',
     [req.userId]
   );
+  const globalExerciseAverages = await fetchGlobalExerciseAverages();
 
   const ranking = computeSeasonRanking(
     {
@@ -58,6 +104,7 @@ router.post('/report', async (req, res) => {
       trainingDays: user.training_days ? user.training_days.split(',').filter(Boolean).map(Number) : [],
       goal: user.goal,
       accountCreatedAt: String(user.created_at).slice(0, 10),
+      globalExerciseAverages,
     },
     seasonInfo
   );

@@ -71,7 +71,7 @@ function isTrainingDay(date, trainingDays) {
 }
 
 // Épley formula.
-function estimate1RM(weightKg, reps) {
+export function estimate1RM(weightKg, reps) {
   if (reps <= 0) return 0;
   if (reps === 1) return weightKg;
   return weightKg * (1 + reps / 30);
@@ -212,11 +212,48 @@ function computeMeasurementEvents(measurementEntries, goal, rangeStart, rangeEnd
   return events;
 }
 
+const PERFORMANCE_POINTS_PER_EXERCISE = 5;
+const PERFORMANCE_POINTS_CAP = 30;
+
 /**
- * params: { sessions:[{id,date}], sets:[{sessionId,exerciseId,weightKg,reps}],
+ * Bonus for currently sitting above the community's average best estimated 1RM on a given
+ * exercise (matched by name — see fetchGlobalExerciseAverages in routes/leaderboard.js for
+ * why). Needs everyone's data to compute the average, so this is server-only by design — the
+ * client's own local copy of this formula (utils/ranking.ts) has no such function and never
+ * will, since a device only ever syncs its own user's rows.
+ * globalAverages: Map<lowercased exercise name, avgBestEst1RM> — built by the caller.
+ * Dated "today" rather than to a specific session, since it reflects current standing, not
+ * a one-off historical event.
+ */
+function computePerformanceEvents(sets, globalAverages, today) {
+  if (!globalAverages || globalAverages.size === 0) return [];
+
+  const bestByExercise = new Map();
+  for (const s of sets) {
+    if (!s.exerciseName) continue;
+    const est = estimate1RM(s.weightKg, s.reps);
+    const existing = bestByExercise.get(s.exerciseName);
+    if (!existing || est > existing) bestByExercise.set(s.exerciseName, est);
+  }
+
+  const events = [];
+  let total = 0;
+  for (const [exerciseName, best] of bestByExercise) {
+    if (total >= PERFORMANCE_POINTS_CAP) break;
+    const avg = globalAverages.get(exerciseName);
+    if (avg && best > avg) {
+      events.push({ date: today, points: PERFORMANCE_POINTS_PER_EXERCISE, source: 'performance' });
+      total += PERFORMANCE_POINTS_PER_EXERCISE;
+    }
+  }
+  return events;
+}
+
+/**
+ * params: { sessions:[{id,date}], sets:[{sessionId,exerciseId,exerciseName,weightKg,reps}],
  *   nutritionEntries:[{date,proteinG,carbsG,fatG}], bodyWeightEntries:[{weightKg}] (DESC by date),
  *   measurementEntries:[{id,date,type,valueCm}], measurementsEnabled, trainingDays:number[],
- *   goal, accountCreatedAt: 'YYYY-MM-DD' }
+ *   goal, accountCreatedAt: 'YYYY-MM-DD', globalExerciseAverages?: Map<string, number> }
  */
 export function computeSeasonRanking(params, seasonInfo) {
   const today = todayKey();
@@ -240,8 +277,9 @@ export function computeSeasonRanking(params, seasonInfo) {
   const measurementEvents = params.measurementsEnabled
     ? computeMeasurementEvents(params.measurementEntries, params.goal, seasonInfo.startDate, effectiveEnd)
     : [];
+  const performanceEvents = computePerformanceEvents(params.sets, params.globalExerciseAverages, effectiveEnd);
 
-  const events = [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents];
+  const events = [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents, ...performanceEvents];
   const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
   const state = tierFromPoints(totalPoints);
 

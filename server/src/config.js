@@ -29,4 +29,13 @@ export const config = {
     clientId: process.env.APPLE_CLIENT_ID ?? null,
   },
   corsOrigins: (process.env.CORS_ORIGINS ?? '*').split(',').map((s) => s.trim()),
+  admin: {
+    username: process.env.ADMIN_USERNAME ?? null,
+    passwordHash: process.env.ADMIN_PASSWORD_HASH ?? null,
+    jwtSecret: process.env.ADMIN_JWT_SECRET ?? null,
+    // Same box as the API (pm2 runs it as the `tanren` user) — read directly off disk
+    // rather than re-implementing what backup-db.sh / check-review-status.js already track.
+    backupsDir: process.env.ADMIN_BACKUPS_DIR ?? '/home/tanren/backups/db',
+    appleStatusFile: process.env.ADMIN_APPLE_STATUS_FILE ?? '/home/tanren/backups/apple-status-state.json',
+  },
 };

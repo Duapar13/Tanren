@@ -334,6 +334,13 @@ export interface SeasonRanking {
   breakdown: { streak: number; pr: number; nutrition: number; measurement: number };
 }
 
+/**
+ * Note: the server (server/src/utils/ranking.js) also awards a bonus for sitting above the
+ * community's average best 1RM on a shared exercise. That needs every user's data to compute
+ * an average, which never gets synced to a single device — so it can't be reproduced here.
+ * This means the locally-estimated total can undershoot the authoritative server value by a
+ * few points; that's expected, not a bug, and resolves itself after the next /leaderboard/report.
+ */
 export function computeSeasonRanking(
   params: RankingParams,
   seasonInfo: SeasonInfo = currentSeasonInfo()

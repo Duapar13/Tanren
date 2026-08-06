@@ -13,6 +13,7 @@ import bodyWeightRoutes from './routes/bodyWeight.js';
 import nutritionRoutes from './routes/nutrition.js';
 import measurementsRoutes from './routes/measurements.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import adminRoutes from './routes/admin.js';
 import { scheduleDailyReminder } from './jobs/dailyReminder.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,6 +38,7 @@ app.use('/body-weight', bodyWeightRoutes);
 app.use('/nutrition/entries', nutritionRoutes);
 app.use('/measurements', measurementsRoutes);
 app.use('/leaderboard', leaderboardRoutes);
+app.use('/admin/api', adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'not_found' });
