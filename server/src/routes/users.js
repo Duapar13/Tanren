@@ -42,7 +42,6 @@ function publicUser(row) {
     restTimerEnabled: !!row.rest_timer_enabled,
     restTimerSeconds: row.rest_timer_seconds,
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
-    trainingSince: row.training_since,
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
@@ -72,7 +71,6 @@ router.patch('/me', async (req, res) => {
     restTimerEnabled,
     restTimerSeconds,
     trainingDays,
-    trainingSince,
     rpeEnabled,
     measurementsEnabled,
     customProteinG,
@@ -99,11 +97,6 @@ router.patch('/me', async (req, res) => {
   ) {
     return res.status(400).json({ error: 'invalid_training_days' });
   }
-  // Declarative only — never read by the ranking/streak engine, so no upper bound beyond "a
-  // real date" matters here the way it would for something that feeds points.
-  if (trainingSince !== undefined && trainingSince !== null && !/^\d{4}-\d{2}-\d{2}$/.test(trainingSince)) {
-    return res.status(400).json({ error: 'invalid_training_since' });
-  }
   if (username !== undefined) {
     if (!USERNAME_RE.test(username)) return res.status(400).json({ error: 'invalid_username' });
     const [clash] = await pool.query('SELECT id FROM users WHERE username = ? AND id != ?', [username, req.userId]);
@@ -125,7 +118,6 @@ router.patch('/me', async (req, res) => {
   if (restTimerEnabled !== undefined) { fields.push('rest_timer_enabled = ?'); values.push(restTimerEnabled ? 1 : 0); }
   if (restTimerSeconds !== undefined) { fields.push('rest_timer_seconds = ?'); values.push(restTimerSeconds); }
   if (trainingDays !== undefined) { fields.push('training_days = ?'); values.push(trainingDays.join(',')); }
-  if (trainingSince !== undefined) { fields.push('training_since = ?'); values.push(trainingSince); }
   if (rpeEnabled !== undefined) { fields.push('rpe_enabled = ?'); values.push(rpeEnabled ? 1 : 0); }
   if (measurementsEnabled !== undefined) { fields.push('measurements_enabled = ?'); values.push(measurementsEnabled ? 1 : 0); }
   if (customProteinG !== undefined) { fields.push('custom_protein_g = ?'); values.push(customProteinG); }

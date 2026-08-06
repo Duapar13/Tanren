@@ -24,7 +24,6 @@ interface AuthContextValue {
     restTimerEnabled: boolean;
     restTimerSeconds: number;
     trainingDays: number[];
-    trainingSince: string | null;
     rpeEnabled: boolean;
     measurementsEnabled: boolean;
     customProteinG: number | null;

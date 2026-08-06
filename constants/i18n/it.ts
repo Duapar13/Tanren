@@ -274,8 +274,6 @@ export const it: TranslationDict = {
     lengthUnits: 'Altezza e misurazioni',
     program: 'Programma',
     trainingDays: 'Giorni di allenamento',
-    trainingSince: 'In palestra dal',
-    trainingSinceHint: 'Solo indicativo — non conta nel tuo rango né nelle sessioni perse',
     session: 'Allenamento',
     restTimer: 'Timer di riposo',
     restTimerHint: 'Conto alla rovescia mostrato dopo ogni serie aggiunta',

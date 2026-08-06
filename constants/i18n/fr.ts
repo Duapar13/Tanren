@@ -272,8 +272,6 @@ export const fr = {
     lengthUnits: 'Taille & mensurations',
     program: 'Programme',
     trainingDays: "Jours d'entraînement",
-    trainingSince: 'À la salle depuis',
-    trainingSinceHint: 'Purement indicatif — ne compte pas dans ton rang ni tes séances manquées',
     session: 'Séance',
     restTimer: 'Timer de repos',
     restTimerHint: 'Décompte affiché après chaque série ajoutée',
