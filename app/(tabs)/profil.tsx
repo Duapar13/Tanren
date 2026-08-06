@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Alert, Image, Keyboard, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Image, Keyboard, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Application from 'expo-application';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -568,6 +569,11 @@ export default function ProfilScreen() {
               </ThemedText>
             </Pressable>
           </View>
+
+          <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.sm }}>
+            Ningyma {Application.nativeApplicationVersion} ({Application.nativeBuildVersion}) ·{' '}
+            {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+          </ThemedText>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
