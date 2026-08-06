@@ -185,6 +185,25 @@ export default function ProfilScreen() {
     updateProfile({ trainingDays: next });
   };
 
+  const [trainingSinceInput, setTrainingSinceInput] = useState(user?.trainingSince ?? '');
+  useEffect(() => {
+    setTrainingSinceInput(user?.trainingSince ?? '');
+  }, [user?.trainingSince]);
+
+  const saveTrainingSince = () => {
+    Keyboard.dismiss();
+    const trimmed = trainingSinceInput.trim();
+    if (trimmed === '') {
+      updateProfile({ trainingSince: null });
+      return;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !Number.isNaN(new Date(trimmed).getTime())) {
+      updateProfile({ trainingSince: trimmed });
+    } else {
+      setTrainingSinceInput(user?.trainingSince ?? '');
+    }
+  };
+
   const customExercises = exercises.filter((e) => e.isCustom);
 
   return (
@@ -402,6 +421,23 @@ export default function ProfilScreen() {
                     );
                   })}
                 </View>
+              </View>
+              <View>
+                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+                  {t.profil.trainingSince}
+                </ThemedText>
+                <Input
+                  value={trainingSinceInput}
+                  onChangeText={setTrainingSinceInput}
+                  onSubmitEditing={saveTrainingSince}
+                  onEndEditing={saveTrainingSince}
+                  returnKeyType="done"
+                  placeholder="YYYY-MM-DD"
+                  keyboardType="numbers-and-punctuation"
+                />
+                <ThemedText variant="caption" color="tertiary" style={{ marginTop: 4 }}>
+                  {t.profil.trainingSinceHint}
+                </ThemedText>
               </View>
             </Card>
           </View>

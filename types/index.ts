@@ -155,6 +155,9 @@ export interface User {
   pushNotificationsEnabled: boolean;
   weightUnit: 'kg' | 'lbs';
   lengthUnit: 'cm' | 'in';
+  /** Purely declarative "I've trained since X" note — never used by ranking/streak math,
+   * which only ever counts from createdAt (the real, technical account-start date). */
+  trainingSince: string | null;
 }
 
 export interface ExercisePR {
