@@ -30,6 +30,7 @@ export const en: TranslationDict = {
     monthRecap: 'Month recap',
     support: 'Support the app',
     exerciseLibrary: 'Exercise library',
+    exerciseCatalog: 'Exercise catalog',
   },
   tour: {
     steps: [
@@ -184,6 +185,19 @@ export const en: TranslationDict = {
     tapToSkip: 'Tap to skip',
     chronoLabel: 'Stopwatch',
     tapToStop: 'Tap to stop',
+  },
+  exerciseCatalog: {
+    browseButton: 'Browse the catalog',
+    browseButtonHint: 'Over 1000 exercises with animated demos',
+    searchPlaceholder: 'Search an exercise…',
+    noResults: 'No results',
+    filterAll: 'All',
+    addToMyExercises: 'Add to my exercises',
+    addedToMyExercises: 'Added to your exercises',
+    instructions: 'Instructions',
+    secondaryMuscles: 'Secondary muscles',
+    equipment: 'Equipment',
+    target: 'Target muscle',
   },
   progression: {
     regularity: 'Consistency',

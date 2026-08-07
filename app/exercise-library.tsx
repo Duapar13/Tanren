@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Alert, Keyboard, ScrollView, View, Pressable } from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
@@ -9,12 +11,14 @@ import { IconButton } from '../components/IconButton';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { useTheme } from '../hooks/useTheme';
 import { Spacing } from '../constants/theme';
 import { Exercise } from '../types';
 
 export default function ExerciseLibraryScreen() {
   const { exercises, addExercise, updateExercise, removeExercise } = useData();
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [name, setName] = useState('');
@@ -84,7 +88,33 @@ export default function ExerciseLibraryScreen() {
             </View>
           </Card>
         ) : (
-          <Button title={t.seance.addExercise} onPress={() => setShowAddExercise(true)} />
+          <View style={{ gap: Spacing.sm }}>
+            <Pressable
+              onPress={() => router.push('/exercise-catalog')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.sm,
+                padding: Spacing.md,
+                borderRadius: 12,
+                backgroundColor: colors.accent + '14',
+                borderWidth: 1,
+                borderColor: colors.accent + '40',
+              }}
+            >
+              <Ionicons name="film-outline" size={20} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <ThemedText variant="subhead" weight="600" color="accent">
+                  {t.exerciseCatalog.browseButton}
+                </ThemedText>
+                <ThemedText variant="caption" color="tertiary">
+                  {t.exerciseCatalog.browseButtonHint}
+                </ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.accent} />
+            </Pressable>
+            <Button title={t.seance.addExercise} onPress={() => setShowAddExercise(true)} />
+          </View>
         )}
 
         {customExercises.length === 0 && !showAddExercise && (

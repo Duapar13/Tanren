@@ -28,6 +28,7 @@ export const fr = {
     monthRecap: 'Résumé du mois',
     support: 'Soutenir l’app',
     exerciseLibrary: 'Bibliothèque d’exercices',
+    exerciseCatalog: 'Catalogue d’exercices',
   },
   tour: {
     steps: [
@@ -182,6 +183,19 @@ export const fr = {
     tapToSkip: 'Toucher pour passer',
     chronoLabel: 'Chrono',
     tapToStop: 'Toucher pour arrêter',
+  },
+  exerciseCatalog: {
+    browseButton: 'Parcourir le catalogue',
+    browseButtonHint: 'Plus de 1000 exercices avec démo animée',
+    searchPlaceholder: 'Rechercher un exercice…',
+    noResults: 'Aucun résultat',
+    filterAll: 'Tous',
+    addToMyExercises: 'Ajouter à mes exercices',
+    addedToMyExercises: 'Ajouté à tes exercices',
+    instructions: 'Instructions',
+    secondaryMuscles: 'Muscles secondaires',
+    equipment: 'Équipement',
+    target: 'Muscle ciblé',
   },
   progression: {
     regularity: 'Régularité',

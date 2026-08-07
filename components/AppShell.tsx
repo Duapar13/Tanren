@@ -81,6 +81,8 @@ export function AppShell() {
           }}
         />
         <Stack.Screen name="exercise-library" options={{ title: t.screenTitles.exerciseLibrary }} />
+        <Stack.Screen name="exercise-catalog" options={{ title: t.screenTitles.exerciseCatalog }} />
+        <Stack.Screen name="exercise-catalog-detail" options={{ title: t.screenTitles.exerciseCatalog }} />
       </Stack.Protected>
     </Stack>
   );

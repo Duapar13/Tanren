@@ -12,6 +12,7 @@ function publicExercise(row) {
     category: row.target,
     muscleGroup: row.muscle_group,
     isCustom: !!row.is_custom,
+    catalogRefId: row.catalog_ref_id,
   };
 }
 
@@ -24,17 +25,20 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { name, category } = req.body ?? {};
+  const { name, category, catalogRefId } = req.body ?? {};
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'invalid_name' });
   }
   if (!['upper', 'lower'].includes(category)) {
     return res.status(400).json({ error: 'invalid_category' });
   }
+  if (catalogRefId !== undefined && catalogRefId !== null && !Number.isInteger(catalogRefId)) {
+    return res.status(400).json({ error: 'invalid_catalog_ref' });
+  }
 
   const [result] = await pool.query(
-    'INSERT INTO exercises (user_id, name, target, is_custom) VALUES (?, ?, ?, 1)',
-    [req.userId, name.trim(), category]
+    'INSERT INTO exercises (user_id, name, target, is_custom, catalog_ref_id) VALUES (?, ?, ?, 1, ?)',
+    [req.userId, name.trim(), category, catalogRefId ?? null]
   );
   const [[row]] = await pool.query('SELECT * FROM exercises WHERE id = ?', [result.insertId]);
   res.status(201).json(publicExercise(row));

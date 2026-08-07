@@ -1,0 +1,115 @@
+import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { pool } from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const GIF_DIR = path.join(__dirname, '..', '..', 'uploads', 'exercise-gifs');
+fs.mkdirSync(GIF_DIR, { recursive: true });
+
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+const RAPIDAPI_HOST = 'exercisedb.p.rapidapi.com';
+
+const router = Router();
+router.use(requireAuth);
+
+function publicEntry(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    bodyPart: row.body_part,
+    equipment: row.equipment,
+    target: row.target,
+    difficulty: row.difficulty,
+  };
+}
+
+router.get('/', async (req, res) => {
+  const { search, bodyPart, equipment, target } = req.query;
+  const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+  const where = [];
+  const params = [];
+  if (search) { where.push('name LIKE ?'); params.push(`%${search}%`); }
+  if (bodyPart) { where.push('body_part = ?'); params.push(bodyPart); }
+  if (equipment) { where.push('equipment = ?'); params.push(equipment); }
+  if (target) { where.push('target = ?'); params.push(target); }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const [rows] = await pool.query(
+    `SELECT id, name, body_part, equipment, target, difficulty FROM exercise_catalog
+     ${whereSql} ORDER BY name ASC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+  res.json(rows.map(publicEntry));
+});
+
+// Free, no external call — derived from our own cached data so the filter UI always
+// reflects what's actually browsable, and stays in sync automatically after a re-sync.
+router.get('/meta', async (req, res) => {
+  const [[bodyParts], [equipment], [targets]] = await Promise.all([
+    pool.query('SELECT DISTINCT body_part FROM exercise_catalog ORDER BY body_part'),
+    pool.query('SELECT DISTINCT equipment FROM exercise_catalog ORDER BY equipment'),
+    pool.query('SELECT DISTINCT target FROM exercise_catalog ORDER BY target'),
+  ]);
+  res.json({
+    bodyParts: bodyParts.map((r) => r.body_part),
+    equipment: equipment.map((r) => r.equipment),
+    targets: targets.map((r) => r.target),
+  });
+});
+
+router.get('/:id', async (req, res) => {
+  const [[row]] = await pool.query('SELECT * FROM exercise_catalog WHERE id = ?', [req.params.id]);
+  if (!row) return res.status(404).json({ error: 'not_found' });
+  res.json({
+    ...publicEntry(row),
+    secondaryMuscles: JSON.parse(row.secondary_muscles ?? '[]'),
+    instructions: JSON.parse(row.instructions ?? '[]'),
+    description: row.description,
+    gifUrl: `/exercise-catalog/${row.id}/gif`,
+  });
+});
+
+// One RapidAPI call the very first time any user opens a given exercise, ever — then served
+// straight off disk forever after. Rate-limited on top of that so a buggy/malicious client
+// mashing many *different* uncached ids can't itself burn the whole month's free quota.
+const gifLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
+
+router.get('/:id/gif', gifLimiter, async (req, res) => {
+  const [[row]] = await pool.query(
+    'SELECT id, external_id, gif_cached FROM exercise_catalog WHERE id = ?',
+    [req.params.id]
+  );
+  if (!row) return res.status(404).json({ error: 'not_found' });
+
+  const filePath = path.join(GIF_DIR, `${row.id}.gif`);
+  if (row.gif_cached && fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  if (!RAPIDAPI_KEY) return res.status(503).json({ error: 'catalog_not_configured' });
+
+  try {
+    const upstream = await fetch(
+      `https://${RAPIDAPI_HOST}/image?exerciseId=${row.external_id}&resolution=180`,
+      { headers: { 'x-rapidapi-host': RAPIDAPI_HOST, 'x-rapidapi-key': RAPIDAPI_KEY } }
+    );
+    if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    await fsp.writeFile(filePath, buffer);
+    await pool.query('UPDATE exercise_catalog SET gif_cached = 1 WHERE id = ?', [row.id]);
+    res.set('Content-Type', 'image/gif');
+    res.send(buffer);
+  } catch (err) {
+    console.error('[exercise-catalog] gif fetch failed', row.external_id, err.message);
+    res.status(502).json({ error: 'gif_unavailable' });
+  }
+});
+
+export default router;
