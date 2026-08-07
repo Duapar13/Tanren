@@ -12,6 +12,11 @@ import { Spacing } from '../constants/theme';
 import { MUSCLE_GROUP_CATEGORY } from '../types';
 import { API_URL, getTokens } from '../lib/api';
 import { CatalogDetail, catalogTargetToMuscleGroup, getCatalogDetail } from '../lib/exerciseCatalog';
+import { equipmentLabel, targetLabel } from '../constants/exerciseCatalogLabels';
+
+function capitalize(s: string) {
+  return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -28,7 +33,7 @@ export default function ExerciseCatalogDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { addExercise } = useData();
   const [detail, setDetail] = useState<CatalogDetail | null>(null);
   const [authHeader, setAuthHeader] = useState<string | null>(null);
@@ -36,12 +41,12 @@ export default function ExerciseCatalogDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    getCatalogDetail(Number(id)).then((d) => {
+    getCatalogDetail(Number(id), lang).then((d) => {
       setDetail(d);
       navigation.setOptions({ title: d.name[0].toUpperCase() + d.name.slice(1) });
     });
     getTokens().then(({ accessToken }) => setAuthHeader(accessToken));
-  }, [id, navigation]);
+  }, [id, lang, navigation]);
 
   const handleAdd = async () => {
     if (!detail) return;
@@ -91,24 +96,24 @@ export default function ExerciseCatalogDetailScreen() {
             <ThemedText variant="caption" color="tertiary">
               {t.exerciseCatalog.target}
             </ThemedText>
-            <ThemedText variant="subhead" weight="600" style={{ textTransform: 'capitalize' }}>
-              {detail.target}
+            <ThemedText variant="subhead" weight="600">
+              {capitalize(targetLabel(detail.target, lang))}
             </ThemedText>
           </Card>
           <Card style={{ flex: 1, gap: 2 }}>
             <ThemedText variant="caption" color="tertiary">
               {t.exerciseCatalog.equipment}
             </ThemedText>
-            <ThemedText variant="subhead" weight="600" style={{ textTransform: 'capitalize' }}>
-              {detail.equipment}
+            <ThemedText variant="subhead" weight="600">
+              {capitalize(equipmentLabel(detail.equipment, lang))}
             </ThemedText>
           </Card>
         </View>
 
         {detail.secondaryMuscles.length > 0 && (
           <Section title={t.exerciseCatalog.secondaryMuscles}>
-            <ThemedText variant="subhead" style={{ textTransform: 'capitalize' }}>
-              {detail.secondaryMuscles.join(', ')}
+            <ThemedText variant="subhead">
+              {capitalize(detail.secondaryMuscles.map((m) => targetLabel(m, lang)).join(', '))}
             </ThemedText>
           </Section>
         )}

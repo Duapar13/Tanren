@@ -8,6 +8,11 @@ import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { CatalogEntry, CatalogMeta, getCatalogMeta, searchCatalog } from '../lib/exerciseCatalog';
+import { bodyPartLabel, equipmentLabel } from '../constants/exerciseCatalogLabels';
+
+function capitalize(s: string) {
+  return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors } = useTheme();
@@ -31,7 +36,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 export default function ExerciseCatalogScreen() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [search, setSearch] = useState('');
   const [bodyPart, setBodyPart] = useState<string | null>(null);
   const [meta, setMeta] = useState<CatalogMeta | null>(null);
@@ -74,7 +79,7 @@ export default function ExerciseCatalogScreen() {
             keyExtractor={(item) => item ?? 'all'}
             renderItem={({ item }) => (
               <Chip
-                label={item ? item[0].toUpperCase() + item.slice(1) : t.exerciseCatalog.filterAll}
+                label={item ? capitalize(bodyPartLabel(item, lang)) : t.exerciseCatalog.filterAll}
                 active={bodyPart === item}
                 onPress={() => setBodyPart(item)}
               />
@@ -112,8 +117,8 @@ export default function ExerciseCatalogScreen() {
               <ThemedText variant="subhead" weight="600" style={{ textTransform: 'capitalize' }}>
                 {item.name}
               </ThemedText>
-              <ThemedText variant="caption" color="tertiary" style={{ textTransform: 'capitalize' }}>
-                {item.bodyPart} · {item.equipment}
+              <ThemedText variant="caption" color="tertiary">
+                {capitalize(bodyPartLabel(item.bodyPart, lang))} · {equipmentLabel(item.equipment, lang)}
               </ThemedText>
             </View>
           </Pressable>

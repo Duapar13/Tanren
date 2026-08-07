@@ -42,8 +42,9 @@ export function getCatalogMeta(): Promise<CatalogMeta> {
   return apiFetch('/exercise-catalog/meta');
 }
 
-export function getCatalogDetail(id: number): Promise<CatalogDetail> {
-  return apiFetch(`/exercise-catalog/${id}`);
+export function getCatalogDetail(id: number, lang?: string): Promise<CatalogDetail> {
+  const qs = lang ? `?lang=${lang}` : '';
+  return apiFetch(`/exercise-catalog/${id}${qs}`);
 }
 
 /** ExerciseDB's `target` (a specific muscle) maps far more cleanly onto our fixed 8-value

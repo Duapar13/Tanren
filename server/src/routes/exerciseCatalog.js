@@ -68,14 +68,25 @@ router.get('/meta', async (req, res) => {
   });
 });
 
+const TRANSLATED_LANGS = ['fr', 'es', 'it'];
+
 router.get('/:id', async (req, res) => {
   const [[row]] = await pool.query('SELECT * FROM exercise_catalog WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ error: 'not_found' });
+
+  // Name stays English always (see translate-exercise-catalog.js) — only description and
+  // instructions have a translated column, and only for languages the batch job covers.
+  // Falls back to English whenever a given exercise hasn't been translated yet (the batch
+  // job runs incrementally) so the catalog is never blocked on it finishing.
+  const lang = TRANSLATED_LANGS.includes(req.query.lang) ? req.query.lang : null;
+  const description = (lang && row[`description_${lang}`]) || row.description;
+  const instructionsRaw = (lang && row[`instructions_${lang}`]) || row.instructions;
+
   res.json({
     ...publicEntry(row),
     secondaryMuscles: JSON.parse(row.secondary_muscles ?? '[]'),
-    instructions: JSON.parse(row.instructions ?? '[]'),
-    description: row.description,
+    instructions: JSON.parse(instructionsRaw ?? '[]'),
+    description,
     gifUrl: `/exercise-catalog/${row.id}/gif`,
   });
 });
