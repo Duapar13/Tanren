@@ -30,9 +30,13 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const MAX_BURST_RETRIES = 3;
+const BURST_BACKOFF_MS = 4000;
+
 async function run() {
   if (RAPIDAPI_KEYS.length === 0) throw new Error('Missing RAPIDAPI_KEY in server/.env');
   let keyIndex = 0;
+  const perKeyDone = RAPIDAPI_KEYS.map(() => 0);
 
   const [rows] = await pool.query(
     'SELECT id, external_id FROM exercise_catalog WHERE gif_cached = 0 ORDER BY id LIMIT ?',
@@ -42,6 +46,7 @@ async function run() {
 
   let done = 0;
   let failed = 0;
+  let burstRetries = 0;
   for (const row of rows) {
     let cached = false;
     while (!cached && keyIndex < RAPIDAPI_KEYS.length) {
@@ -51,10 +56,25 @@ async function run() {
           { headers: { 'x-rapidapi-host': RAPIDAPI_HOST, 'x-rapidapi-key': RAPIDAPI_KEYS[keyIndex] } }
         );
         if (res.status === 429) {
+          // A 429 can mean two very different things: the monthly quota is truly gone
+          // (X-RateLimit-Requests-Remaining: 0), or we just sent requests too fast and hit a
+          // short burst limit — the header tells them apart. Only rotate away from a key for
+          // the former; for the latter, back off and retry the *same* key a few times first,
+          // since prematurely writing off a key that's actually fine wastes it for nothing.
+          const remaining = Number(res.headers.get('x-ratelimit-requests-remaining'));
+          const isRealQuotaExhaustion = Number.isFinite(remaining) && remaining <= 0;
+          if (!isRealQuotaExhaustion && burstRetries < MAX_BURST_RETRIES) {
+            burstRetries++;
+            console.warn(`Burst limit hit (key ${keyIndex + 1}, remaining=${remaining || '?'}) — backing off ${BURST_BACKOFF_MS}ms, retry ${burstRetries}/${MAX_BURST_RETRIES}.`);
+            await sleep(BURST_BACKOFF_MS);
+            continue;
+          }
+          burstRetries = 0;
           keyIndex++;
-          console.warn(`Key ${keyIndex} rate limited — ${keyIndex < RAPIDAPI_KEYS.length ? 'rotating to next key.' : 'no keys left.'}`);
+          console.warn(`Key ${keyIndex} out of quota (remaining=${remaining || '?'}) — ${keyIndex < RAPIDAPI_KEYS.length ? 'rotating to next key.' : 'no keys left.'}`);
           continue;
         }
+        burstRetries = 0;
         if (!res.ok) {
           console.warn(`id ${row.id} (${row.external_id}): HTTP ${res.status}, skipping`);
           failed++;
@@ -64,6 +84,7 @@ async function run() {
         await fsp.writeFile(path.join(GIF_DIR, `${row.id}.gif`), buffer);
         await pool.query('UPDATE exercise_catalog SET gif_cached = 1 WHERE id = ?', [row.id]);
         done++;
+        perKeyDone[keyIndex]++;
         cached = true;
         if (done % 25 === 0) console.log(`${done}/${rows.length} cached...`);
       } catch (err) {
@@ -78,6 +99,8 @@ async function run() {
     }
     await sleep(DELAY_MS);
   }
+
+  RAPIDAPI_KEYS.forEach((_, i) => console.log(`Key ${i + 1}: ${perKeyDone[i]} cached.`));
 
   console.log(`Done. ${done} cached, ${failed} failed/skipped this run.`);
   await pool.end();
