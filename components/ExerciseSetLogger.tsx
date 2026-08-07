@@ -11,6 +11,7 @@ import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { displayToKg, formatWeight, kgToDisplay, WeightUnit } from '../utils/units';
 import { useTranslation } from '../hooks/useTranslation';
+import { findExerciseGuide } from '../constants/exerciseGuides';
 
 export interface DraftSet {
   reps: number;
@@ -58,6 +59,8 @@ export function ExerciseSetLogger({
   const [editReps, setEditReps] = useState('');
   const [editWeight, setEditWeight] = useState('');
   const [editRpe, setEditRpe] = useState('');
+  const [showGuide, setShowGuide] = useState(false);
+  const guide = findExerciseGuide(exercise.name);
 
   const handleAdd = () => {
     if (!reps || !weight) return;
@@ -174,6 +177,33 @@ export function ExerciseSetLogger({
           gap: Spacing.sm,
         }}
       >
+        {guide && (
+          <View>
+            <Pressable
+              onPress={() => setShowGuide((v) => !v)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 }}
+            >
+              <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+              <ThemedText variant="footnote" weight="600" color="accent" style={{ flex: 1 }}>
+                {t.seance.howToPerform}
+              </ThemedText>
+              <Ionicons
+                name={showGuide ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={colors.textTertiary}
+              />
+            </Pressable>
+            {showGuide && (
+              <View style={{ gap: 4, paddingTop: 4, paddingBottom: 2 }}>
+                {guide.cues.map((cue, i) => (
+                  <ThemedText key={i} variant="footnote" color="secondary">
+                    {'•'} {cue}
+                  </ThemedText>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
         {draftSets.map((s, i) =>
           editingIndex === i ? (
             <View key={i} style={{ gap: Spacing.sm }}>

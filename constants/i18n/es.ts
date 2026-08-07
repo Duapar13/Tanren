@@ -177,10 +177,13 @@ export const es: TranslationDict = {
     deleteSessionConfirmTitle: 'Eliminar el entreno',
     deleteSessionConfirmBody: 'Se eliminará todo el entreno.',
     exerciseCount: (n: number) => `${n} ejercicio${n > 1 ? 's' : ''}`,
+    howToPerform: 'Cómo ejecutarlo bien',
   },
   restTimer: {
     label: 'Descanso',
     tapToSkip: 'Toca para saltar',
+    chronoLabel: 'Cronómetro',
+    tapToStop: 'Toca para detener',
   },
   progression: {
     regularity: 'Constancia',
@@ -276,6 +279,8 @@ export const es: TranslationDict = {
     trainingDays: 'Días de entreno',
     session: 'Entreno',
     restTimer: 'Temporizador de descanso',
+    restTimerModeCountdown: 'Cuenta atrás',
+    restTimerModeStopwatch: 'Cronómetro',
     restTimerHint: 'Cuenta atrás mostrada tras cada serie añadida',
     rpeHint: 'Campo de intensidad percibida (1-10) en cada serie',
     measurements: 'Medidas',

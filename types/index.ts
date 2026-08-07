@@ -143,6 +143,7 @@ export interface User {
   goal: NutritionGoal;
   restTimerEnabled: boolean;
   restTimerSeconds: number;
+  restTimerMode: 'countdown' | 'stopwatch';
   trainingDays: number[]; // 0=dimanche..6=samedi (convention JS Date.getDay())
   rpeEnabled: boolean;
   measurementsEnabled: boolean;

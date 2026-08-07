@@ -108,7 +108,9 @@ export default function SeanceScreen() {
       [exerciseId]: [...(prev[exerciseId] ?? []), set],
     }));
     if (user?.restTimerEnabled) {
-      setRestTimerEndAt(Date.now() + user.restTimerSeconds * 1000);
+      setRestTimerEndAt(
+        user.restTimerMode === 'stopwatch' ? Date.now() : Date.now() + user.restTimerSeconds * 1000
+      );
     }
   };
 
@@ -215,7 +217,11 @@ export default function SeanceScreen() {
         <ScreenHeader mascot="focused" />
         {restTimerEndAt && (
           <View style={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm }}>
-            <RestTimerBanner endAt={restTimerEndAt} onDone={() => setRestTimerEndAt(null)} />
+            <RestTimerBanner
+            endAt={restTimerEndAt}
+            mode={user?.restTimerMode ?? 'countdown'}
+            onDone={() => setRestTimerEndAt(null)}
+          />
           </View>
         )}
         <KeyboardAvoidingView

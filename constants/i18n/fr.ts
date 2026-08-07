@@ -175,10 +175,13 @@ export const fr = {
     deleteSessionConfirmTitle: 'Supprimer la séance',
     deleteSessionConfirmBody: 'Toute la séance sera supprimée.',
     exerciseCount: (n: number) => `${n} exercice${n > 1 ? 's' : ''}`,
+    howToPerform: 'Comment bien l\'exécuter',
   },
   restTimer: {
     label: 'Repos',
     tapToSkip: 'Toucher pour passer',
+    chronoLabel: 'Chrono',
+    tapToStop: 'Toucher pour arrêter',
   },
   progression: {
     regularity: 'Régularité',
@@ -275,6 +278,8 @@ export const fr = {
     session: 'Séance',
     restTimer: 'Timer de repos',
     restTimerHint: 'Décompte affiché après chaque série ajoutée',
+    restTimerModeCountdown: 'Minuteur',
+    restTimerModeStopwatch: 'Chronomètre',
     rpeHint: 'Champ d’intensité perçue (1-10) sur chaque série',
     measurements: 'Mensurations',
     measurementsToggle: 'Suivi des mensurations',

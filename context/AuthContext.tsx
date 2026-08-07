@@ -23,6 +23,7 @@ interface AuthContextValue {
     goal: User['goal'];
     restTimerEnabled: boolean;
     restTimerSeconds: number;
+    restTimerMode: User['restTimerMode'];
     trainingDays: number[];
     rpeEnabled: boolean;
     measurementsEnabled: boolean;

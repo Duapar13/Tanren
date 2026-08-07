@@ -427,6 +427,17 @@ export default function ProfilScreen() {
               </View>
 
               {user?.restTimerEnabled && (
+                <SegmentedControl
+                  options={[
+                    { label: t.profil.restTimerModeCountdown, value: 'countdown' as const },
+                    { label: t.profil.restTimerModeStopwatch, value: 'stopwatch' as const },
+                  ]}
+                  value={user?.restTimerMode ?? 'countdown'}
+                  onChange={(v) => updateProfile({ restTimerMode: v })}
+                />
+              )}
+
+              {user?.restTimerEnabled && user.restTimerMode !== 'stopwatch' && (
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {REST_DURATIONS.map((d) => {
                     const selected = user.restTimerSeconds === d;

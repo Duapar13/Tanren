@@ -41,6 +41,7 @@ function publicUser(row) {
     goal: row.goal,
     restTimerEnabled: !!row.rest_timer_enabled,
     restTimerSeconds: row.rest_timer_seconds,
+    restTimerMode: row.rest_timer_mode,
     trainingDays: row.training_days ? row.training_days.split(',').filter(Boolean).map(Number) : [],
     rpeEnabled: !!row.rpe_enabled,
     measurementsEnabled: !!row.measurements_enabled,
@@ -70,6 +71,7 @@ router.patch('/me', async (req, res) => {
     goal,
     restTimerEnabled,
     restTimerSeconds,
+    restTimerMode,
     trainingDays,
     rpeEnabled,
     measurementsEnabled,
@@ -90,6 +92,9 @@ router.patch('/me', async (req, res) => {
   }
   if (lengthUnit !== undefined && !['cm', 'in'].includes(lengthUnit)) {
     return res.status(400).json({ error: 'invalid_length_unit' });
+  }
+  if (restTimerMode !== undefined && !['countdown', 'stopwatch'].includes(restTimerMode)) {
+    return res.status(400).json({ error: 'invalid_rest_timer_mode' });
   }
   if (
     trainingDays !== undefined &&
@@ -117,6 +122,7 @@ router.patch('/me', async (req, res) => {
   if (goal !== undefined) { fields.push('goal = ?'); values.push(goal); }
   if (restTimerEnabled !== undefined) { fields.push('rest_timer_enabled = ?'); values.push(restTimerEnabled ? 1 : 0); }
   if (restTimerSeconds !== undefined) { fields.push('rest_timer_seconds = ?'); values.push(restTimerSeconds); }
+  if (restTimerMode !== undefined) { fields.push('rest_timer_mode = ?'); values.push(restTimerMode); }
   if (trainingDays !== undefined) { fields.push('training_days = ?'); values.push(trainingDays.join(',')); }
   if (rpeEnabled !== undefined) { fields.push('rpe_enabled = ?'); values.push(rpeEnabled ? 1 : 0); }
   if (measurementsEnabled !== undefined) { fields.push('measurements_enabled = ?'); values.push(measurementsEnabled ? 1 : 0); }
