@@ -11,7 +11,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GIF_DIR = path.join(__dirname, '..', '..', 'uploads', 'exercise-gifs');
 fs.mkdirSync(GIF_DIR, { recursive: true });
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+// Same rotation strategy as scripts/bulk-fetch-gifs.js — several free-tier keys stacked as
+// separate quotas, tried in order until one doesn't 429.
+const RAPIDAPI_KEYS = [process.env.RAPIDAPI_KEY, process.env.RAPIDAPI_KEY_2, process.env.RAPIDAPI_KEY_3].filter(
+  Boolean
+);
 const RAPIDAPI_HOST = 'exercisedb.p.rapidapi.com';
 
 const router = Router();
@@ -76,6 +80,26 @@ router.get('/:id', async (req, res) => {
   });
 });
 
+// Remembers which key last worked so a request doesn't retry an already-exhausted one every
+// time — only advances forward, never resets within the process lifetime (a fresh deploy /
+// restart, or the next monthly quota reset, both naturally start this back at 0).
+let currentKeyIndex = 0;
+
+async function fetchGifFromUpstream(externalId) {
+  while (currentKeyIndex < RAPIDAPI_KEYS.length) {
+    const res = await fetch(`https://${RAPIDAPI_HOST}/image?exerciseId=${externalId}&resolution=180`, {
+      headers: { 'x-rapidapi-host': RAPIDAPI_HOST, 'x-rapidapi-key': RAPIDAPI_KEYS[currentKeyIndex] },
+    });
+    if (res.status === 429) {
+      currentKeyIndex++;
+      continue;
+    }
+    if (!res.ok) throw new Error(`upstream ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+  throw new Error('all RapidAPI keys exhausted');
+}
+
 // One RapidAPI call the very first time any user opens a given exercise, ever — then served
 // straight off disk forever after. Rate-limited on top of that so a buggy/malicious client
 // mashing many *different* uncached ids can't itself burn the whole month's free quota.
@@ -93,15 +117,10 @@ router.get('/:id/gif', gifLimiter, async (req, res) => {
     return res.sendFile(filePath);
   }
 
-  if (!RAPIDAPI_KEY) return res.status(503).json({ error: 'catalog_not_configured' });
+  if (RAPIDAPI_KEYS.length === 0) return res.status(503).json({ error: 'catalog_not_configured' });
 
   try {
-    const upstream = await fetch(
-      `https://${RAPIDAPI_HOST}/image?exerciseId=${row.external_id}&resolution=180`,
-      { headers: { 'x-rapidapi-host': RAPIDAPI_HOST, 'x-rapidapi-key': RAPIDAPI_KEY } }
-    );
-    if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
-    const buffer = Buffer.from(await upstream.arrayBuffer());
+    const buffer = await fetchGifFromUpstream(row.external_id);
     await fsp.writeFile(filePath, buffer);
     await pool.query('UPDATE exercise_catalog SET gif_cached = 1 WHERE id = ?', [row.id]);
     res.set('Content-Type', 'image/gif');
