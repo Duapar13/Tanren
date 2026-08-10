@@ -21,9 +21,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { todayKey } from '../../utils/date';
+import { computeExercisePRs } from '../../utils/prStats';
 
 export default function SeanceScreen() {
-  const { exercises, sessions, addSession, addSetsToSession, addExercise: createExercise } = useData();
+  const { exercises, sessions, sets, addSession, addSetsToSession, addExercise: createExercise } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -57,6 +58,8 @@ export default function SeanceScreen() {
     if (exerciseFilter === 'all') return exercises;
     return exercises.filter((e) => e.category === exerciseFilter);
   }, [exercises, exerciseFilter]);
+
+  const exercisePRs = useMemo(() => computeExercisePRs(sets, sessions), [sets, sessions]);
 
   const pickableExercises = availableExercises.filter(
     (e) => !activeExerciseIds.includes(e.id)
@@ -326,6 +329,7 @@ export default function SeanceScreen() {
                     validated={validatedExerciseIds.has(exerciseId)}
                     rpeEnabled={user?.rpeEnabled ?? false}
                     weightUnit={user?.weightUnit ?? 'kg'}
+                    bestWeightKg={exercisePRs.get(exerciseId)?.maxWeightKg || null}
                     onToggleValidated={() => toggleValidated(exerciseId)}
                     onAddSet={(set) => addSet(exerciseId, set)}
                     onEditSet={(i, set) => editSet(exerciseId, i, set)}

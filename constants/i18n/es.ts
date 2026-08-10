@@ -179,6 +179,8 @@ export const es: TranslationDict = {
     deleteSessionConfirmBody: 'Se eliminará todo el entreno.',
     exerciseCount: (n: number) => `${n} ejercicio${n > 1 ? 's' : ''}`,
     howToPerform: 'Cómo ejecutarlo bien',
+    bestWeight: 'Récord',
+    bestWeightBeaten: '¡Récord batido!',
   },
   restTimer: {
     label: 'Descanso',

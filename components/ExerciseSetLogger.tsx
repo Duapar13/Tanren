@@ -25,6 +25,7 @@ interface Props {
   validated: boolean;
   rpeEnabled: boolean;
   weightUnit: WeightUnit;
+  bestWeightKg?: number | null;
   onToggleValidated: () => void;
   onAddSet: (set: DraftSet) => void;
   onEditSet: (index: number, set: DraftSet) => void;
@@ -43,6 +44,7 @@ export function ExerciseSetLogger({
   validated,
   rpeEnabled,
   weightUnit,
+  bestWeightKg,
   onToggleValidated,
   onAddSet,
   onEditSet,
@@ -107,6 +109,7 @@ export function ExerciseSetLogger({
   };
 
   const canCollapse = draftSets.length > 0;
+  const recordBeaten = !!bestWeightKg && draftSets.some((s) => s.weightKg >= bestWeightKg);
 
   const banner = (
     <Pressable
@@ -122,9 +125,29 @@ export function ExerciseSetLogger({
         opacity: canCollapse ? 1 : 0.6,
       }}
     >
-      <ThemedText variant="headline" weight="700" style={{ color: '#FFFFFF', flex: 1 }}>
-        {exercise.name}
-      </ThemedText>
+      <View style={{ flex: 1, gap: 2 }}>
+        <ThemedText variant="headline" weight="700" style={{ color: '#FFFFFF' }}>
+          {exercise.name}
+        </ThemedText>
+        {!!bestWeightKg && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons
+              name="barbell-outline"
+              size={13}
+              color={recordBeaten ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
+            />
+            <ThemedText
+              variant="caption"
+              weight={recordBeaten ? '700' : '600'}
+              style={{ color: recordBeaten ? '#FFFFFF' : 'rgba(255,255,255,0.8)' }}
+            >
+              {recordBeaten
+                ? t.seance.bestWeightBeaten
+                : `${t.seance.bestWeight} : ${formatWeight(bestWeightKg, weightUnit)}`}
+            </ThemedText>
+          </View>
+        )}
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {draftSets.length > 0 && (
           <ThemedText variant="footnote" weight="600" style={{ color: '#FFFFFF' }}>

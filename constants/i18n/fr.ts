@@ -177,6 +177,8 @@ export const fr = {
     deleteSessionConfirmBody: 'Toute la séance sera supprimée.',
     exerciseCount: (n: number) => `${n} exercice${n > 1 ? 's' : ''}`,
     howToPerform: 'Comment bien l\'exécuter',
+    bestWeight: 'Record',
+    bestWeightBeaten: 'Record battu !',
   },
   restTimer: {
     label: 'Repos',
