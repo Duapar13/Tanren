@@ -135,8 +135,6 @@ export const en: TranslationDict = {
     seasonHistory: 'Season history',
     completed: 'Completed',
     inProgress: 'In progress',
-    seasonEventHistory: 'Season history',
-    noPointsYet: 'No points this month yet — log a workout to get started.',
     unlocked: 'Unlocked ✓',
     daysUnit: 'days',
     currentRank: (rank: string) => `Current rank: ${rank}`,
@@ -183,7 +181,8 @@ export const en: TranslationDict = {
     'rank-rubis': { name: 'Ruby rank', description: 'Reach Ruby rank or higher this season.' },
     'rank-saphir': { name: 'Sapphire rank', description: 'Reach Sapphire rank or higher this season.' },
     'rank-divin': { name: 'Divine rank', description: 'Reach Divine rank or higher this season.' },
-    'rank-master-divin': { name: 'Master Divine rank', description: 'Reach Master Divine rank this season.' },
+    'rank-master-divin': { name: 'Master Divine rank', description: 'Reach Master Divine rank or higher this season.' },
+    'rank-grand-master-divin': { name: 'Grand Master Divine rank', description: 'Reach Grand Master Divine rank this season.' },
   },
   seance: {
     all: 'All',

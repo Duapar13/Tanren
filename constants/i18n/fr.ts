@@ -133,8 +133,6 @@ export const fr = {
     seasonHistory: 'Historique des saisons',
     completed: 'Terminée',
     inProgress: 'En cours',
-    seasonEventHistory: 'Historique de la saison',
-    noPointsYet: "Aucun point ce mois-ci pour l'instant — logge une séance pour commencer.",
     unlocked: 'Débloqué ✓',
     daysUnit: 'jours',
     currentRank: (rank: string) => `Rang actuel : ${rank}`,
@@ -181,7 +179,8 @@ export const fr = {
     'rank-rubis': { name: 'Rang Rubis', description: 'Atteins le rang Rubis ou plus sur la saison en cours.' },
     'rank-saphir': { name: 'Rang Saphir', description: 'Atteins le rang Saphir ou plus sur la saison en cours.' },
     'rank-divin': { name: 'Rang Divin', description: 'Atteins le rang Divin ou plus sur la saison en cours.' },
-    'rank-master-divin': { name: 'Rang Master Divin', description: 'Atteins le rang Master Divin sur la saison en cours.' },
+    'rank-master-divin': { name: 'Rang Master Divin', description: 'Atteins le rang Master Divin ou plus sur la saison en cours.' },
+    'rank-grand-master-divin': { name: 'Rang Grand Master Divin', description: 'Atteins le rang Grand Master Divin sur la saison en cours.' },
   },
   seance: {
     all: 'Tout',

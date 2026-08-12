@@ -135,8 +135,6 @@ export const it: TranslationDict = {
     seasonHistory: 'Cronologia stagioni',
     completed: 'Terminata',
     inProgress: 'In corso',
-    seasonEventHistory: 'Cronologia della stagione',
-    noPointsYet: 'Ancora nessun punto questo mese — registra un allenamento per iniziare.',
     unlocked: 'Sbloccato ✓',
     daysUnit: 'giorni',
     currentRank: (rank: string) => `Rango attuale: ${rank}`,
@@ -183,7 +181,8 @@ export const it: TranslationDict = {
     'rank-rubis': { name: 'Rango Rubino', description: 'Raggiungi il rango Rubino o superiore in questa stagione.' },
     'rank-saphir': { name: 'Rango Zaffiro', description: 'Raggiungi il rango Zaffiro o superiore in questa stagione.' },
     'rank-divin': { name: 'Rango Divino', description: 'Raggiungi il rango Divino o superiore in questa stagione.' },
-    'rank-master-divin': { name: 'Rango Master Divino', description: 'Raggiungi il rango Master Divino in questa stagione.' },
+    'rank-master-divin': { name: 'Rango Master Divino', description: 'Raggiungi il rango Master Divino o superiore in questa stagione.' },
+    'rank-grand-master-divin': { name: 'Rango Grand Master Divino', description: 'Raggiungi il rango Grand Master Divino in questa stagione.' },
   },
   seance: {
     all: 'Tutti',

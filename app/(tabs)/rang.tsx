@@ -9,7 +9,6 @@ import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { ProgressBar } from '../../components/ProgressBar';
 import { SkillBanner } from '../../components/SkillBanner';
-import { XPBadge } from '../../components/XPBadge';
 import { Popup } from '../../components/Popup';
 import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
 import { useData } from '../../context/DataContext';
@@ -122,6 +121,15 @@ export default function RangScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const badgePageWidth = windowWidth - Spacing.lg * 2;
 
+  const rankPages = useMemo(() => {
+    const pages: (typeof RANKS[number])[][] = [];
+    for (let i = 0; i < RANKS.length; i += BADGES_PER_PAGE) {
+      pages.push(RANKS.slice(i, i + BADGES_PER_PAGE) as (typeof RANKS[number])[]);
+    }
+    return pages;
+  }, []);
+  const [rankPageIndex, setRankPageIndex] = useState(0);
+
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
 
@@ -216,41 +224,68 @@ export default function RangScreen() {
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
               {t.rang.ranksListTitle}
             </ThemedText>
-            <Card style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
-              {RANKS.map((rank, i) => {
-                const isCurrent = rank === state.rank;
-                const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
-                return (
-                  <View key={rank} style={{ width: '22%', alignItems: 'center', gap: 4 }}>
-                    <View
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 999,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: RANK_COLORS[rank] + '26',
-                        borderWidth: isCurrent ? 3 : 2,
-                        borderColor: RANK_COLORS[rank],
-                      }}
-                    >
-                      <Ionicons name="shield" size={24} color={RANK_COLORS[rank]} />
-                    </View>
-                    <ThemedText
-                      variant="caption"
-                      weight={isCurrent ? '700' : '600'}
-                      style={{ textAlign: 'center' }}
-                    >
-                      {rank}
-                    </ThemedText>
-                    <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
-                      {t.rang.pointsThreshold(threshold)}
-                    </ThemedText>
-                    {isCurrent && <Ionicons name="checkmark-circle" size={16} color={colors.accent} />}
-                  </View>
-                );
-              })}
-            </Card>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                setRankPageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
+              }}
+            >
+              {rankPages.map((page, pageIndex) => (
+                <Card key={pageIndex} style={{ width: badgePageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
+                  {page.map((rank, indexInPage) => {
+                    const i = pageIndex * BADGES_PER_PAGE + indexInPage;
+                    const isCurrent = rank === state.rank;
+                    const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
+                    return (
+                      <View key={rank} style={{ width: '22%', alignItems: 'center', gap: 4 }}>
+                        <View
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: RANK_COLORS[rank] + '26',
+                            borderWidth: isCurrent ? 3 : 2,
+                            borderColor: RANK_COLORS[rank],
+                          }}
+                        >
+                          <Ionicons name="shield" size={24} color={RANK_COLORS[rank]} />
+                        </View>
+                        <ThemedText
+                          variant="caption"
+                          weight={isCurrent ? '700' : '600'}
+                          style={{ textAlign: 'center' }}
+                        >
+                          {rank}
+                        </ThemedText>
+                        <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                          {t.rang.pointsThreshold(threshold)}
+                        </ThemedText>
+                        {isCurrent && <Ionicons name="checkmark-circle" size={16} color={colors.accent} />}
+                      </View>
+                    );
+                  })}
+                </Card>
+              ))}
+            </ScrollView>
+            {rankPages.length > 1 && (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: Spacing.sm }}>
+                {rankPages.map((_, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: i === rankPageIndex ? colors.accent : colors.separator,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={{ gap: Spacing.sm }}>
@@ -433,42 +468,6 @@ export default function RangScreen() {
             </Card>
           </View>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.rang.seasonEventHistory}
-            </ThemedText>
-            {ranking.events.length === 0 ? (
-              <Card>
-                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  {t.rang.noPointsYet}
-                </ThemedText>
-              </Card>
-            ) : (
-              <Card style={{ gap: 0 }}>
-                {ranking.events.map((e, i) => (
-                  <View
-                    key={`${e.date}-${i}`}
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      paddingVertical: Spacing.xs,
-                      borderTopWidth: i === 0 ? 0 : 1,
-                      borderTopColor: colors.separator,
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <ThemedText variant="subhead">{e.label}</ThemedText>
-                      <ThemedText variant="caption" color="tertiary">
-                        {e.date}
-                      </ThemedText>
-                    </View>
-                    <XPBadge points={e.points} size="sm" />
-                  </View>
-                ))}
-              </Card>
-            )}
-          </View>
         </ScrollView>
 
         <Popup

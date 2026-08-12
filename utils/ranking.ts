@@ -26,6 +26,7 @@ export const RANKS = [
   'Légende',
   'Divin',
   'Master Divin',
+  'Grand Master Divin',
 ] as const;
 export type RankName = (typeof RANKS)[number];
 
@@ -33,7 +34,7 @@ export const DIVISIONS = ['IV', 'III', 'II', 'I'] as const;
 export type Division = (typeof DIVISIONS)[number];
 
 export const POINTS_PER_DIVISION = 100;
-export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 44
+export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 48
 export const MAX_POINTS = TOTAL_TIERS * POINTS_PER_DIVISION;
 
 export const RANK_COLORS: Record<RankName, string> = {
@@ -48,6 +49,7 @@ export const RANK_COLORS: Record<RankName, string> = {
   Légende: '#B15CDE',
   Divin: '#F2C744',
   'Master Divin': '#FF9F1C',
+  'Grand Master Divin': '#FF2E9A',
 };
 
 export interface RankState {
