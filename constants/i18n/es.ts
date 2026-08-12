@@ -140,6 +140,8 @@ export const es: TranslationDict = {
     unlocked: 'Desbloqueado ✓',
     daysUnit: 'días',
     currentRank: (rank: string) => `Rango actual: ${rank}`,
+    ranksListTitle: 'Rangos de la temporada',
+    pointsThreshold: (pts: number) => (pts === 0 ? 'Rango inicial' : `Desde ${pts} pts`),
     peakRank: 'Rango máximo:',
     totalPointsSummary: (total: number, streak: string, pr: string, nutrition: string) =>
       `${total} pts en total · Constancia ${streak} · Fuerza ${pr} · Nutrición ${nutrition}`,

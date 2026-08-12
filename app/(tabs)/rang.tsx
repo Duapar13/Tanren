@@ -21,8 +21,10 @@ import {
   computeSeasonMedalHistory,
   computeSeasonRanking,
   daysUntilNextSeason,
+  DIVISIONS,
   POINTS_PER_DIVISION,
   RANK_COLORS,
+  RANKS,
   type SeasonMedal,
   type SeasonRanking,
 } from '../../utils/ranking';
@@ -79,6 +81,7 @@ export default function RangScreen() {
 
   const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
   const [selectedMedal, setSelectedMedal] = useState<MedalSelection | null>(null);
+  const [showRanksList, setShowRanksList] = useState(false);
 
   const rankingParams = useMemo(
     () => ({
@@ -159,7 +162,8 @@ export default function RangScreen() {
           }}
         >
           <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
-            <View
+            <Pressable
+              onPress={() => setShowRanksList(true)}
               style={{
                 width: 96,
                 height: 96,
@@ -172,7 +176,7 @@ export default function RangScreen() {
               }}
             >
               <Ionicons name="shield" size={44} color={rankColor} />
-            </View>
+            </Pressable>
             <ThemedText variant="title1" weight="700">
               {state.rank} {state.division}
             </ThemedText>
@@ -433,6 +437,50 @@ export default function RangScreen() {
               </ThemedText>
             </View>
           )}
+        </Popup>
+
+        <Popup title={t.rang.ranksListTitle} visible={showRanksList} onClose={() => setShowRanksList(false)}>
+          <View style={{ gap: 0 }}>
+            {RANKS.map((rank, i) => {
+              const isCurrent = rank === state.rank;
+              const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
+              return (
+                <View
+                  key={rank}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: Spacing.sm,
+                    paddingVertical: Spacing.sm,
+                    borderTopWidth: i === 0 ? 0 : 1,
+                    borderTopColor: colors.separator,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 999,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: RANK_COLORS[rank] + '26',
+                      borderWidth: 2,
+                      borderColor: RANK_COLORS[rank],
+                    }}
+                  >
+                    <Ionicons name="shield" size={16} color={RANK_COLORS[rank]} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText weight={isCurrent ? '700' : '600'}>{rank}</ThemedText>
+                    <ThemedText variant="caption" color="tertiary">
+                      {t.rang.pointsThreshold(threshold)}
+                    </ThemedText>
+                  </View>
+                  {isCurrent && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />}
+                </View>
+              );
+            })}
+          </View>
         </Popup>
 
         <Popup

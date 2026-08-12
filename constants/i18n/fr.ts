@@ -138,6 +138,8 @@ export const fr = {
     unlocked: 'Débloqué ✓',
     daysUnit: 'jours',
     currentRank: (rank: string) => `Rang actuel : ${rank}`,
+    ranksListTitle: 'Les rangs de la saison',
+    pointsThreshold: (pts: number) => (pts === 0 ? 'Rang de départ' : `À partir de ${pts} pts`),
     peakRank: 'Rang de pointe :',
     totalPointsSummary: (total: number, streak: string, pr: string, nutrition: string) =>
       `${total} pts au total · Régularité ${streak} · Force ${pr} · Nutrition ${nutrition}`,
