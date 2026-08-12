@@ -396,6 +396,56 @@ interface ServerExercise {
   deletedAt: string | null;
 }
 
+// One-time repair for exercises that were hard-deleted locally before the switch to soft
+// delete: their sets.exerciseId now points nowhere locally, so they display as "Exercice
+// supprimé" even though the server still has the row (its own DELETE failed on the
+// fk_set_exercise constraint, since a hard delete was never actually possible once history
+// existed). Re-inserts the missing exercise locally at the exact id its orphaned sets already
+// reference, so no set needs to be touched — only runs the (safe, order-independent) 1-orphan
+// case automatically; anything more ambiguous is left alone rather than risk a wrong pairing.
+export async function repairOrphanedExercises(db: SQLiteDatabase): Promise<void> {
+  const orphaned = await db.getAllAsync<{ exerciseId: number }>(
+    'SELECT DISTINCT exerciseId FROM sets WHERE exerciseId NOT IN (SELECT id FROM exercises)'
+  );
+  if (orphaned.length === 0) return;
+
+  const localServerIds = new Set(
+    (
+      await db.getAllAsync<{ serverId: number }>('SELECT serverId FROM exercises WHERE serverId IS NOT NULL')
+    ).map((r) => r.serverId)
+  );
+
+  let serverExercises: ServerExercise[];
+  try {
+    serverExercises = await apiFetch('/exercises');
+  } catch {
+    return; // offline — retried on next bootstrap pass
+  }
+  const missingFromLocal = serverExercises.filter((se) => !localServerIds.has(se.id));
+
+  if (orphaned.length !== 1 || missingFromLocal.length !== 1) {
+    if (orphaned.length > 0) {
+      console.warn(
+        `[repair] ${orphaned.length} orphaned exercise id(s), ${missingFromLocal.length} candidate(s) on server — ambiguous, skipping`
+      );
+    }
+    return;
+  }
+
+  const se = missingFromLocal[0];
+  await db.runAsync(
+    'INSERT INTO exercises (id, name, category, muscleGroup, isCustom, createdAt, serverId, deletedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    orphaned[0].exerciseId,
+    se.name,
+    se.category,
+    se.muscleGroup ?? 'pecs',
+    se.isCustom ? 1 : 0,
+    new Date().toISOString(),
+    se.id,
+    se.deletedAt ?? new Date().toISOString()
+  );
+}
+
 export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
   const serverExercises: ServerExercise[] = await apiFetch('/exercises');
 

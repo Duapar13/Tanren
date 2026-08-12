@@ -4,7 +4,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { bootstrapAfterLogin, runSync, wipeLocalData } from '../lib/syncEngine';
+import { bootstrapAfterLogin, repairOrphanedExercises, runSync, wipeLocalData } from '../lib/syncEngine';
 import { registerSyncTrigger } from '../lib/syncBus';
 import { getLocalDataOwner, setLocalDataOwner } from '../lib/api';
 
@@ -52,6 +52,7 @@ export function SyncEngine() {
       if (bootstrappedFor.current !== user.id) {
         try {
           await bootstrapAfterLogin(db);
+          await repairOrphanedExercises(db);
           await reload();
         } catch (err) {
           console.warn('[sync] bootstrap failed', err);
