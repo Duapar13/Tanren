@@ -7,16 +7,15 @@
 export const RANKS = [
   'Fer',
   'Bronze',
-  'Acier',
   'Argent',
   'Or',
   'Améthyste',
   'Émeraude',
   'Rubis',
   'Saphir',
-  'Diamant',
   'Légende',
   'Divin',
+  'Master Divin',
 ];
 export const DIVISIONS = ['IV', 'III', 'II', 'I'];
 export const POINTS_PER_DIVISION = 100;

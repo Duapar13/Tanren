@@ -152,7 +152,6 @@ export const fr = {
     'prs-10': { name: '10 records brisés', description: 'Bats 10 records personnels au total.' },
     'nutrition-14': { name: 'Discipline de fer', description: 'Atteins ton objectif calorique 14 jours au total.' },
     'bodyweight-10': { name: 'Suivi assidu', description: 'Logge ton poids de corps 10 jours différents.' },
-    'rank-acier': { name: 'Rang Acier', description: 'Atteins le rang Acier ou plus sur la saison en cours.' },
     'bar-140': { name: 'Barre à 140', description: 'Logge une série à 140 kg ou plus.' },
     'bar-180': { name: 'Barre à 180', description: 'Logge une série à 180 kg ou plus.' },
     'sessions-50': { name: '50 séances forgées', description: 'Logge 50 séances au total.' },
@@ -181,8 +180,8 @@ export const fr = {
     'rank-emeraude': { name: 'Rang Émeraude', description: 'Atteins le rang Émeraude ou plus sur la saison en cours.' },
     'rank-rubis': { name: 'Rang Rubis', description: 'Atteins le rang Rubis ou plus sur la saison en cours.' },
     'rank-saphir': { name: 'Rang Saphir', description: 'Atteins le rang Saphir ou plus sur la saison en cours.' },
-    'rank-diamant': { name: 'Rang Diamant', description: 'Atteins le rang Diamant ou plus sur la saison en cours.' },
-    'rank-divin': { name: 'Rang Divin', description: 'Atteins le rang Divin sur la saison en cours.' },
+    'rank-divin': { name: 'Rang Divin', description: 'Atteins le rang Divin ou plus sur la saison en cours.' },
+    'rank-master-divin': { name: 'Rang Master Divin', description: 'Atteins le rang Master Divin sur la saison en cours.' },
   },
   seance: {
     all: 'Tout',

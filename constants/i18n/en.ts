@@ -154,7 +154,6 @@ export const en: TranslationDict = {
     'prs-10': { name: '10 records broken', description: 'Beat 10 personal records in total.' },
     'nutrition-14': { name: 'Iron discipline', description: 'Hit your calorie target 14 days in total.' },
     'bodyweight-10': { name: 'Diligent tracking', description: 'Log your body weight on 10 different days.' },
-    'rank-acier': { name: 'Steel rank', description: 'Reach Steel rank or higher this season.' },
     'bar-140': { name: 'Bar at 140', description: 'Log a set at 140 kg or more.' },
     'bar-180': { name: 'Bar at 180', description: 'Log a set at 180 kg or more.' },
     'sessions-50': { name: '50 workouts forged', description: 'Log 50 workouts in total.' },
@@ -183,8 +182,8 @@ export const en: TranslationDict = {
     'rank-emeraude': { name: 'Emerald rank', description: 'Reach Emerald rank or higher this season.' },
     'rank-rubis': { name: 'Ruby rank', description: 'Reach Ruby rank or higher this season.' },
     'rank-saphir': { name: 'Sapphire rank', description: 'Reach Sapphire rank or higher this season.' },
-    'rank-diamant': { name: 'Diamond rank', description: 'Reach Diamond rank or higher this season.' },
-    'rank-divin': { name: 'Divine rank', description: 'Reach Divine rank this season.' },
+    'rank-divin': { name: 'Divine rank', description: 'Reach Divine rank or higher this season.' },
+    'rank-master-divin': { name: 'Master Divine rank', description: 'Reach Master Divine rank this season.' },
   },
   seance: {
     all: 'All',

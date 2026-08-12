@@ -154,7 +154,6 @@ export const es: TranslationDict = {
     'prs-10': { name: '10 récords batidos', description: 'Bate 10 récords personales en total.' },
     'nutrition-14': { name: 'Disciplina de hierro', description: 'Alcanza tu objetivo calórico 14 días en total.' },
     'bodyweight-10': { name: 'Seguimiento constante', description: 'Registra tu peso corporal en 10 días diferentes.' },
-    'rank-acier': { name: 'Rango Acero', description: 'Alcanza el rango Acero o superior esta temporada.' },
     'bar-140': { name: 'Barra a 140', description: 'Registra una serie de 140 kg o más.' },
     'bar-180': { name: 'Barra a 180', description: 'Registra una serie de 180 kg o más.' },
     'sessions-50': { name: '50 entrenos forjados', description: 'Registra 50 entrenos en total.' },
@@ -183,8 +182,8 @@ export const es: TranslationDict = {
     'rank-emeraude': { name: 'Rango Esmeralda', description: 'Alcanza el rango Esmeralda o superior esta temporada.' },
     'rank-rubis': { name: 'Rango Rubí', description: 'Alcanza el rango Rubí o superior esta temporada.' },
     'rank-saphir': { name: 'Rango Zafiro', description: 'Alcanza el rango Zafiro o superior esta temporada.' },
-    'rank-diamant': { name: 'Rango Diamante', description: 'Alcanza el rango Diamante o superior esta temporada.' },
-    'rank-divin': { name: 'Rango Divino', description: 'Alcanza el rango Divino esta temporada.' },
+    'rank-divin': { name: 'Rango Divino', description: 'Alcanza el rango Divino o superior esta temporada.' },
+    'rank-master-divin': { name: 'Rango Master Divino', description: 'Alcanza el rango Master Divino esta temporada.' },
   },
   seance: {
     all: 'Todos',
