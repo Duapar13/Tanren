@@ -175,6 +175,8 @@ export const es: TranslationDict = {
     lastSet: 'Última serie',
     setLabel: (n: number) => `Serie ${n}`,
     deleteSetConfirmTitle: 'Eliminar la serie',
+    removeExerciseConfirmTitle: '¿Quitar este ejercicio de la sesión?',
+    removeExerciseConfirmBody: (n: number) => `${n} serie${n > 1 ? 's' : ''} ya registrada${n > 1 ? 's' : ''} para este ejercicio se perderá${n > 1 ? 'n' : ''}.`,
     deleteSessionConfirmTitle: 'Eliminar el entreno',
     deleteSessionConfirmBody: 'Se eliminará todo el entreno.',
     exerciseCount: (n: number) => `${n} ejercicio${n > 1 ? 's' : ''}`,

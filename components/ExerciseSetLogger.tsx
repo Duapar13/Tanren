@@ -108,6 +108,17 @@ export function ExerciseSetLogger({
     ]);
   };
 
+  const confirmRemoveExercise = () => {
+    Alert.alert(
+      t.seance.removeExerciseConfirmTitle,
+      draftSets.length > 0 ? t.seance.removeExerciseConfirmBody(draftSets.length) : undefined,
+      [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: onRemoveExercise },
+      ]
+    );
+  };
+
   const canCollapse = draftSets.length > 0;
   const recordBeaten = !!bestWeightKg && draftSets.some((s) => s.weightKg >= bestWeightKg);
 
@@ -352,7 +363,7 @@ export function ExerciseSetLogger({
           </Pressable>
         </View>
 
-        <Button title={t.seance.removeExerciseFromSession} variant="destructive" onPress={onRemoveExercise} />
+        <Button title={t.seance.removeExerciseFromSession} variant="destructive" onPress={confirmRemoveExercise} />
       </View>
     </View>
   );

@@ -173,6 +173,9 @@ export const fr = {
     lastSet: 'Dernière série',
     setLabel: (n: number) => `Série ${n}`,
     deleteSetConfirmTitle: 'Supprimer la série',
+    removeExerciseConfirmTitle: 'Retirer cet exercice de la séance ?',
+    removeExerciseConfirmBody: (n: number) =>
+      `${n} série${n > 1 ? 's' : ''} déjà loggée${n > 1 ? 's' : ''} pour cet exercice ${n > 1 ? 'seront perdues' : 'sera perdue'} si tu continues.`,
     deleteSessionConfirmTitle: 'Supprimer la séance',
     deleteSessionConfirmBody: 'Toute la séance sera supprimée.',
     exerciseCount: (n: number) => `${n} exercice${n > 1 ? 's' : ''}`,
