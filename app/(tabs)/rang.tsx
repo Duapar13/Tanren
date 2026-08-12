@@ -35,6 +35,16 @@ import { TranslationDict } from '../../constants/i18n/fr';
 
 const BADGES_PER_PAGE = 8;
 
+// Tier badges (one per rank+division, e.g. "Acier III") are generated from RANKS/DIVISIONS
+// rather than hand-authored per language — so their description reuses the already-translated
+// pointsThreshold copy instead of needing 47 x 4 translated strings kept in sync with the ladder.
+function badgeDescription(status: BadgeStatus, t: TranslationDict): string {
+  if (status.badge.id.startsWith('tier-') && status.progress.kind !== 'rank') {
+    return t.rang.pointsThreshold(status.progress.target);
+  }
+  return t.badges[status.badge.id as keyof typeof t.badges]?.description ?? status.badge.description;
+}
+
 function formatBadgeProgress(progress: BadgeProgress, t: TranslationDict): string {
   if (progress.kind === 'rank') {
     return progress.unlocked ? t.rang.unlocked : t.rang.currentRank(progress.rank);
@@ -430,7 +440,7 @@ export default function RangScreen() {
           {selectedBadge && (
             <View style={{ gap: Spacing.sm }}>
               <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                {t.badges[selectedBadge.badge.id as keyof typeof t.badges]?.description ?? selectedBadge.badge.description}
+                {badgeDescription(selectedBadge, t)}
               </ThemedText>
               <ThemedText weight="600" style={{ textAlign: 'center' }}>
                 {formatBadgeProgress(selectedBadge.progress, t)}

@@ -5,7 +5,14 @@ import { isTrainingDay } from './program';
 import { estimate1RM } from './oneRepMax';
 import { macroTargets } from './nutrition';
 import { latestBodyWeight } from './nutritionStats';
-import { computeSeasonRanking, RANKS, type RankingParams } from './ranking';
+import {
+  computeSeasonRanking,
+  DIVISIONS,
+  POINTS_PER_DIVISION,
+  RANKS,
+  TOTAL_TIERS,
+  type RankingParams,
+} from './ranking';
 
 export interface Badge {
   id: string;
@@ -175,6 +182,37 @@ export const BADGES: Badge[] = [
   },
 ];
 
+// One badge per rank+division tier (Fer IV, Fer III, ... Divin I), not just per rank — generated
+// from RANKS/DIVISIONS instead of hand-listed so it can't drift out of sync with the ladder (see
+// utils/ranking.ts). Tier 0 (Fer IV) is skipped: everyone starts there, so it isn't an achievement.
+export interface TierInfo {
+  tierIndex: number;
+  id: string;
+  name: string;
+  threshold: number;
+}
+
+export const TIER_LIST: TierInfo[] = [];
+for (let tierIndex = 1; tierIndex < TOTAL_TIERS; tierIndex++) {
+  const rank = RANKS[Math.floor(tierIndex / DIVISIONS.length)];
+  const division = DIVISIONS[tierIndex % DIVISIONS.length];
+  TIER_LIST.push({
+    tierIndex,
+    id: `tier-${tierIndex}`,
+    name: `${rank} ${division}`,
+    threshold: tierIndex * POINTS_PER_DIVISION,
+  });
+}
+
+const TIER_BADGES: Badge[] = TIER_LIST.map((tier) => ({
+  id: tier.id,
+  name: tier.name,
+  description: `Atteins le palier ${tier.name}.`,
+  icon: 'ribbon',
+}));
+
+BADGES.push(...TIER_BADGES);
+
 function countAllTimePRs(sets: SetWithExercise[], sessions: WorkoutSession[]): number {
   const dateBySession = new Map(sessions.map((s) => [s.id, s.date]));
   const sorted = [...sets].sort((a, b) => {
@@ -272,8 +310,10 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
   const prCount = countAllTimePRs(params.sets, params.sessions);
   const nutritionDays = countNutritionTargetDaysHit(params.nutritionEntries, params.bodyWeightEntries, params.goal);
   const bodyWeightDays = new Set(params.bodyWeightEntries.map((e) => e.date)).size;
-  const seasonRank = computeSeasonRanking(params).state.rank;
+  const seasonRanking = computeSeasonRanking(params);
+  const seasonRank = seasonRanking.state.rank;
   const rankIndex = RANKS.indexOf(seasonRank);
+  const totalPoints = seasonRanking.totalPoints;
   const measurementDays = new Set(params.measurementEntries.map((e) => e.date)).size;
   const distinctExercises = new Set(params.sets.map((s) => s.exerciseId)).size;
   const hasCustomExercise = params.exercises.some((e) => e.isCustom);
@@ -331,6 +371,10 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
     'sets-500': tierEntry(totalSets, 500),
     'estimated-1rm-150': tierEntry(Math.round(maxEst1RM), 150, 'kg'),
   };
+
+  for (const tier of TIER_LIST) {
+    values[tier.id] = tierEntry(totalPoints, tier.threshold);
+  }
 
   return BADGES.map((badge) => ({
     badge,
