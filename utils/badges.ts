@@ -93,9 +93,45 @@ export const BADGES: Badge[] = [
   },
   { id: 'rank-or', name: 'Rang Or', description: 'Atteins le rang Or ou plus sur la saison en cours.', icon: 'shield' },
   {
+    id: 'rank-amethyste',
+    name: 'Rang Améthyste',
+    description: 'Atteins le rang Améthyste ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-emeraude',
+    name: 'Rang Émeraude',
+    description: 'Atteins le rang Émeraude ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-rubis',
+    name: 'Rang Rubis',
+    description: 'Atteins le rang Rubis ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-saphir',
+    name: 'Rang Saphir',
+    description: 'Atteins le rang Saphir ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-diamant',
+    name: 'Rang Diamant',
+    description: 'Atteins le rang Diamant ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
     id: 'rank-legende',
     name: 'Rang Légende',
-    description: 'Atteins le rang Légende sur la saison en cours.',
+    description: 'Atteins le rang Légende ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-divin',
+    name: 'Rang Divin',
+    description: 'Atteins le rang Divin sur la saison en cours.',
     icon: 'shield',
   },
   { id: 'measurement-5', name: 'Métrologue', description: 'Logge une mensuration 5 jours différents.', icon: 'body' },
@@ -245,10 +281,15 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
   const totalSets = params.sets.length;
   const maxEst1RM = params.sets.reduce((max, s) => Math.max(max, estimate1RM(s.weightKg, s.reps)), 0);
 
-  const rankEntry = (minIndex: number) => ({
-    unlocked: rankIndex >= minIndex,
-    progress: { kind: 'rank' as const, unlocked: rankIndex >= minIndex, rank: seasonRank },
-  });
+  // Looked up by rank name rather than a hardcoded index, so inserting new ranks into the
+  // ladder (utils/ranking.ts) can never silently shift which rank an existing badge requires.
+  const rankEntry = (minRank: (typeof RANKS)[number]) => {
+    const minIndex = RANKS.indexOf(minRank);
+    return {
+      unlocked: rankIndex >= minIndex,
+      progress: { kind: 'rank' as const, unlocked: rankIndex >= minIndex, rank: seasonRank },
+    };
+  };
 
   const values: Record<string, { unlocked: boolean; progress: BadgeProgress }> = {
     'first-session': tierEntry(params.sessions.length, 1),
@@ -258,7 +299,7 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
     'prs-10': tierEntry(prCount, 10),
     'nutrition-14': tierEntry(nutritionDays, 14, 'days'),
     'bodyweight-10': tierEntry(bodyWeightDays, 10, 'days'),
-    'rank-acier': rankEntry(2),
+    'rank-acier': rankEntry('Acier'),
     'bar-140': tierEntry(maxWeight, 140, 'kg'),
     'bar-180': tierEntry(maxWeight, 180, 'kg'),
     'sessions-50': tierEntry(params.sessions.length, 50),
@@ -271,9 +312,15 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
     'nutrition-60': tierEntry(nutritionDays, 60, 'days'),
     'bodyweight-30': tierEntry(bodyWeightDays, 30, 'days'),
     'bodyweight-60': tierEntry(bodyWeightDays, 60, 'days'),
-    'rank-argent': rankEntry(3),
-    'rank-or': rankEntry(4),
-    'rank-legende': rankEntry(5),
+    'rank-argent': rankEntry('Argent'),
+    'rank-or': rankEntry('Or'),
+    'rank-amethyste': rankEntry('Améthyste'),
+    'rank-emeraude': rankEntry('Émeraude'),
+    'rank-rubis': rankEntry('Rubis'),
+    'rank-saphir': rankEntry('Saphir'),
+    'rank-diamant': rankEntry('Diamant'),
+    'rank-legende': rankEntry('Légende'),
+    'rank-divin': rankEntry('Divin'),
     'measurement-5': tierEntry(measurementDays, 5, 'days'),
     'exercises-variety-10': tierEntry(distinctExercises, 10),
     'exercises-variety-25': tierEntry(distinctExercises, 25),

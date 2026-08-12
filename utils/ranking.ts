@@ -14,14 +14,27 @@ import { estimate1RM } from './oneRepMax';
 import { macroTargets } from './nutrition';
 import { latestBodyWeight } from './nutritionStats';
 
-export const RANKS = ['Fer', 'Bronze', 'Acier', 'Argent', 'Or', 'Légende'] as const;
+export const RANKS = [
+  'Fer',
+  'Bronze',
+  'Acier',
+  'Argent',
+  'Or',
+  'Améthyste',
+  'Émeraude',
+  'Rubis',
+  'Saphir',
+  'Diamant',
+  'Légende',
+  'Divin',
+] as const;
 export type RankName = (typeof RANKS)[number];
 
 export const DIVISIONS = ['IV', 'III', 'II', 'I'] as const;
 export type Division = (typeof DIVISIONS)[number];
 
 export const POINTS_PER_DIVISION = 100;
-export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 24
+export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 48
 export const MAX_POINTS = TOTAL_TIERS * POINTS_PER_DIVISION;
 
 export const RANK_COLORS: Record<RankName, string> = {
@@ -30,7 +43,13 @@ export const RANK_COLORS: Record<RankName, string> = {
   Acier: '#7C8B9C',
   Argent: '#C7C9CC',
   Or: '#C4881F',
+  Améthyste: '#8B5FBF',
+  Émeraude: '#17A673',
+  Rubis: '#D7263D',
+  Saphir: '#2E6FE0',
+  Diamant: '#5FD0D9',
   Légende: '#B15CDE',
+  Divin: '#F2C744',
 };
 
 export interface RankState {

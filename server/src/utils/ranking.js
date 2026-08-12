@@ -4,7 +4,20 @@
 // stored for the leaderboard is always recomputed here from the user's own synced rows, never
 // trusted from the request body. A client can send whatever "points" it wants; it's ignored.
 
-export const RANKS = ['Fer', 'Bronze', 'Acier', 'Argent', 'Or', 'Légende'];
+export const RANKS = [
+  'Fer',
+  'Bronze',
+  'Acier',
+  'Argent',
+  'Or',
+  'Améthyste',
+  'Émeraude',
+  'Rubis',
+  'Saphir',
+  'Diamant',
+  'Légende',
+  'Divin',
+];
 export const DIVISIONS = ['IV', 'III', 'II', 'I'];
 export const POINTS_PER_DIVISION = 100;
 const TOTAL_TIERS = RANKS.length * DIVISIONS.length;
