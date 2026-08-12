@@ -180,7 +180,8 @@ export const fr = {
     'rank-saphir': { name: 'Rang Saphir', description: 'Atteins le rang Saphir ou plus sur la saison en cours.' },
     'rank-divin': { name: 'Rang Divin', description: 'Atteins le rang Divin ou plus sur la saison en cours.' },
     'rank-master-divin': { name: 'Rang Master Divin', description: 'Atteins le rang Master Divin ou plus sur la saison en cours.' },
-    'rank-grand-master-divin': { name: 'Rang Grand Master Divin', description: 'Atteins le rang Grand Master Divin sur la saison en cours.' },
+    'rank-grand-master-divin': { name: 'Rang Grand Master Divin', description: 'Atteins le rang Grand Master Divin ou plus sur la saison en cours.' },
+    'rank-ultime': { name: 'Rang Ultime', description: 'Atteins le rang Ultime sur la saison en cours.' },
   },
   seance: {
     all: 'Tout',

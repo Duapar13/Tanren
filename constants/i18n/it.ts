@@ -182,7 +182,8 @@ export const it: TranslationDict = {
     'rank-saphir': { name: 'Rango Zaffiro', description: 'Raggiungi il rango Zaffiro o superiore in questa stagione.' },
     'rank-divin': { name: 'Rango Divino', description: 'Raggiungi il rango Divino o superiore in questa stagione.' },
     'rank-master-divin': { name: 'Rango Master Divino', description: 'Raggiungi il rango Master Divino o superiore in questa stagione.' },
-    'rank-grand-master-divin': { name: 'Rango Grand Master Divino', description: 'Raggiungi il rango Grand Master Divino in questa stagione.' },
+    'rank-grand-master-divin': { name: 'Rango Grand Master Divino', description: 'Raggiungi il rango Grand Master Divino o superiore in questa stagione.' },
+    'rank-ultime': { name: 'Rango Definitivo', description: 'Raggiungi il rango Definitivo in questa stagione.' },
   },
   seance: {
     all: 'Tutti',

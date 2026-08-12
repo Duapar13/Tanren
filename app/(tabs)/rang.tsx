@@ -33,6 +33,7 @@ import { apiFetch } from '../../lib/api';
 import { TranslationDict } from '../../constants/i18n/fr';
 
 const BADGES_PER_PAGE = 8;
+const RANKS_PER_PAGE = 4;
 
 // Tier badges (one per rank+division, e.g. "Acier III") are generated from RANKS/DIVISIONS
 // rather than hand-authored per language — so their description reuses the already-translated
@@ -123,8 +124,8 @@ export default function RangScreen() {
 
   const rankPages = useMemo(() => {
     const pages: (typeof RANKS[number])[][] = [];
-    for (let i = 0; i < RANKS.length; i += BADGES_PER_PAGE) {
-      pages.push(RANKS.slice(i, i + BADGES_PER_PAGE) as (typeof RANKS[number])[]);
+    for (let i = 0; i < RANKS.length; i += RANKS_PER_PAGE) {
+      pages.push(RANKS.slice(i, i + RANKS_PER_PAGE) as (typeof RANKS[number])[]);
     }
     return pages;
   }, []);
@@ -235,7 +236,7 @@ export default function RangScreen() {
               {rankPages.map((page, pageIndex) => (
                 <Card key={pageIndex} style={{ width: badgePageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
                   {page.map((rank, indexInPage) => {
-                    const i = pageIndex * BADGES_PER_PAGE + indexInPage;
+                    const i = pageIndex * RANKS_PER_PAGE + indexInPage;
                     const isCurrent = rank === state.rank;
                     const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
                     return (

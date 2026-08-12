@@ -182,7 +182,8 @@ export const en: TranslationDict = {
     'rank-saphir': { name: 'Sapphire rank', description: 'Reach Sapphire rank or higher this season.' },
     'rank-divin': { name: 'Divine rank', description: 'Reach Divine rank or higher this season.' },
     'rank-master-divin': { name: 'Master Divine rank', description: 'Reach Master Divine rank or higher this season.' },
-    'rank-grand-master-divin': { name: 'Grand Master Divine rank', description: 'Reach Grand Master Divine rank this season.' },
+    'rank-grand-master-divin': { name: 'Grand Master Divine rank', description: 'Reach Grand Master Divine rank or higher this season.' },
+    'rank-ultime': { name: 'Ultimate rank', description: 'Reach Ultimate rank this season.' },
   },
   seance: {
     all: 'All',

@@ -138,7 +138,13 @@ export const BADGES: Badge[] = [
   {
     id: 'rank-grand-master-divin',
     name: 'Rang Grand Master Divin',
-    description: 'Atteins le rang Grand Master Divin sur la saison en cours.',
+    description: 'Atteins le rang Grand Master Divin ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  {
+    id: 'rank-ultime',
+    name: 'Rang Ultime',
+    description: 'Atteins le rang Ultime sur la saison en cours.',
     icon: 'shield',
   },
   { id: 'measurement-5', name: 'Métrologue', description: 'Logge une mensuration 5 jours différents.', icon: 'body' },
@@ -361,6 +367,7 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
     'rank-divin': rankEntry('Divin'),
     'rank-master-divin': rankEntry('Master Divin'),
     'rank-grand-master-divin': rankEntry('Grand Master Divin'),
+    'rank-ultime': rankEntry('Ultime'),
     'measurement-5': tierEntry(measurementDays, 5, 'days'),
     'exercises-variety-10': tierEntry(distinctExercises, 10),
     'exercises-variety-25': tierEntry(distinctExercises, 25),
