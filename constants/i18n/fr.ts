@@ -370,6 +370,14 @@ export const fr = {
     restoreDoneBody: 'Tes achats précédents ont été restaurés.',
     restoreErrorTitle: 'Restauration',
     restoreErrorBody: 'Impossible de restaurer les achats pour le moment, réessaie plus tard.',
+    periodWeek: 'par semaine',
+    periodMonth: 'par mois',
+    periodTwoMonths: 'tous les 2 mois',
+    periodThreeMonths: 'tous les 3 mois',
+    periodSixMonths: 'tous les 6 mois',
+    periodYear: 'par an',
+    privacyPolicy: 'Politique de confidentialité',
+    termsOfUse: "Conditions d'utilisation",
   },
 };
 

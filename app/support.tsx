@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, View } from 'react-native';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
@@ -7,10 +7,18 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { NinjaMascot } from '../components/NinjaMascot';
 import { useTranslation } from '../hooks/useTranslation';
+import { useTheme } from '../hooks/useTheme';
 import { Spacing } from '../constants/theme';
+import { formatSubscriptionPeriod } from '../utils/subscriptionPeriod';
+
+const PRIVACY_POLICY_URL = 'https://api-tanren.duapar.fr/privacy';
+// Apple's own standard EULA — used as-is since Ningyma doesn't need custom subscription terms;
+// Apple explicitly allows linking this directly instead of hosting a custom one.
+const TERMS_OF_USE_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 export default function SupportScreen() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
@@ -72,32 +80,53 @@ export default function SupportScreen() {
           </Card>
         ) : (
           <View style={{ width: '100%', gap: Spacing.sm }}>
-            {packages.map((pkg) => (
-              <Card key={pkg.identifier} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <ThemedText variant="subhead" weight="600">
-                    {pkg.product.title}
-                  </ThemedText>
-                  {!!pkg.product.description && (
-                    <ThemedText variant="caption" color="tertiary" numberOfLines={2}>
-                      {pkg.product.description}
+            {packages.map((pkg) => {
+              const period = formatSubscriptionPeriod(pkg.product.subscriptionPeriod, t);
+              return (
+                <Card key={pkg.identifier} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <ThemedText variant="subhead" weight="600">
+                      {pkg.product.title}
                     </ThemedText>
-                  )}
-                </View>
-                <Button
-                  title={purchasingId === pkg.identifier ? t.support.purchasing : pkg.product.priceString}
-                  onPress={() => handlePurchase(pkg)}
-                  disabled={purchasingId !== null}
-                  style={{ paddingHorizontal: Spacing.lg }}
-                />
-              </Card>
-            ))}
+                    {!!pkg.product.description && (
+                      <ThemedText variant="caption" color="tertiary" numberOfLines={2}>
+                        {pkg.product.description}
+                      </ThemedText>
+                    )}
+                    {!!period && (
+                      <ThemedText variant="caption" color="tertiary">
+                        {pkg.product.priceString} {period}
+                      </ThemedText>
+                    )}
+                  </View>
+                  <Button
+                    title={purchasingId === pkg.identifier ? t.support.purchasing : pkg.product.priceString}
+                    onPress={() => handlePurchase(pkg)}
+                    disabled={purchasingId !== null}
+                    style={{ paddingHorizontal: Spacing.lg }}
+                  />
+                </Card>
+              );
+            })}
           </View>
         )}
 
         <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
           {t.support.disclaimer}
         </ThemedText>
+
+        <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+          <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+            <ThemedText variant="caption" weight="600" style={{ color: colors.accent, textDecorationLine: 'underline' }}>
+              {t.support.privacyPolicy}
+            </ThemedText>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(TERMS_OF_USE_URL)}>
+            <ThemedText variant="caption" weight="600" style={{ color: colors.accent, textDecorationLine: 'underline' }}>
+              {t.support.termsOfUse}
+            </ThemedText>
+          </Pressable>
+        </View>
 
         <Button
           title={restoring ? t.support.restoring : t.support.restorePurchases}

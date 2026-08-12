@@ -371,5 +371,13 @@ export const es: TranslationDict = {
     restoreDoneBody: 'Tus compras anteriores han sido restauradas.',
     restoreErrorTitle: 'Restaurar',
     restoreErrorBody: 'No se pudieron restaurar las compras ahora, inténtalo más tarde.',
+    periodWeek: 'por semana',
+    periodMonth: 'al mes',
+    periodTwoMonths: 'cada 2 meses',
+    periodThreeMonths: 'cada 3 meses',
+    periodSixMonths: 'cada 6 meses',
+    periodYear: 'al año',
+    privacyPolicy: 'Política de privacidad',
+    termsOfUse: 'Condiciones de uso',
   },
 };

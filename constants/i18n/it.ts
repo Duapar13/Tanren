@@ -371,5 +371,13 @@ export const it: TranslationDict = {
     restoreDoneBody: 'I tuoi acquisti precedenti sono stati ripristinati.',
     restoreErrorTitle: 'Ripristino',
     restoreErrorBody: 'Impossibile ripristinare gli acquisti al momento, riprova più tardi.',
+    periodWeek: 'a settimana',
+    periodMonth: 'al mese',
+    periodTwoMonths: 'ogni 2 mesi',
+    periodThreeMonths: 'ogni 3 mesi',
+    periodSixMonths: 'ogni 6 mesi',
+    periodYear: "all'anno",
+    privacyPolicy: 'Informativa sulla privacy',
+    termsOfUse: 'Termini di utilizzo',
   },
 };
