@@ -257,6 +257,7 @@ export const fr = {
     maxWeight: 'Poids max :',
     estimated1RM: '1RM estimée :',
     sessionVolume: 'Volume max (1 séance) :',
+    deletedNotice: 'Exercice supprimé de ta bibliothèque — conservé ici pour ton historique.',
   },
   foodSearch: {
     scan: 'Scanner',

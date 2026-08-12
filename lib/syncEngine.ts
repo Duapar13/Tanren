@@ -393,6 +393,7 @@ interface ServerExercise {
   category: string;
   muscleGroup: string | null;
   isCustom: boolean;
+  deletedAt: string | null;
 }
 
 export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
@@ -435,13 +436,14 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
   for (const se of serverExercises) {
     if (alreadyMatched.has(se.id)) continue;
     await db.runAsync(
-      'INSERT INTO exercises (name, category, muscleGroup, isCustom, createdAt, serverId) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO exercises (name, category, muscleGroup, isCustom, createdAt, serverId, deletedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
       se.name,
       se.category,
       se.muscleGroup ?? 'pecs',
       se.isCustom ? 1 : 0,
       now,
-      se.id
+      se.id,
+      se.deletedAt
     );
   }
 

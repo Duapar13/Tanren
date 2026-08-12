@@ -259,6 +259,7 @@ export const it: TranslationDict = {
     maxWeight: 'Peso max:',
     estimated1RM: '1RM stimata:',
     sessionVolume: 'Volume max (1 allenamento):',
+    deletedNotice: 'Rimosso dalla tua libreria — conservato qui per il tuo storico.',
   },
   foodSearch: {
     scan: 'Scansiona',

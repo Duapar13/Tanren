@@ -42,9 +42,10 @@ export interface Exercise {
   muscleGroup: MuscleGroup;
   isCustom: boolean;
   createdAt: string;
+  deletedAt: string | null;
 }
 
-export type ExerciseInput = Omit<Exercise, 'id' | 'createdAt'>;
+export type ExerciseInput = Omit<Exercise, 'id' | 'createdAt' | 'deletedAt'>;
 
 export interface WorkoutSession {
   id: number;

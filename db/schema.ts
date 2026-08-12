@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DB_NAME = 'tanren.db';
-const CURRENT_VERSION = 8;
+const CURRENT_VERSION = 9;
 
 export async function migrateDb(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>(
@@ -32,7 +32,8 @@ export async function migrateDb(db: SQLiteDatabase) {
       muscleGroup TEXT NOT NULL,
       isCustom INTEGER NOT NULL DEFAULT 0,
       createdAt TEXT NOT NULL,
-      serverId INTEGER
+      serverId INTEGER,
+      deletedAt TEXT
     );
 
     CREATE TABLE IF NOT EXISTS sessions (
@@ -152,6 +153,16 @@ export async function migrateDb(db: SQLiteDatabase) {
   if (currentVersion > 0 && currentVersion < 7) {
     try {
       await db.execAsync("ALTER TABLE nutrition_entries ADD COLUMN unit TEXT DEFAULT 'g'");
+    } catch {
+      // already added by the CREATE TABLE above on a fresh install
+    }
+  }
+
+  // v<=8 -> v9: deleting an exercise now soft-deletes it (deletedAt) instead of a hard DELETE,
+  // so sets logged against it keep showing the real exercise name instead of "Exercice supprimé".
+  if (currentVersion > 0 && currentVersion < 9) {
+    try {
+      await db.execAsync('ALTER TABLE exercises ADD COLUMN deletedAt TEXT');
     } catch {
       // already added by the CREATE TABLE above on a fresh install
     }

@@ -8,6 +8,7 @@ interface ExerciseRow {
   muscleGroup: string;
   isCustom: number;
   createdAt: string;
+  deletedAt: string | null;
 }
 
 function mapRow(row: ExerciseRow): Exercise {
@@ -18,6 +19,7 @@ function mapRow(row: ExerciseRow): Exercise {
     muscleGroup: row.muscleGroup as Exercise['muscleGroup'],
     isCustom: row.isCustom === 1,
     createdAt: row.createdAt,
+    deletedAt: row.deletedAt,
   };
 }
 
@@ -57,9 +59,15 @@ export async function updateExercise(
   }
 }
 
+// Soft delete: sets keep referencing this exerciseId (see db/sets.ts's getAllSets comment),
+// so removing the row outright would strip the real exercise name from historical sets.
 export async function deleteExercise(
   db: SQLiteDatabase,
   id: number
 ): Promise<void> {
-  await db.runAsync('DELETE FROM exercises WHERE id = ?', id);
+  await db.runAsync(
+    'UPDATE exercises SET deletedAt = ? WHERE id = ?',
+    new Date().toISOString(),
+    id
+  );
 }

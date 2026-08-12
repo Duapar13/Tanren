@@ -83,8 +83,9 @@ export default function SeanceScreen() {
   }, [draftHydrated, activeExerciseIds, draftSets, validatedExerciseIds, resuming]);
 
   const availableExercises = useMemo(() => {
-    if (exerciseFilter === 'all') return exercises;
-    return exercises.filter((e) => e.category === exerciseFilter);
+    const active = exercises.filter((e) => !e.deletedAt);
+    if (exerciseFilter === 'all') return active;
+    return active.filter((e) => e.category === exerciseFilter);
   }, [exercises, exerciseFilter]);
 
   const exercisePRs = useMemo(() => computeExercisePRs(sets, sessions), [sets, sessions]);

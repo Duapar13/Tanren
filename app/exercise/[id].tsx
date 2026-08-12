@@ -38,6 +38,11 @@ export default function ExerciseDetailScreen() {
             {exercise.category === 'upper' ? t.common.upperBody : t.common.lowerBody} ·{' '}
             {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
           </ThemedText>
+          {!!exercise.deletedAt && (
+            <ThemedText variant="caption" color="tertiary" style={{ marginTop: Spacing.xs }}>
+              {t.exerciseDetail.deletedNotice}
+            </ThemedText>
+          )}
         </View>
 
         {pr && (

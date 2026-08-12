@@ -60,7 +60,7 @@ export default function ExerciseLibraryScreen() {
     setEditingExerciseId(null);
   };
 
-  const customExercises = exercises.filter((e) => e.isCustom);
+  const customExercises = exercises.filter((e) => e.isCustom && !e.deletedAt);
 
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>

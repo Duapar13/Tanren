@@ -13,6 +13,7 @@ function publicExercise(row) {
     muscleGroup: row.muscle_group,
     isCustom: !!row.is_custom,
     catalogRefId: row.catalog_ref_id,
+    deletedAt: row.deleted_at,
   };
 }
 
@@ -71,13 +72,21 @@ router.patch('/:id', async (req, res) => {
   res.json(publicExercise(row));
 });
 
+// Soft delete: sets keep a real fk_set_exercise reference (no ON DELETE CASCADE/SET NULL), so a
+// hard DELETE here throws a FK violation for any exercise with logged history — which used to
+// wedge the whole client sync queue behind that one permanently-failing item. Marking deleted_at
+// also lets historical sets keep showing the real exercise name instead of losing it forever.
 router.delete('/:id', async (req, res) => {
   const [result] = await pool.query(
-    'DELETE FROM exercises WHERE id = ? AND user_id = ?',
+    'UPDATE exercises SET deleted_at = NOW() WHERE id = ? AND user_id = ? AND deleted_at IS NULL',
     [req.params.id, req.userId]
   );
   if (result.affectedRows === 0) {
-    return res.status(404).json({ error: 'not_found' });
+    const [[row]] = await pool.query(
+      'SELECT id FROM exercises WHERE id = ? AND user_id = ?',
+      [req.params.id, req.userId]
+    );
+    if (!row) return res.status(404).json({ error: 'not_found' });
   }
   res.status(204).end();
 });
