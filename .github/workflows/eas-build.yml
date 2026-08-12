@@ -1,0 +1,67 @@
+name: EAS Build (iOS, self-hosted)
+
+# Runs on the project's self-hosted macOS runner (a personal MacBook), not a GitHub-hosted
+# runner — iOS compilation needs Xcode, which only exists on macOS, and doing it locally sidesteps
+# the EAS cloud build plan's monthly quota entirely.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eas-build-ios
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Verify bundle exports
+        run: npx expo export --platform ios
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: EAS build (local)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --local --platform ios --profile preview --non-interactive --output ./build.ipa
+
+      - name: Deploy to OTA hosting
+        id: deploy
+        run: |
+          set -euo pipefail
+          BUILD_ID="$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          IPA_URL="https://api-tanren.duapar.fr/ota/${BUILD_ID}.ipa"
+          MANIFEST_URL="https://api-tanren.duapar.fr/ota/${BUILD_ID}.plist"
+
+          node scripts/ci/generate-ota-manifest.js "$IPA_URL" "./manifest.plist"
+
+          SSH_KEY="$HOME/.ssh/tanren_ota_deploy"
+          scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
+            ./build.ipa "tanren@176.161.39.196:/home/tanren/ota-builds/${BUILD_ID}.ipa"
+          scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
+            ./manifest.plist "tanren@176.161.39.196:/home/tanren/ota-builds/${BUILD_ID}.plist"
+
+          echo "install_link=itms-services://?action=download-manifest&url=${MANIFEST_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          node scripts/ci/notify-discord-build.js \
+            "${{ steps.deploy.outputs.install_link }}" \
+            "Commit ${GITHUB_SHA::7} — ${{ github.event.head_commit.message }}"
