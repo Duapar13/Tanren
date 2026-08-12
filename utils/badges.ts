@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BodyWeightEntry, NutritionEntry, NutritionGoal, SetWithExercise, WorkoutSession } from '../types';
+import { BodyWeightEntry, Exercise, NutritionEntry, NutritionGoal, SetWithExercise, WorkoutSession } from '../types';
 import { addDays, toDateKey, todayKey } from './date';
 import { isTrainingDay } from './program';
 import { estimate1RM } from './oneRepMax';
@@ -42,6 +42,100 @@ export const BADGES: Badge[] = [
     name: 'Rang Acier',
     description: 'Atteins le rang Acier ou plus sur la saison en cours.',
     icon: 'shield',
+  },
+  { id: 'bar-140', name: 'Barre à 140', description: 'Logge une série à 140 kg ou plus.', icon: 'barbell' },
+  { id: 'bar-180', name: 'Barre à 180', description: 'Logge une série à 180 kg ou plus.', icon: 'barbell' },
+  { id: 'sessions-50', name: '50 séances forgées', description: 'Logge 50 séances au total.', icon: 'layers' },
+  { id: 'sessions-100', name: '100 séances forgées', description: 'Logge 100 séances au total.', icon: 'layers' },
+  {
+    id: 'streak-14',
+    name: 'Fer trempé',
+    description: '14 jours d’entraînement prévus d’affilée, sans en manquer un.',
+    icon: 'flame',
+  },
+  {
+    id: 'streak-30',
+    name: 'Acier inoxydable',
+    description: '30 jours d’entraînement prévus d’affilée, sans en manquer un.',
+    icon: 'flame',
+  },
+  { id: 'prs-25', name: '25 records brisés', description: 'Bats 25 records personnels au total.', icon: 'trophy' },
+  { id: 'prs-50', name: '50 records brisés', description: 'Bats 50 records personnels au total.', icon: 'trophy' },
+  {
+    id: 'nutrition-30',
+    name: 'Discipline d’acier',
+    description: 'Atteins ton objectif calorique 30 jours au total.',
+    icon: 'nutrition',
+  },
+  {
+    id: 'nutrition-60',
+    name: 'Discipline de légende',
+    description: 'Atteins ton objectif calorique 60 jours au total.',
+    icon: 'nutrition',
+  },
+  {
+    id: 'bodyweight-30',
+    name: 'Suivi rigoureux',
+    description: 'Logge ton poids de corps 30 jours différents.',
+    icon: 'analytics',
+  },
+  {
+    id: 'bodyweight-60',
+    name: 'Suivi implacable',
+    description: 'Logge ton poids de corps 60 jours différents.',
+    icon: 'analytics',
+  },
+  {
+    id: 'rank-argent',
+    name: 'Rang Argent',
+    description: 'Atteins le rang Argent ou plus sur la saison en cours.',
+    icon: 'shield',
+  },
+  { id: 'rank-or', name: 'Rang Or', description: 'Atteins le rang Or ou plus sur la saison en cours.', icon: 'shield' },
+  {
+    id: 'rank-legende',
+    name: 'Rang Légende',
+    description: 'Atteins le rang Légende sur la saison en cours.',
+    icon: 'shield',
+  },
+  { id: 'measurement-5', name: 'Métrologue', description: 'Logge une mensuration 5 jours différents.', icon: 'body' },
+  {
+    id: 'exercises-variety-10',
+    name: 'Boîte à outils',
+    description: 'Logge au moins 10 exercices différents.',
+    icon: 'grid',
+  },
+  {
+    id: 'exercises-variety-25',
+    name: 'Arsenal complet',
+    description: 'Logge au moins 25 exercices différents.',
+    icon: 'grid',
+  },
+  {
+    id: 'custom-exercise-1',
+    name: 'Forgeron d’exercices',
+    description: 'Crée ton premier exercice personnalisé.',
+    icon: 'construct',
+  },
+  {
+    id: 'volume-50k',
+    name: '50 tonnes soulevées',
+    description: 'Cumule 50 000 kg soulevés au total, toutes séances confondues.',
+    icon: 'trending-up',
+  },
+  {
+    id: 'volume-250k',
+    name: '250 tonnes soulevées',
+    description: 'Cumule 250 000 kg soulevés au total, toutes séances confondues.',
+    icon: 'trending-up',
+  },
+  { id: 'sets-100', name: '100 coups de forge', description: 'Logge 100 séries au total.', icon: 'checkmark-done' },
+  { id: 'sets-500', name: '500 coups de forge', description: 'Logge 500 séries au total.', icon: 'checkmark-done' },
+  {
+    id: 'estimated-1rm-150',
+    name: 'Force brute',
+    description: 'Atteins une 1RM estimée de 150 kg ou plus sur un exercice.',
+    icon: 'flash',
   },
 ];
 
@@ -125,7 +219,18 @@ export interface BadgeStatus {
   progress: BadgeProgress;
 }
 
-export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
+export interface BadgeParams extends RankingParams {
+  exercises: Exercise[];
+}
+
+function tierEntry(current: number, target: number, kind: 'plain' | 'kg' | 'days' = 'plain'): {
+  unlocked: boolean;
+  progress: BadgeProgress;
+} {
+  return { unlocked: current >= target, progress: { kind, current: Math.min(current, target), target } };
+}
+
+export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
   const maxWeight = params.sets.reduce((max, s) => Math.max(max, s.weightKg), 0);
   const streak = countMaxTrainingStreak(params.sessions, params.trainingDays);
   const prCount = countAllTimePRs(params.sets, params.sessions);
@@ -133,34 +238,51 @@ export function computeBadgeStatuses(params: RankingParams): BadgeStatus[] {
   const bodyWeightDays = new Set(params.bodyWeightEntries.map((e) => e.date)).size;
   const seasonRank = computeSeasonRanking(params).state.rank;
   const rankIndex = RANKS.indexOf(seasonRank);
+  const measurementDays = new Set(params.measurementEntries.map((e) => e.date)).size;
+  const distinctExercises = new Set(params.sets.map((s) => s.exerciseId)).size;
+  const hasCustomExercise = params.exercises.some((e) => e.isCustom);
+  const totalVolume = params.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0);
+  const totalSets = params.sets.length;
+  const maxEst1RM = params.sets.reduce((max, s) => Math.max(max, estimate1RM(s.weightKg, s.reps)), 0);
+
+  const rankEntry = (minIndex: number) => ({
+    unlocked: rankIndex >= minIndex,
+    progress: { kind: 'rank' as const, unlocked: rankIndex >= minIndex, rank: seasonRank },
+  });
 
   const values: Record<string, { unlocked: boolean; progress: BadgeProgress }> = {
-    'first-session': {
-      unlocked: params.sessions.length >= 1,
-      progress: { kind: 'plain', current: Math.min(params.sessions.length, 1), target: 1 },
-    },
-    'bar-100': {
-      unlocked: maxWeight >= 100,
-      progress: { kind: 'kg', current: Math.round(Math.min(maxWeight, 100)), target: 100 },
-    },
-    'streak-7': { unlocked: streak >= 7, progress: { kind: 'days', current: Math.min(streak, 7), target: 7 } },
-    'sessions-20': {
-      unlocked: params.sessions.length >= 20,
-      progress: { kind: 'plain', current: Math.min(params.sessions.length, 20), target: 20 },
-    },
-    'prs-10': { unlocked: prCount >= 10, progress: { kind: 'plain', current: Math.min(prCount, 10), target: 10 } },
-    'nutrition-14': {
-      unlocked: nutritionDays >= 14,
-      progress: { kind: 'days', current: Math.min(nutritionDays, 14), target: 14 },
-    },
-    'bodyweight-10': {
-      unlocked: bodyWeightDays >= 10,
-      progress: { kind: 'days', current: Math.min(bodyWeightDays, 10), target: 10 },
-    },
-    'rank-acier': {
-      unlocked: rankIndex >= 2,
-      progress: { kind: 'rank', unlocked: rankIndex >= 2, rank: seasonRank },
-    },
+    'first-session': tierEntry(params.sessions.length, 1),
+    'bar-100': tierEntry(maxWeight, 100, 'kg'),
+    'streak-7': tierEntry(streak, 7, 'days'),
+    'sessions-20': tierEntry(params.sessions.length, 20),
+    'prs-10': tierEntry(prCount, 10),
+    'nutrition-14': tierEntry(nutritionDays, 14, 'days'),
+    'bodyweight-10': tierEntry(bodyWeightDays, 10, 'days'),
+    'rank-acier': rankEntry(2),
+    'bar-140': tierEntry(maxWeight, 140, 'kg'),
+    'bar-180': tierEntry(maxWeight, 180, 'kg'),
+    'sessions-50': tierEntry(params.sessions.length, 50),
+    'sessions-100': tierEntry(params.sessions.length, 100),
+    'streak-14': tierEntry(streak, 14, 'days'),
+    'streak-30': tierEntry(streak, 30, 'days'),
+    'prs-25': tierEntry(prCount, 25),
+    'prs-50': tierEntry(prCount, 50),
+    'nutrition-30': tierEntry(nutritionDays, 30, 'days'),
+    'nutrition-60': tierEntry(nutritionDays, 60, 'days'),
+    'bodyweight-30': tierEntry(bodyWeightDays, 30, 'days'),
+    'bodyweight-60': tierEntry(bodyWeightDays, 60, 'days'),
+    'rank-argent': rankEntry(3),
+    'rank-or': rankEntry(4),
+    'rank-legende': rankEntry(5),
+    'measurement-5': tierEntry(measurementDays, 5, 'days'),
+    'exercises-variety-10': tierEntry(distinctExercises, 10),
+    'exercises-variety-25': tierEntry(distinctExercises, 25),
+    'custom-exercise-1': tierEntry(hasCustomExercise ? 1 : 0, 1),
+    'volume-50k': tierEntry(Math.round(totalVolume), 50000, 'kg'),
+    'volume-250k': tierEntry(Math.round(totalVolume), 250000, 'kg'),
+    'sets-100': tierEntry(totalSets, 100),
+    'sets-500': tierEntry(totalSets, 500),
+    'estimated-1rm-150': tierEntry(Math.round(maxEst1RM), 150, 'kg'),
   };
 
   return BADGES.map((badge) => ({

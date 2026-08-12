@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,8 @@ import { computeBadgeStatuses, type BadgeProgress, type BadgeStatus } from '../.
 import { toDateKey, todayKey } from '../../utils/date';
 import { apiFetch } from '../../lib/api';
 import { TranslationDict } from '../../constants/i18n/fr';
+
+const BADGES_PER_PAGE = 8;
 
 function formatBadgeProgress(progress: BadgeProgress, t: TranslationDict): string {
   if (progress.kind === 'rank') {
@@ -69,7 +71,7 @@ interface MedalSelection {
 }
 
 export default function RangScreen() {
-  const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
+  const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, exercises } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
@@ -85,17 +87,28 @@ export default function RangScreen() {
       nutritionEntries,
       bodyWeightEntries,
       measurementEntries,
+      exercises,
       measurementsEnabled: user?.measurementsEnabled ?? false,
       trainingDays: user?.trainingDays ?? [],
       goal: user?.goal ?? ('maintain' as const),
       accountCreatedAt: user?.createdAt ? toDateKey(new Date(user.createdAt)) : todayKey(),
     }),
-    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, user]
+    [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, exercises, user]
   );
 
   const ranking = useMemo(() => computeSeasonRanking(rankingParams), [rankingParams]);
   const seasonMedals = useMemo(() => computeSeasonMedalHistory(rankingParams), [rankingParams]);
   const badgeStatuses = useMemo(() => computeBadgeStatuses(rankingParams), [rankingParams]);
+  const badgePages = useMemo(() => {
+    const pages: BadgeStatus[][] = [];
+    for (let i = 0; i < badgeStatuses.length; i += BADGES_PER_PAGE) {
+      pages.push(badgeStatuses.slice(i, i + BADGES_PER_PAGE));
+    }
+    return pages;
+  }, [badgeStatuses]);
+  const [badgePageIndex, setBadgePageIndex] = useState(0);
+  const { width: windowWidth } = useWindowDimensions();
+  const badgePageWidth = windowWidth - Spacing.lg * 2;
 
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
@@ -200,42 +213,68 @@ export default function RangScreen() {
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
               {t.rang.badges}
             </ThemedText>
-            <Card style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
-              {badgeStatuses.map((status) => {
-                const { badge, unlocked } = status;
-                const label = t.badges[badge.id as keyof typeof t.badges]?.name ?? badge.name;
-                return (
-                  <Pressable
-                    key={badge.id}
-                    onPress={() => setSelectedBadge(status)}
-                    style={{ width: '22%', alignItems: 'center', gap: 6 }}
-                  >
-                    <View
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 999,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: unlocked ? colors.accent + '26' : colors.fill,
-                        borderWidth: 2,
-                        borderColor: unlocked ? colors.accent : colors.separator,
-                      }}
-                    >
-                      <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
-                    </View>
-                    <ThemedText
-                      variant="caption"
-                      weight="600"
-                      color={unlocked ? 'primary' : 'tertiary'}
-                      style={{ textAlign: 'center' }}
-                    >
-                      {label}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </Card>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                setBadgePageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
+              }}
+            >
+              {badgePages.map((page, pageIndex) => (
+                <Card key={pageIndex} style={{ width: badgePageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
+                  {page.map((status) => {
+                    const { badge, unlocked } = status;
+                    const label = t.badges[badge.id as keyof typeof t.badges]?.name ?? badge.name;
+                    return (
+                      <Pressable
+                        key={badge.id}
+                        onPress={() => setSelectedBadge(status)}
+                        style={{ width: '22%', alignItems: 'center', gap: 6 }}
+                      >
+                        <View
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: unlocked ? colors.accent + '26' : colors.fill,
+                            borderWidth: 2,
+                            borderColor: unlocked ? colors.accent : colors.separator,
+                          }}
+                        >
+                          <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
+                        </View>
+                        <ThemedText
+                          variant="caption"
+                          weight="600"
+                          color={unlocked ? 'primary' : 'tertiary'}
+                          style={{ textAlign: 'center' }}
+                        >
+                          {label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </Card>
+              ))}
+            </ScrollView>
+            {badgePages.length > 1 && (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: Spacing.sm }}>
+                {badgePages.map((_, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: i === badgePageIndex ? colors.accent : colors.separator,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
           <View>
