@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -22,6 +22,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
 import { todayKey } from '../../utils/date';
 import { computeExercisePRs } from '../../utils/prStats';
+import { clearSessionDraft, loadSessionDraft, saveSessionDraft } from '../../utils/sessionDraft';
 
 export default function SeanceScreen() {
   const { exercises, sessions, sets, addSession, addSetsToSession, addExercise: createExercise } = useData();
@@ -53,6 +54,33 @@ export default function SeanceScreen() {
   const [showCreateExercise, setShowCreateExercise] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseCategory, setNewExerciseCategory] = useState<'upper' | 'lower'>('upper');
+  const [draftHydrated, setDraftHydrated] = useState(false);
+
+  useEffect(() => {
+    loadSessionDraft().then((draft) => {
+      if (draft && draft.activeExerciseIds.length > 0) {
+        setActiveExerciseIds(draft.activeExerciseIds);
+        setDraftSets(draft.draftSets);
+        setValidatedExerciseIds(new Set(draft.validatedExerciseIds));
+        setResuming(draft.resuming);
+      }
+      setDraftHydrated(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!draftHydrated) return;
+    if (activeExerciseIds.length === 0) {
+      clearSessionDraft();
+      return;
+    }
+    saveSessionDraft({
+      activeExerciseIds,
+      draftSets,
+      validatedExerciseIds: Array.from(validatedExerciseIds),
+      resuming,
+    });
+  }, [draftHydrated, activeExerciseIds, draftSets, validatedExerciseIds, resuming]);
 
   const availableExercises = useMemo(() => {
     if (exerciseFilter === 'all') return exercises;
@@ -138,6 +166,7 @@ export default function SeanceScreen() {
     setDraftSets({});
     setValidatedExerciseIds(new Set());
     setRestTimerEndAt(null);
+    clearSessionDraft();
   };
 
   const commitSession = async () => {
