@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
@@ -24,6 +24,8 @@ export default function MonthRecapScreen() {
   const { t, lang } = useTranslation();
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
+  const [showAllBest, setShowAllBest] = useState(false);
+  const BEST_PREVIEW_COUNT = 6;
 
   const viewYear = Number(year);
   const viewMonth = Number(month);
@@ -108,32 +110,43 @@ export default function MonthRecapScreen() {
               {t.monthRecap.noNewRecord}
             </ThemedText>
           ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
-              {current.bestPerformances.map((p, i) => (
-                <View
-                  key={i}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingHorizontal: Spacing.sm,
-                    paddingVertical: Spacing.xs,
-                    borderRadius: Radius.md,
-                    backgroundColor: colors.positive + '14',
-                    borderWidth: 1,
-                    borderColor: colors.positive + '33',
-                  }}
-                >
-                  <Ionicons name="trophy" size={14} color={colors.positive} />
-                  <ThemedText variant="footnote" weight="600">
-                    {p.exerciseName}
+            <>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+                {(showAllBest ? current.bestPerformances : current.bestPerformances.slice(0, BEST_PREVIEW_COUNT)).map(
+                  (p, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        paddingHorizontal: Spacing.sm,
+                        paddingVertical: Spacing.xs,
+                        borderRadius: Radius.md,
+                        backgroundColor: colors.positive + '14',
+                        borderWidth: 1,
+                        borderColor: colors.positive + '33',
+                      }}
+                    >
+                      <Ionicons name="trophy" size={14} color={colors.positive} />
+                      <ThemedText variant="footnote" weight="600">
+                        {p.exerciseName}
+                      </ThemedText>
+                      <ThemedText variant="footnote" weight="700" style={{ color: colors.positive }}>
+                        {formatWeight(p.est1RM, weightUnit)}
+                      </ThemedText>
+                    </View>
+                  )
+                )}
+              </View>
+              {current.bestPerformances.length > BEST_PREVIEW_COUNT && (
+                <Pressable onPress={() => setShowAllBest((v) => !v)} style={{ marginTop: Spacing.sm }}>
+                  <ThemedText variant="footnote" weight="600" color="accent">
+                    {showAllBest ? t.monthRecap.showLessBest : t.monthRecap.showAllBest(current.bestPerformances.length)}
                   </ThemedText>
-                  <ThemedText variant="footnote" weight="700" style={{ color: colors.positive }}>
-                    {formatWeight(p.est1RM, weightUnit)}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
+                </Pressable>
+              )}
+            </>
           )}
         </View>
 

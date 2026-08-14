@@ -186,6 +186,63 @@ export const BADGES: Badge[] = [
     description: 'Atteins une 1RM estimée de 150 kg ou plus sur un exercice.',
     icon: 'flash',
   },
+  {
+    id: 'estimated-1rm-200',
+    name: 'Force herculéenne',
+    description: 'Atteins une 1RM estimée de 200 kg ou plus sur un exercice.',
+    icon: 'flash',
+  },
+  { id: 'bar-220', name: 'Barre à 220', description: 'Logge une série à 220 kg ou plus.', icon: 'barbell' },
+  { id: 'streak-60', name: 'Trempe légendaire', description: '60 jours d’entraînement prévus d’affilée, sans en manquer un.', icon: 'flame' },
+  { id: 'streak-100', name: 'Inébranlable', description: '100 jours d’entraînement prévus d’affilée, sans en manquer un.', icon: 'flame' },
+  { id: 'sessions-200', name: '200 séances forgées', description: 'Logge 200 séances au total.', icon: 'layers' },
+  { id: 'sessions-365', name: '365 séances forgées', description: 'Logge 365 séances au total.', icon: 'layers' },
+  { id: 'prs-100', name: '100 records brisés', description: 'Bats 100 records personnels au total.', icon: 'trophy' },
+  {
+    id: 'nutrition-100',
+    name: 'Discipline absolue',
+    description: 'Atteins ton objectif calorique 100 jours au total.',
+    icon: 'nutrition',
+  },
+  {
+    id: 'bodyweight-100',
+    name: 'Suivi total',
+    description: 'Logge ton poids de corps 100 jours différents.',
+    icon: 'analytics',
+  },
+  {
+    id: 'volume-500k',
+    name: '500 tonnes soulevées',
+    description: 'Cumule 500 000 kg soulevés au total, toutes séances confondues.',
+    icon: 'trending-up',
+  },
+  { id: 'sets-1000', name: '1000 coups de forge', description: 'Logge 1000 séries au total.', icon: 'checkmark-done' },
+  {
+    id: 'exercises-variety-50',
+    name: 'Encyclopédie vivante',
+    description: 'Logge au moins 50 exercices différents.',
+    icon: 'grid',
+  },
+  { id: 'early-bird', name: 'Lève-tôt', description: 'Logge une séance avant 7h du matin.', icon: 'sunny' },
+  { id: 'night-owl', name: 'Oiseau de nuit', description: 'Logge une séance après 22h.', icon: 'moon' },
+  {
+    id: 'weekend-warrior',
+    name: 'Guerrier du week-end',
+    description: 'Entraîne-toi samedi et dimanche la même semaine.',
+    icon: 'calendar',
+  },
+  {
+    id: 'comeback',
+    name: 'Le retour',
+    description: "Reprends l'entraînement après une pause de 30 jours ou plus.",
+    icon: 'refresh',
+  },
+  {
+    id: 'full-week',
+    name: 'Semaine sans relâche',
+    description: 'Logge une séance chaque jour, 7 jours d’affilée.',
+    icon: 'infinite',
+  },
 ];
 
 // One badge per rank+division tier (Fer IV, Fer III, ... Divin I), not just per rank — generated
@@ -265,6 +322,47 @@ function countMaxTrainingStreak(sessions: WorkoutSession[], trainingDays: number
   return max;
 }
 
+// Unlike countMaxTrainingStreak, this counts every calendar day with a logged session — no
+// program/trainingDays filter — for the "logged every single day" badge.
+function countMaxConsecutiveCalendarDays(sessions: WorkoutSession[]): number {
+  const dates = new Set(sessions.map((s) => s.date));
+  let max = 0;
+  for (const dateStr of dates) {
+    const runStart = new Date(`${dateStr}T00:00:00`);
+    if (dates.has(toDateKey(addDays(runStart, -1)))) continue; // not the start of a run
+    let streak = 0;
+    let cursor = runStart;
+    let cursorKey = dateStr;
+    while (dates.has(cursorKey)) {
+      streak += 1;
+      cursor = addDays(cursor, 1);
+      cursorKey = toDateKey(cursor);
+    }
+    max = Math.max(max, streak);
+  }
+  return max;
+}
+
+function hasWeekendPair(sessions: WorkoutSession[]): boolean {
+  const dates = new Set(sessions.map((s) => s.date));
+  for (const dateStr of dates) {
+    const d = new Date(`${dateStr}T00:00:00`);
+    if (d.getDay() === 6 && dates.has(toDateKey(addDays(d, 1)))) return true; // Saturday -> Sunday
+  }
+  return false;
+}
+
+function hasComeback(sessions: WorkoutSession[], minGapDays: number): boolean {
+  const sortedDates = [...new Set(sessions.map((s) => s.date))].sort();
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prev = new Date(`${sortedDates[i - 1]}T00:00:00`);
+    const curr = new Date(`${sortedDates[i]}T00:00:00`);
+    const gapDays = Math.round((curr.getTime() - prev.getTime()) / (24 * 60 * 60 * 1000));
+    if (gapDays >= minGapDays) return true;
+  }
+  return false;
+}
+
 function countNutritionTargetDaysHit(
   nutritionEntries: NutritionEntry[],
   bodyWeightEntries: BodyWeightEntry[],
@@ -326,6 +424,11 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
   const totalVolume = params.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0);
   const totalSets = params.sets.length;
   const maxEst1RM = params.sets.reduce((max, s) => Math.max(max, estimate1RM(s.weightKg, s.reps)), 0);
+  const maxCalendarStreak = countMaxConsecutiveCalendarDays(params.sessions);
+  const isEarlyBird = params.sessions.some((s) => new Date(s.createdAt).getHours() < 7);
+  const isNightOwl = params.sessions.some((s) => new Date(s.createdAt).getHours() >= 22);
+  const isWeekendWarrior = hasWeekendPair(params.sessions);
+  const isComeback = hasComeback(params.sessions, 30);
 
   // Looked up by rank name rather than a hardcoded index, so inserting new ranks into the
   // ladder (utils/ranking.ts) can never silently shift which rank an existing badge requires.
@@ -377,6 +480,23 @@ export function computeBadgeStatuses(params: BadgeParams): BadgeStatus[] {
     'sets-100': tierEntry(totalSets, 100),
     'sets-500': tierEntry(totalSets, 500),
     'estimated-1rm-150': tierEntry(Math.round(maxEst1RM), 150, 'kg'),
+    'estimated-1rm-200': tierEntry(Math.round(maxEst1RM), 200, 'kg'),
+    'bar-220': tierEntry(maxWeight, 220, 'kg'),
+    'streak-60': tierEntry(streak, 60, 'days'),
+    'streak-100': tierEntry(streak, 100, 'days'),
+    'sessions-200': tierEntry(params.sessions.length, 200),
+    'sessions-365': tierEntry(params.sessions.length, 365),
+    'prs-100': tierEntry(prCount, 100),
+    'nutrition-100': tierEntry(nutritionDays, 100, 'days'),
+    'bodyweight-100': tierEntry(bodyWeightDays, 100, 'days'),
+    'volume-500k': tierEntry(Math.round(totalVolume), 500000, 'kg'),
+    'sets-1000': tierEntry(totalSets, 1000),
+    'exercises-variety-50': tierEntry(distinctExercises, 50),
+    'early-bird': tierEntry(isEarlyBird ? 1 : 0, 1),
+    'night-owl': tierEntry(isNightOwl ? 1 : 0, 1),
+    'weekend-warrior': tierEntry(isWeekendWarrior ? 1 : 0, 1),
+    'comeback': tierEntry(isComeback ? 1 : 0, 1),
+    'full-week': tierEntry(maxCalendarStreak, 7, 'days'),
   };
 
   for (const tier of TIER_LIST) {

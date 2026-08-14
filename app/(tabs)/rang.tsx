@@ -32,7 +32,7 @@ import { toDateKey, todayKey } from '../../utils/date';
 import { apiFetch } from '../../lib/api';
 import { TranslationDict } from '../../constants/i18n/fr';
 
-const BADGES_PER_PAGE = 8;
+const BADGES_PER_PAGE = 4;
 const RANKS_PER_PAGE = 4;
 
 // Tier badges (one per rank+division, e.g. "Acier III") are generated from RANKS/DIVISIONS
@@ -229,7 +229,8 @@ export default function RangScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(e) => {
+              scrollEventThrottle={16}
+              onScroll={(e) => {
                 setRankPageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
               }}
             >
@@ -240,7 +241,7 @@ export default function RangScreen() {
                     const isCurrent = rank === state.rank;
                     const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
                     return (
-                      <View key={rank} style={{ width: '22%', alignItems: 'center', gap: 4 }}>
+                      <View key={rank} style={{ width: '45%', alignItems: 'center', gap: 4 }}>
                         <View
                           style={{
                             width: 52,
@@ -293,6 +294,10 @@ export default function RangScreen() {
             <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
             <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
             <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
+            <SkillBanner icon="calendar" label={t.skills.frequency} points={ranking.breakdown.frequency} />
+            {ranking.breakdown.carryover > 0 && (
+              <SkillBanner icon="arrow-redo" label={t.skills.carryover} points={ranking.breakdown.carryover} />
+            )}
             {user?.measurementsEnabled && (
               <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
             )}
@@ -306,7 +311,8 @@ export default function RangScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(e) => {
+              scrollEventThrottle={16}
+              onScroll={(e) => {
                 setBadgePageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
               }}
             >
@@ -319,7 +325,7 @@ export default function RangScreen() {
                       <Pressable
                         key={badge.id}
                         onPress={() => setSelectedBadge(status)}
-                        style={{ width: '22%', alignItems: 'center', gap: 6 }}
+                        style={{ width: '45%', alignItems: 'center', gap: 6 }}
                       >
                         <View
                           style={{

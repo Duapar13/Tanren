@@ -31,11 +31,11 @@ export const RANKS = [
 ] as const;
 export type RankName = (typeof RANKS)[number];
 
-export const DIVISIONS = ['IV', 'III', 'II', 'I'] as const;
+export const DIVISIONS = ['V', 'IV', 'III', 'II', 'I'] as const;
 export type Division = (typeof DIVISIONS)[number];
 
 export const POINTS_PER_DIVISION = 100;
-export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 52
+export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 65
 export const MAX_POINTS = TOTAL_TIERS * POINTS_PER_DIVISION;
 
 export const RANK_COLORS: Record<RankName, string> = {
@@ -79,37 +79,37 @@ export function tierFromPoints(rawPoints: number): RankState {
   };
 }
 
-// Seasons are calendar half-years (Jan-Jun / Jul-Dec), numbered globally so everyone's
-// "Season N" means the same real-world period. The epoch is pinned so the season we're
-// in right now is Season 1 — earlier half-years would count down from there (unused).
+// Seasons are calendar quarters (Jan-Mar / Apr-Jun / Jul-Sep / Oct-Dec), numbered globally so
+// everyone's "Season N" means the same real-world period. The epoch is pinned so the quarter
+// we're in right now is Season 1 — earlier quarters would count down from there (unused).
 const SEASON_EPOCH_YEAR = 2026;
-const SEASON_EPOCH_HALF: 1 | 2 = 2;
-const SEASON_EPOCH_HALF_INDEX = SEASON_EPOCH_YEAR * 2 + (SEASON_EPOCH_HALF - 1);
+const SEASON_EPOCH_QUARTER: 1 | 2 | 3 | 4 = 3;
+const SEASON_EPOCH_QUARTER_INDEX = SEASON_EPOCH_YEAR * 4 + (SEASON_EPOCH_QUARTER - 1);
 
 export interface SeasonInfo {
   seasonNumber: number;
-  half: 1 | 2;
+  quarter: 1 | 2 | 3 | 4;
   year: number;
   startDate: string; // yyyy-mm-01
-  endDate: string; // yyyy-mm-dd, last day of the 6th month
+  endDate: string; // yyyy-mm-dd, last day of the 3rd month
 }
 
-function halfIndexForDate(date: Date): number {
+function quarterIndexForDate(date: Date): number {
   const year = date.getFullYear();
-  const half: 1 | 2 = date.getMonth() < 6 ? 1 : 2;
-  return year * 2 + (half - 1);
+  const quarter = (Math.floor(date.getMonth() / 3) + 1) as 1 | 2 | 3 | 4;
+  return year * 4 + (quarter - 1);
 }
 
-function seasonInfoForHalfIndex(halfIndex: number): SeasonInfo {
-  const year = Math.floor(halfIndex / 2);
-  const half: 1 | 2 = ((halfIndex % 2) + 1) as 1 | 2;
-  const seasonNumber = halfIndex - SEASON_EPOCH_HALF_INDEX + 1;
-  const startMonth = half === 1 ? 0 : 6;
+function seasonInfoForQuarterIndex(quarterIndex: number): SeasonInfo {
+  const year = Math.floor(quarterIndex / 4);
+  const quarter = ((quarterIndex % 4) + 1) as 1 | 2 | 3 | 4;
+  const seasonNumber = quarterIndex - SEASON_EPOCH_QUARTER_INDEX + 1;
+  const startMonth = (quarter - 1) * 3;
   const start = new Date(year, startMonth, 1);
-  const end = new Date(year, startMonth + 6, 0); // day 0 of the month after = last day of the 6th month
+  const end = new Date(year, startMonth + 3, 0); // day 0 of the month after = last day of the 3rd month
   return {
     seasonNumber,
-    half,
+    quarter,
     year,
     startDate: toDateKey(start),
     endDate: toDateKey(end),
@@ -117,7 +117,7 @@ function seasonInfoForHalfIndex(halfIndex: number): SeasonInfo {
 }
 
 export function seasonInfoForDate(date: Date): SeasonInfo {
-  return seasonInfoForHalfIndex(halfIndexForDate(date));
+  return seasonInfoForQuarterIndex(quarterIndexForDate(date));
 }
 
 export function currentSeasonInfo(date = new Date()): SeasonInfo {
@@ -125,7 +125,7 @@ export function currentSeasonInfo(date = new Date()): SeasonInfo {
 }
 
 export function seasonInfoForNumber(seasonNumber: number): SeasonInfo {
-  return seasonInfoForHalfIndex(seasonNumber - 1 + SEASON_EPOCH_HALF_INDEX);
+  return seasonInfoForQuarterIndex(seasonNumber - 1 + SEASON_EPOCH_QUARTER_INDEX);
 }
 
 export function seasonLabel(info: SeasonInfo): string {
@@ -143,7 +143,7 @@ export interface RankEvent {
   date: string;
   label: string;
   points: number;
-  source: 'streak' | 'pr' | 'nutrition' | 'measurement';
+  source: 'streak' | 'pr' | 'nutrition' | 'measurement' | 'carryover' | 'frequency';
 }
 
 function computeStreakEvents(
@@ -325,6 +325,42 @@ export interface RankingParams {
   accountCreatedAt: string;
 }
 
+// Rewards training MORE than your scheduled program, not just not-missing it (that's what
+// streak points already do) — someone doing 5 sessions/week earns clearly more than someone
+// doing 2-3, on top of everything else. Baseline of 2/week is unrewarded (that's normal), each
+// session beyond it that same week adds a flat bonus.
+const FREQUENCY_BONUS_BASELINE_PER_WEEK = 2;
+const FREQUENCY_BONUS_PER_EXTRA_SESSION = 8;
+
+function mondayOfWeek(d: Date): string {
+  const daysSinceMonday = (d.getDay() + 6) % 7; // getDay(): 0=Sunday..6=Saturday
+  return toDateKey(addDays(d, -daysSinceMonday));
+}
+
+function computeFrequencyEvents(sessions: WorkoutSession[], rangeStart: string, rangeEnd: string): RankEvent[] {
+  const datesByWeek = new Map<string, Set<string>>();
+  for (const s of sessions) {
+    if (s.date < rangeStart || s.date > rangeEnd) continue;
+    const weekStart = mondayOfWeek(new Date(`${s.date}T00:00:00`));
+    if (!datesByWeek.has(weekStart)) datesByWeek.set(weekStart, new Set());
+    datesByWeek.get(weekStart)!.add(s.date);
+  }
+
+  const events: RankEvent[] = [];
+  for (const [weekStart, dates] of datesByWeek) {
+    const extra = dates.size - FREQUENCY_BONUS_BASELINE_PER_WEEK;
+    if (extra <= 0) continue;
+    const weekEnd = toDateKey(addDays(new Date(`${weekStart}T00:00:00`), 6));
+    events.push({
+      date: weekEnd < rangeEnd ? weekEnd : rangeEnd,
+      label: `Fréquence d’entraînement (${dates.size} séances cette semaine)`,
+      points: extra * FREQUENCY_BONUS_PER_EXTRA_SESSION,
+      source: 'frequency',
+    });
+  }
+  return events;
+}
+
 function computeEventsForRange(params: RankingParams, rangeStart: string, rangeEnd: string): RankEvent[] {
   const streakEvents = computeStreakEvents(
     params.sessions,
@@ -344,7 +380,46 @@ function computeEventsForRange(params: RankingParams, rangeStart: string, rangeE
   const measurementEvents = params.measurementsEnabled
     ? computeMeasurementEvents(params.measurementEntries, params.goal, rangeStart, rangeEnd)
     : [];
-  return [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents];
+  const frequencyEvents = computeFrequencyEvents(params.sessions, rangeStart, rangeEnd);
+  return [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents, ...frequencyEvents];
+}
+
+// Placement: without this, everyone restarts each new season at 0 points regardless of how far
+// they got last time, which is a bad experience for anyone who reached a high rank — see
+// computeCarryoverEvent below. Half of the previous season's peak-rank threshold, so it's a real
+// head start without letting a single great season permanently inflate every season after it.
+const SEASON_CARRYOVER_RATIO = 0.5;
+const SEASON_CARRYOVER_MIN_SESSIONS = 10;
+
+/**
+ * A one-time bonus applied once the user has logged SEASON_CARRYOVER_MIN_SESSIONS real sessions
+ * in the new season — not applied instantly at season start, so it reflects "you're clearly back
+ * and training" rather than a free handout, and it's a visible, dated event (not a hidden/
+ * provisional rank) so nothing about the score is ever mysterious.
+ */
+function computeCarryoverEvent(params: RankingParams, seasonInfo: SeasonInfo, effectiveEnd: string): RankEvent | null {
+  if (seasonInfo.seasonNumber <= 1) return null; // no earlier season to carry over from
+
+  const sessionsInSeason = params.sessions
+    .filter((s) => s.date >= seasonInfo.startDate && s.date <= effectiveEnd)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  if (sessionsInSeason.length < SEASON_CARRYOVER_MIN_SESSIONS) return null;
+
+  const previousSeasonInfo = seasonInfoForNumber(seasonInfo.seasonNumber - 1);
+  const previousMedal = computeSeasonMedal(params, previousSeasonInfo);
+  const peakIndex = RANKS.indexOf(previousMedal.peakRank);
+  if (peakIndex <= 0) return null; // peaked at Fer (the starting rank) — nothing to carry over
+
+  const bonus = Math.round(peakIndex * DIVISIONS.length * POINTS_PER_DIVISION * SEASON_CARRYOVER_RATIO);
+  if (bonus <= 0) return null;
+
+  const triggerDate = sessionsInSeason[SEASON_CARRYOVER_MIN_SESSIONS - 1].date;
+  return {
+    date: triggerDate,
+    label: `Report de saison précédente (pic : ${previousMedal.peakRank})`,
+    points: bonus,
+    source: 'carryover',
+  };
 }
 
 export interface SeasonRanking {
@@ -352,7 +427,14 @@ export interface SeasonRanking {
   totalPoints: number;
   state: RankState;
   events: RankEvent[];
-  breakdown: { streak: number; pr: number; nutrition: number; measurement: number };
+  breakdown: {
+    streak: number;
+    pr: number;
+    nutrition: number;
+    measurement: number;
+    frequency: number;
+    carryover: number;
+  };
 }
 
 /**
@@ -387,10 +469,18 @@ export function computeSeasonRanking(
   const measurementEvents = params.measurementsEnabled
     ? computeMeasurementEvents(params.measurementEntries, params.goal, seasonInfo.startDate, effectiveEnd)
     : [];
+  const frequencyEvents = computeFrequencyEvents(params.sessions, seasonInfo.startDate, effectiveEnd);
+  const carryoverEvent = computeCarryoverEvent(params, seasonInfo, effectiveEnd);
+  const carryoverEvents = carryoverEvent ? [carryoverEvent] : [];
 
-  const events = [...streakEvents, ...prEvents, ...nutritionEvents, ...measurementEvents].sort((a, b) =>
-    a.date === b.date ? 0 : a.date < b.date ? 1 : -1
-  );
+  const events = [
+    ...streakEvents,
+    ...prEvents,
+    ...nutritionEvents,
+    ...measurementEvents,
+    ...frequencyEvents,
+    ...carryoverEvents,
+  ].sort((a, b) => (a.date === b.date ? 0 : a.date < b.date ? 1 : -1));
   const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
 
   return {
@@ -403,6 +493,8 @@ export function computeSeasonRanking(
       pr: prEvents.reduce((s, e) => s + e.points, 0),
       nutrition: nutritionEvents.reduce((s, e) => s + e.points, 0),
       measurement: measurementEvents.reduce((s, e) => s + e.points, 0),
+      frequency: frequencyEvents.reduce((s, e) => s + e.points, 0),
+      carryover: carryoverEvents.reduce((s, e) => s + e.points, 0),
     },
   };
 }
@@ -428,7 +520,7 @@ export function computeSeasonMedal(params: RankingParams, seasonInfo: SeasonInfo
   const start = new Date(`${seasonInfo.startDate}T00:00:00`);
   const monthStarts: string[] = [];
   const monthEnds: string[] = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 3; i++) {
     monthStarts.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i, 1)));
     monthEnds.push(toDateKey(new Date(start.getFullYear(), start.getMonth() + i + 1, 0)));
   }
@@ -441,7 +533,7 @@ export function computeSeasonMedal(params: RankingParams, seasonInfo: SeasonInfo
   let runningMax = 0;
   let cursor = start;
   let cursorKey = toDateKey(cursor);
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 3; i++) {
     if (monthStarts[i] > effectiveEnd) {
       segments.push(null);
       continue;
