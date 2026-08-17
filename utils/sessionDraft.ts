@@ -47,3 +47,30 @@ export async function loadSessionDraft(date: string): Promise<SessionDraftState 
 export async function clearSessionDraft(): Promise<void> {
   await AsyncStorage.removeItem(STORAGE_KEY);
 }
+
+/** On app launch, looks for a draft left over from a day that's already ended without the user
+ * tapping "Terminer la séance" — the old day rolling over meant loadSessionDraft(todayKey())
+ * would just silently miss it (different date), leaving a real logged workout stuck invisible
+ * until the user thought to step the date picker back to find it. Returns null if there's nothing
+ * stale, or nothing worth keeping (no sets were ever logged into it). Doesn't clear the draft
+ * itself — the caller does that only after successfully committing it, so a failed auto-commit
+ * can retry on the next launch instead of silently losing the data. */
+export async function peekStaleDraft(today: string): Promise<(SessionDraftState & { date: string }) | null> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed: StoredSessionDraft = JSON.parse(raw);
+    if (parsed.date >= today) return null;
+    const hasSets = Object.values(parsed.draftSets ?? {}).some((list) => list.length > 0);
+    if (!hasSets) return null;
+    return {
+      date: parsed.date,
+      activeExerciseIds: parsed.activeExerciseIds,
+      draftSets: parsed.draftSets,
+      validatedExerciseIds: parsed.validatedExerciseIds,
+      resuming: parsed.resuming,
+    };
+  } catch {
+    return null;
+  }
+}

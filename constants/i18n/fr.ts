@@ -217,6 +217,9 @@ export const fr = {
     addToSessionConfirmBody: (n: number) => `${n} série${n > 1 ? 's' : ''} de plus.`,
     finishSessionConfirmTitle: 'Terminer la séance ?',
     finishSessionConfirmBody: (n: number) => `${n} série${n > 1 ? 's' : ''} enregistrée${n > 1 ? 's' : ''}.`,
+    autoValidatedTitle: 'Séance validée automatiquement',
+    autoValidatedBody: (dateLabel: string, n: number) =>
+      `Tu n'avais pas terminé ta séance du ${dateLabel}, donc on l'a validée toute seule avec ${n} série${n > 1 ? 's' : ''} enregistrée${n > 1 ? 's' : ''}.`,
     addToSession: 'Ajouter à la séance',
     finishSession: 'Terminer la séance',
     removeExerciseFromSession: 'Retirer l’exercice de la séance',

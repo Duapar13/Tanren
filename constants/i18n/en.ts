@@ -219,6 +219,9 @@ export const en: TranslationDict = {
     addToSessionConfirmBody: (n: number) => `${n} more set${n > 1 ? 's' : ''}.`,
     finishSessionConfirmTitle: 'Finish workout?',
     finishSessionConfirmBody: (n: number) => `${n} set${n > 1 ? 's' : ''} logged.`,
+    autoValidatedTitle: 'Workout auto-saved',
+    autoValidatedBody: (dateLabel: string, n: number) =>
+      `You never finished your ${dateLabel} workout, so we saved it for you with ${n} set${n > 1 ? 's' : ''} logged.`,
     addToSession: 'Add to workout',
     finishSession: 'Finish workout',
     removeExerciseFromSession: 'Remove exercise from workout',

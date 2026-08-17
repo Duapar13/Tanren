@@ -219,6 +219,9 @@ export const es: TranslationDict = {
     addToSessionConfirmBody: (n: number) => `${n} serie${n > 1 ? 's' : ''} más.`,
     finishSessionConfirmTitle: '¿Terminar el entreno?',
     finishSessionConfirmBody: (n: number) => `${n} serie${n > 1 ? 's' : ''} registrada${n > 1 ? 's' : ''}.`,
+    autoValidatedTitle: 'Entreno guardado automáticamente',
+    autoValidatedBody: (dateLabel: string, n: number) =>
+      `No terminaste tu entreno del ${dateLabel}, así que lo guardamos por ti con ${n} serie${n > 1 ? 's' : ''} registrada${n > 1 ? 's' : ''}.`,
     addToSession: 'Añadir al entreno',
     finishSession: 'Terminar entreno',
     removeExerciseFromSession: 'Quitar el ejercicio del entreno',
