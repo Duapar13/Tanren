@@ -575,3 +575,57 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
     );
   }
 }
+
+/** bootstrapAfterLogin only ever pulls from the server when the local cache is completely empty
+ * (fresh install) — sync itself is push-only after that (runSync drains the local queue up to the
+ * server, nothing pulls the other way). That leaves no recovery path for a session that ends up
+ * existing server-side (support/data-recovery, or a device that never finished its own bootstrap)
+ * but isn't mirrored locally. This reconciles that gap on every launch: cheap when there's nothing
+ * missing (one GET /sessions), and safe to repeat since it only inserts sessions whose serverId
+ * isn't already present locally. */
+export async function pullMissingSessions(db: SQLiteDatabase): Promise<void> {
+  const serverSessions: { id: number }[] = await apiFetch('/sessions');
+  if (serverSessions.length === 0) return;
+
+  const localServerIds = new Set(
+    (
+      await db.getAllAsync<{ serverId: number }>('SELECT serverId FROM sessions WHERE serverId IS NOT NULL')
+    ).map((r) => r.serverId)
+  );
+  const missing = serverSessions.filter((s) => !localServerIds.has(s.id));
+  if (missing.length === 0) return;
+
+  const localExercises = await db.getAllAsync<{ id: number; serverId: number }>(
+    'SELECT id, serverId FROM exercises WHERE serverId IS NOT NULL'
+  );
+  const exerciseServerToLocal = new Map(localExercises.map((e) => [e.serverId, e.id]));
+  const now = new Date().toISOString();
+
+  for (const s of missing) {
+    const detail = await apiFetch(`/sessions/${s.id}`);
+    const result = await db.runAsync(
+      'INSERT INTO sessions (date, category, notes, createdAt, serverId) VALUES (?, ?, ?, ?, ?)',
+      detail.date,
+      detail.category,
+      detail.notes ?? '',
+      detail.startedAt ?? now,
+      detail.id
+    );
+    const localSessionId = result.lastInsertRowId;
+    for (const st of detail.sets) {
+      const localExerciseId = exerciseServerToLocal.get(st.exerciseId);
+      if (!localExerciseId) continue;
+      await db.runAsync(
+        'INSERT INTO sets (sessionId, exerciseId, setNumber, reps, weightKg, rpe, createdAt, serverId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        localSessionId,
+        localExerciseId,
+        st.setNumber,
+        st.reps,
+        st.weightKg,
+        st.rpe,
+        now,
+        st.id
+      );
+    }
+  }
+}

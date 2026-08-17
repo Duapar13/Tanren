@@ -4,7 +4,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { bootstrapAfterLogin, repairOrphanedExercises, runSync, wipeLocalData } from '../lib/syncEngine';
+import { bootstrapAfterLogin, pullMissingSessions, repairOrphanedExercises, runSync, wipeLocalData } from '../lib/syncEngine';
 import { registerSyncTrigger } from '../lib/syncBus';
 import { getLocalDataOwner, setLocalDataOwner } from '../lib/api';
 
@@ -60,6 +60,14 @@ export function SyncEngine() {
         bootstrappedFor.current = user.id;
         await setLocalDataOwner(user.id);
       }
+
+      try {
+        await pullMissingSessions(db);
+        await reload();
+      } catch (err) {
+        console.warn('[sync] pull missing sessions failed', err);
+      }
+
       runSync(db);
     })();
   }, [db, user, reload]);
