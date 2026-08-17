@@ -29,6 +29,7 @@ export const fr = {
     support: 'Soutenir l’app',
     exerciseLibrary: 'Bibliothèque d’exercices',
     exerciseCatalog: 'Catalogue d’exercices',
+    workoutTemplates: 'Modèles de séance',
   },
   tour: {
     steps: [
@@ -321,6 +322,18 @@ export const fr = {
     progressToggle1RM: '1RM estimée',
     notEnoughData: 'Logge au moins 2 séances sur cet exercice pour voir le graphique.',
   },
+  workoutTemplates: {
+    emptyState: 'Aucun modèle enregistré. Choisis des exercices dans une séance et enregistre-les comme modèle.',
+    newTemplate: 'Nouveau modèle',
+    namePlaceholder: 'Nom du modèle (ex: Push day A)',
+    selectExercisesHint: 'Sélectionne les exercices à inclure',
+    createButton: 'Créer le modèle',
+    deleteConfirmTitle: 'Supprimer ce modèle ?',
+    startFromTemplate: 'Démarrer depuis un modèle',
+    saveAsTemplate: 'Enregistrer comme modèle',
+    manageTemplates: 'Gérer mes modèles',
+    savedConfirmation: 'Modèle enregistré !',
+  },
   foodSearch: {
     scan: 'Scanner',
     search: 'Rechercher',
@@ -373,6 +386,8 @@ export const fr = {
     noCustomExercises: 'Aucun exercice personnalisé pour l’instant.',
     exerciseNamePlaceholder: 'Nom de l’exercice',
     deleteExerciseConfirmTitle: 'Supprimer l’exercice',
+    workoutTemplates: 'Modèles de séance',
+    workoutTemplatesCount: (n: number) => `${n} modèle${n > 1 ? 's' : ''}`,
     dangerZone: 'Zone de danger',
     deleteAccount: 'Supprimer mon compte',
     deleteAccountConfirmTitle: 'Supprimer définitivement ton compte ?',

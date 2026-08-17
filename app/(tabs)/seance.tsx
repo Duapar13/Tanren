@@ -19,13 +19,13 @@ import { TodaySessionsReview } from '../../components/TodaySessionsReview';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
-import { Spacing } from '../../constants/theme';
+import { Spacing, Radius } from '../../constants/theme';
 import { addDays, formatLongDate, todayKey, toDateKey } from '../../utils/date';
 import { computeExercisePRs } from '../../utils/prStats';
 import { clearSessionDraft, loadSessionDraft, saveSessionDraft } from '../../utils/sessionDraft';
 
 export default function SeanceScreen() {
-  const { exercises, sessions, sets, addSession, addSetsToSession, addExercise: createExercise } = useData();
+  const { exercises, sessions, sets, addSession, addSetsToSession, addExercise: createExercise, workoutTemplates, addWorkoutTemplate } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
@@ -66,6 +66,8 @@ export default function SeanceScreen() {
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseCategory, setNewExerciseCategory] = useState<'upper' | 'lower'>('upper');
   const [draftHydrated, setDraftHydrated] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   // Re-hydrates whenever selectedDate changes, not just on mount, so switching the date stepper
   // to a day with an in-progress draft restores it, and switching away from one starts clean
@@ -129,6 +131,22 @@ export default function SeanceScreen() {
     addExerciseToSession(newId);
     setNewExerciseName('');
     setShowCreateExercise(false);
+  };
+
+  const startFromTemplate = (templateId: number) => {
+    const template = workoutTemplates.find((tpl) => tpl.id === templateId);
+    if (!template) return;
+    // Drop any exercise the template references that no longer resolves locally (deleted account
+    // data edge case) rather than crashing the logger on a missing exercise further down.
+    setActiveExerciseIds(template.exerciseIds.filter((id) => exercises.some((e) => e.id === id)));
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim() || activeExerciseIds.length === 0) return;
+    await addWorkoutTemplate({ name: templateName.trim(), exerciseIds: activeExerciseIds });
+    setTemplateName('');
+    setShowSaveTemplate(false);
+    Alert.alert(t.workoutTemplates.savedConfirmation);
   };
 
   const removeExercise = (exerciseId: number) => {
@@ -302,6 +320,41 @@ export default function SeanceScreen() {
           >
               {!resuming && dateStepper}
 
+              {!resuming && activeExerciseIds.length === 0 && workoutTemplates.length > 0 && (
+                <Card style={{ gap: Spacing.sm }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <ThemedText variant="headline">{t.workoutTemplates.startFromTemplate}</ThemedText>
+                    <Pressable onPress={() => router.push('/workout-templates')}>
+                      <ThemedText variant="caption" color="accent">
+                        {t.workoutTemplates.manageTemplates}
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {workoutTemplates.map((tpl) => (
+                      <Pressable
+                        key={tpl.id}
+                        onPress={() => startFromTemplate(tpl.id)}
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: Radius.pill,
+                          backgroundColor: colors.fill,
+                        }}
+                      >
+                        <ThemedText variant="subhead" weight="600">
+                          {tpl.name}
+                        </ThemedText>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </Card>
+              )}
+
               {resumeTarget && resuming ? (
                 <TodaySessionsReview date={selectedDate} title={dateLabel} />
               ) : null}
@@ -400,6 +453,35 @@ export default function SeanceScreen() {
                   />
                 );
               })}
+
+              {activeExerciseIds.length > 0 && (
+                showSaveTemplate ? (
+                  <Card style={{ gap: Spacing.sm }}>
+                    <Input
+                      placeholder={t.workoutTemplates.namePlaceholder}
+                      value={templateName}
+                      onChangeText={setTemplateName}
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                    <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                      <Button
+                        title={t.workoutTemplates.createButton}
+                        onPress={handleSaveTemplate}
+                        disabled={!templateName.trim()}
+                        style={{ flex: 1 }}
+                      />
+                      <IconButton name="close" onPress={() => { setShowSaveTemplate(false); setTemplateName(''); }} />
+                    </View>
+                  </Card>
+                ) : (
+                  <Button
+                    title={t.workoutTemplates.saveAsTemplate}
+                    variant="plain"
+                    onPress={() => setShowSaveTemplate(true)}
+                  />
+                )
+              )}
 
               <Button
                 title={

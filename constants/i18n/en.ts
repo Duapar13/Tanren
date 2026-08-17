@@ -31,6 +31,7 @@ export const en: TranslationDict = {
     support: 'Support the app',
     exerciseLibrary: 'Exercise library',
     exerciseCatalog: 'Exercise catalog',
+    workoutTemplates: 'Workout templates',
   },
   tour: {
     steps: [
@@ -322,6 +323,18 @@ export const en: TranslationDict = {
     progressToggle1RM: 'Est. 1RM',
     notEnoughData: 'Log at least 2 workouts with this exercise to see the chart.',
   },
+  workoutTemplates: {
+    emptyState: 'No saved templates yet. Pick exercises in a workout and save them as a template.',
+    newTemplate: 'New template',
+    namePlaceholder: 'Template name (e.g. Push day A)',
+    selectExercisesHint: 'Pick the exercises to include',
+    createButton: 'Create template',
+    deleteConfirmTitle: 'Delete this template?',
+    startFromTemplate: 'Start from a template',
+    saveAsTemplate: 'Save as template',
+    manageTemplates: 'Manage my templates',
+    savedConfirmation: 'Template saved!',
+  },
   foodSearch: {
     scan: 'Scan',
     search: 'Search',
@@ -374,6 +387,8 @@ export const en: TranslationDict = {
     noCustomExercises: 'No custom exercises yet.',
     exerciseNamePlaceholder: 'Exercise name',
     deleteExerciseConfirmTitle: 'Delete exercise',
+    workoutTemplates: 'Workout templates',
+    workoutTemplatesCount: (n: number) => `${n} template${n > 1 ? 's' : ''}`,
     dangerZone: 'Danger zone',
     deleteAccount: 'Delete my account',
     deleteAccountConfirmTitle: 'Permanently delete your account?',

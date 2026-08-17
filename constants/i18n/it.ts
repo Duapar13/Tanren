@@ -31,6 +31,7 @@ export const it: TranslationDict = {
     support: 'Sostieni l’app',
     exerciseLibrary: 'Libreria esercizi',
     exerciseCatalog: 'Catalogo esercizi',
+    workoutTemplates: 'Modelli di allenamento',
   },
   tour: {
     steps: [
@@ -322,6 +323,18 @@ export const it: TranslationDict = {
     progressToggle1RM: '1RM stimata',
     notEnoughData: 'Registra almeno 2 allenamenti con questo esercizio per vedere il grafico.',
   },
+  workoutTemplates: {
+    emptyState: 'Nessun modello salvato. Scegli gli esercizi in un allenamento e salvali come modello.',
+    newTemplate: 'Nuovo modello',
+    namePlaceholder: 'Nome del modello (es: Push day A)',
+    selectExercisesHint: 'Scegli gli esercizi da includere',
+    createButton: 'Crea modello',
+    deleteConfirmTitle: 'Eliminare questo modello?',
+    startFromTemplate: 'Inizia da un modello',
+    saveAsTemplate: 'Salva come modello',
+    manageTemplates: 'Gestisci i miei modelli',
+    savedConfirmation: 'Modello salvato!',
+  },
   foodSearch: {
     scan: 'Scansiona',
     search: 'Cerca',
@@ -374,6 +387,8 @@ export const it: TranslationDict = {
     noCustomExercises: 'Ancora nessun esercizio personalizzato.',
     exerciseNamePlaceholder: 'Nome dell’esercizio',
     deleteExerciseConfirmTitle: 'Elimina esercizio',
+    workoutTemplates: 'Modelli di allenamento',
+    workoutTemplatesCount: (n: number) => `${n} modell${n > 1 ? 'i' : 'o'}`,
     dangerZone: 'Zona pericolosa',
     deleteAccount: 'Elimina il mio account',
     deleteAccountConfirmTitle: 'Eliminare definitivamente il tuo account?',

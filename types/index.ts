@@ -159,6 +159,16 @@ export interface User {
   lengthUnit: 'cm' | 'in';
 }
 
+export interface WorkoutTemplate {
+  id: number;
+  name: string;
+  exerciseIds: number[];
+  createdAt: string;
+  deletedAt: string | null;
+}
+
+export type WorkoutTemplateInput = { name: string; exerciseIds: number[] };
+
 export interface ExercisePR {
   exerciseId: number;
   maxWeightKg: number;

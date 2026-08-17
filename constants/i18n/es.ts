@@ -31,6 +31,7 @@ export const es: TranslationDict = {
     support: 'Apoyar la app',
     exerciseLibrary: 'Biblioteca de ejercicios',
     exerciseCatalog: 'Catálogo de ejercicios',
+    workoutTemplates: 'Plantillas de entreno',
   },
   tour: {
     steps: [
@@ -322,6 +323,18 @@ export const es: TranslationDict = {
     progressToggle1RM: '1RM estimada',
     notEnoughData: 'Registra al menos 2 entrenos con este ejercicio para ver el gráfico.',
   },
+  workoutTemplates: {
+    emptyState: 'Sin plantillas guardadas todavía. Elige ejercicios en un entreno y guárdalos como plantilla.',
+    newTemplate: 'Nueva plantilla',
+    namePlaceholder: 'Nombre de la plantilla (ej: Push day A)',
+    selectExercisesHint: 'Elige los ejercicios a incluir',
+    createButton: 'Crear plantilla',
+    deleteConfirmTitle: '¿Eliminar esta plantilla?',
+    startFromTemplate: 'Empezar desde una plantilla',
+    saveAsTemplate: 'Guardar como plantilla',
+    manageTemplates: 'Gestionar mis plantillas',
+    savedConfirmation: '¡Plantilla guardada!',
+  },
   foodSearch: {
     scan: 'Escanear',
     search: 'Buscar',
@@ -374,6 +387,8 @@ export const es: TranslationDict = {
     noCustomExercises: 'Todavía no hay ejercicios personalizados.',
     exerciseNamePlaceholder: 'Nombre del ejercicio',
     deleteExerciseConfirmTitle: 'Eliminar ejercicio',
+    workoutTemplates: 'Plantillas de entreno',
+    workoutTemplatesCount: (n: number) => `${n} plantilla${n > 1 ? 's' : ''}`,
     dangerZone: 'Zona de peligro',
     deleteAccount: 'Eliminar mi cuenta',
     deleteAccountConfirmTitle: '¿Eliminar tu cuenta definitivamente?',

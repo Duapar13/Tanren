@@ -117,3 +117,27 @@ CREATE TABLE IF NOT EXISTS nutrition_entries (
   CONSTRAINT fk_nutrition_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_nutrition_user_date (user_id, date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS workout_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  CONSTRAINT fk_template_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_templates_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- No ON DELETE CASCADE on exercise_id, deliberately — same reasoning as fk_set_exercise
+-- (see sets above): it must survive a soft-deleted exercise, and giving it one would
+-- reintroduce the users -> exercises vs users -> workout_templates -> this ordering bug
+-- (see routes/users.js's account-deletion comment).
+CREATE TABLE IF NOT EXISTS workout_template_exercises (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  template_id INT NOT NULL,
+  exercise_id INT NOT NULL,
+  order_index INT NOT NULL DEFAULT 0,
+  CONSTRAINT fk_template_exercise_template FOREIGN KEY (template_id) REFERENCES workout_templates(id) ON DELETE CASCADE,
+  CONSTRAINT fk_template_exercise_exercise FOREIGN KEY (exercise_id) REFERENCES exercises(id),
+  INDEX idx_template_exercises_template (template_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

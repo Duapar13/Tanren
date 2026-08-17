@@ -325,6 +325,49 @@ async function processNutrition(db: SQLiteDatabase, item: SyncQueueItem): Promis
   return 'ok';
 }
 
+async function processWorkoutTemplate(db: SQLiteDatabase, item: SyncQueueItem): Promise<Outcome> {
+  if (item.operation === 'create') {
+    const template = await db.getFirstAsync<{ id: number; name: string; serverId: number | null }>(
+      'SELECT id, name, serverId FROM workout_templates WHERE id = ?',
+      item.localId
+    );
+    if (!template) return 'drop';
+    if (template.serverId) return 'ok';
+
+    const links = await db.getAllAsync<{ exerciseId: number }>(
+      'SELECT exerciseId FROM workout_template_exercises WHERE templateId = ? ORDER BY orderIndex',
+      template.id
+    );
+    const exerciseServerIds: (number | null)[] = [];
+    for (const link of links) {
+      exerciseServerIds.push(await getExerciseServerId(db, link.exerciseId));
+    }
+    if (exerciseServerIds.some((id) => id == null)) return 'stop';
+
+    try {
+      const created = await apiFetch('/workout-templates', {
+        method: 'POST',
+        body: JSON.stringify({ name: template.name, exerciseIds: exerciseServerIds }),
+      });
+      await db.runAsync('UPDATE workout_templates SET serverId = ? WHERE id = ?', created.id, template.id);
+      return 'ok';
+    } catch (err) {
+      return isTransient(err) ? 'stop' : 'drop';
+    }
+  }
+  if (item.operation === 'delete') {
+    if (!item.serverId) return 'ok';
+    try {
+      await apiFetch(`/workout-templates/${item.serverId}`, { method: 'DELETE' });
+      return 'ok';
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return 'ok';
+      return isTransient(err) ? 'stop' : 'drop';
+    }
+  }
+  return 'ok';
+}
+
 async function processItem(db: SQLiteDatabase, item: SyncQueueItem): Promise<Outcome> {
   switch (item.entity) {
     case 'exercise':
@@ -339,6 +382,8 @@ async function processItem(db: SQLiteDatabase, item: SyncQueueItem): Promise<Out
       return processNutrition(db, item);
     case 'measurement':
       return processMeasurement(db, item);
+    case 'workoutTemplate':
+      return processWorkoutTemplate(db, item);
     default:
       return 'drop';
   }
@@ -351,6 +396,8 @@ export async function wipeLocalData(db: SQLiteDatabase): Promise<void> {
     DELETE FROM body_weight_entries;
     DELETE FROM nutrition_entries;
     DELETE FROM measurement_entries;
+    DELETE FROM workout_template_exercises;
+    DELETE FROM workout_templates;
     DELETE FROM exercises WHERE isCustom = 1;
     UPDATE exercises SET serverId = NULL;
     DELETE FROM sync_queue;
@@ -573,6 +620,28 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
       now,
       m.id
     );
+  }
+
+  const templates: { id: number; name: string; exerciseIds: number[] }[] =
+    await apiFetch('/workout-templates');
+  for (const tpl of templates) {
+    const result = await db.runAsync(
+      'INSERT INTO workout_templates (name, createdAt, serverId) VALUES (?, ?, ?)',
+      tpl.name,
+      now,
+      tpl.id
+    );
+    const localTemplateId = result.lastInsertRowId;
+    for (let i = 0; i < tpl.exerciseIds.length; i++) {
+      const localExerciseId = exerciseServerToLocal.get(tpl.exerciseIds[i]);
+      if (!localExerciseId) continue;
+      await db.runAsync(
+        'INSERT INTO workout_template_exercises (templateId, exerciseId, orderIndex) VALUES (?, ?, ?)',
+        localTemplateId,
+        localExerciseId,
+        i
+      );
+    }
   }
 }
 

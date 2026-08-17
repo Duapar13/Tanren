@@ -14,6 +14,7 @@ import bodyWeightRoutes from './routes/bodyWeight.js';
 import nutritionRoutes from './routes/nutrition.js';
 import measurementsRoutes from './routes/measurements.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import workoutTemplatesRoutes from './routes/workoutTemplates.js';
 import adminRoutes from './routes/admin.js';
 import { scheduleDailyReminder } from './jobs/dailyReminder.js';
 
@@ -40,6 +41,7 @@ app.use('/body-weight', bodyWeightRoutes);
 app.use('/nutrition/entries', nutritionRoutes);
 app.use('/measurements', measurementsRoutes);
 app.use('/leaderboard', leaderboardRoutes);
+app.use('/workout-templates', workoutTemplatesRoutes);
 app.use('/admin/api', adminRoutes);
 
 app.use((req, res) => {

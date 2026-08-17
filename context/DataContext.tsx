@@ -21,6 +21,8 @@ import {
   SetWithExercise,
   WorkoutSession,
   WorkoutSessionInput,
+  WorkoutTemplate,
+  WorkoutTemplateInput,
 } from '../types';
 import * as exercisesDb from '../db/exercises';
 import * as sessionsDb from '../db/sessions';
@@ -28,6 +30,7 @@ import * as setsDb from '../db/sets';
 import * as bodyWeightDb from '../db/bodyWeight';
 import * as nutritionDb from '../db/nutrition';
 import * as measurementsDb from '../db/measurements';
+import * as workoutTemplatesDb from '../db/workoutTemplates';
 import { cancelPendingCreate, clearQueueForLocalIds, enqueue, getRowServerId } from '../db/syncQueue';
 import { requestSync } from '../lib/syncBus';
 import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
@@ -72,6 +75,10 @@ interface DataContextValue {
 
   addMeasurementEntry: (input: MeasurementEntryInput) => Promise<void>;
   removeMeasurementEntry: (id: number) => Promise<void>;
+
+  workoutTemplates: WorkoutTemplate[];
+  addWorkoutTemplate: (input: WorkoutTemplateInput) => Promise<number>;
+  removeWorkoutTemplate: (id: number) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -86,15 +93,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [bodyWeightEntries, setBodyWeightEntries] = useState<BodyWeightEntry[]>([]);
   const [nutritionEntries, setNutritionEntries] = useState<NutritionEntry[]>([]);
   const [measurementEntries, setMeasurementEntries] = useState<MeasurementEntry[]>([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
 
   const reload = useCallback(async () => {
-    const [ex, se, st, bw, nu, me] = await Promise.all([
+    const [ex, se, st, bw, nu, me, wt] = await Promise.all([
       exercisesDb.getAllExercises(db),
       sessionsDb.getAllSessions(db),
       setsDb.getAllSets(db),
       bodyWeightDb.getAllBodyWeightEntries(db),
       nutritionDb.getAllNutritionEntries(db),
       measurementsDb.getAllMeasurementEntries(db),
+      workoutTemplatesDb.getAllWorkoutTemplates(db),
     ]);
     setExercises(ex);
     setSessions(se);
@@ -102,6 +111,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setBodyWeightEntries(bw);
     setNutritionEntries(nu);
     setMeasurementEntries(me);
+    setWorkoutTemplates(wt);
   }, [db]);
 
   useEffect(() => {
@@ -338,6 +348,31 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [db, reload]
   );
 
+  const addWorkoutTemplate = useCallback(
+    async (input: WorkoutTemplateInput) => {
+      const newId = await workoutTemplatesDb.insertWorkoutTemplate(db, input);
+      await enqueue(db, 'workoutTemplate', 'create', newId);
+      await reload();
+      requestSync();
+      return newId;
+    },
+    [db, reload]
+  );
+
+  const removeWorkoutTemplate = useCallback(
+    async (id: number) => {
+      const cancelled = await cancelPendingCreate(db, 'workoutTemplate', id);
+      if (!cancelled) {
+        const serverId = await getRowServerId(db, 'workout_templates', id);
+        if (serverId) await enqueue(db, 'workoutTemplate', 'delete', id, serverId);
+      }
+      await workoutTemplatesDb.deleteWorkoutTemplate(db, id);
+      await reload();
+      requestSync();
+    },
+    [db, reload]
+  );
+
   return (
     <DataContext.Provider
       value={{
@@ -364,6 +399,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         removeNutritionEntry,
         addMeasurementEntry,
         removeMeasurementEntry,
+        workoutTemplates,
+        addWorkoutTemplate,
+        removeWorkoutTemplate,
       }}
     >
       {children}

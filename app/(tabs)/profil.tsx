@@ -36,7 +36,7 @@ const WEEKDAY_LABELS: Record<string, string[]> = {
 };
 
 export default function ProfilScreen() {
-  const { exercises } = useData();
+  const { exercises, workoutTemplates } = useData();
   const { user, updateProfile, uploadAvatar, logout, deleteAccount } = useAuth();
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
@@ -545,6 +545,31 @@ export default function ProfilScreen() {
               </ThemedText>
               <ThemedText variant="caption" color="tertiary">
                 {t.seance.exerciseCount(customExercises.length)}
+              </ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/workout-templates')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacing.sm,
+              padding: Spacing.md,
+              borderRadius: 12,
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="list-outline" size={20} color={colors.text} />
+            <View style={{ flex: 1 }}>
+              <ThemedText variant="subhead" weight="600">
+                {t.profil.workoutTemplates}
+              </ThemedText>
+              <ThemedText variant="caption" color="tertiary">
+                {t.profil.workoutTemplatesCount(workoutTemplates.length)}
               </ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
