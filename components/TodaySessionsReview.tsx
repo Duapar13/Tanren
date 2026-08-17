@@ -11,11 +11,7 @@ import { Spacing } from '../constants/theme';
 import { SetWithExercise } from '../types';
 import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
 import { useTranslation } from '../hooks/useTranslation';
-
-interface Props {
-  date: string;
-  title: string;
-}
+import { todayKey } from '../utils/date';
 
 function groupByExercise(setsForSession: SetWithExercise[]) {
   const byExercise = new Map<number, SetWithExercise[]>();
@@ -32,7 +28,7 @@ const num = (v: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-export function TodaySessionsReview({ date, title }: Props) {
+export function TodaySessionsReview() {
   const { sessions, sets, removeSet, updateSet } = useData();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -44,7 +40,8 @@ export function TodaySessionsReview({ date, title }: Props) {
   const [editWeight, setEditWeight] = useState('');
   const [editRpe, setEditRpe] = useState('');
 
-  const todaysSessions = sessions.filter((s) => s.date === date);
+  const today = todayKey();
+  const todaysSessions = sessions.filter((s) => s.date === today);
 
   if (todaysSessions.length === 0) return null;
 
@@ -82,7 +79,7 @@ export function TodaySessionsReview({ date, title }: Props) {
 
   return (
     <View style={{ gap: Spacing.sm }}>
-      <ThemedText variant="headline">{title}</ThemedText>
+      <ThemedText variant="headline">{t.dashboard.today}</ThemedText>
       {todaysSessions.map((session) => {
         const setsForSession = sets.filter((s) => s.sessionId === session.id);
         const grouped = groupByExercise(setsForSession);

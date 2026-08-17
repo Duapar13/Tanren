@@ -18,9 +18,9 @@ import { RestTimerBanner } from '../../components/RestTimerBanner';
 import { TodaySessionsReview } from '../../components/TodaySessionsReview';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing, Radius } from '../../constants/theme';
-import { addDays, formatLongDate, todayKey, toDateKey } from '../../utils/date';
+import { todayKey } from '../../utils/date';
 import { computeExercisePRs } from '../../utils/prStats';
 import { clearSessionDraft, loadSessionDraft, saveSessionDraft } from '../../utils/sessionDraft';
 
@@ -28,8 +28,7 @@ export default function SeanceScreen() {
   const { exercises, sessions, sets, addSession, addSetsToSession, addExercise: createExercise, workoutTemplates, addWorkoutTemplate } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
-  const { t, lang } = useTranslation();
-  const locale = LOCALE_MAP[lang];
+  const { t } = useTranslation();
 
   const EXERCISE_FILTER_OPTIONS: { label: string; value: 'all' | 'upper' | 'lower' }[] = [
     { label: t.seance.all, value: 'all' },
@@ -37,21 +36,11 @@ export default function SeanceScreen() {
     { label: t.seance.lowerShort, value: 'lower' },
   ];
 
-  const [selectedDate, setSelectedDate] = useState(todayKey());
-  const isToday = selectedDate === todayKey();
-  const dateLabel = isToday ? t.dashboard.today : formatLongDate(selectedDate, locale);
-  const shiftSelectedDate = (deltaDays: number) => {
-    setSelectedDate((current) => {
-      const next = toDateKey(addDays(new Date(`${current}T00:00:00`), deltaDays));
-      return next > todayKey() ? current : next;
-    });
-  };
-
-  const sessionsForSelectedDate = useMemo(
-    () => sessions.filter((s) => s.date === selectedDate),
-    [sessions, selectedDate]
+  const todaysSessions = useMemo(
+    () => sessions.filter((s) => s.date === todayKey()),
+    [sessions]
   );
-  const resumeTarget = sessionsForSelectedDate[0] ?? null;
+  const resumeTarget = todaysSessions[0] ?? null;
   const [resuming, setResuming] = useState(false);
   const showBuilder = !resumeTarget || resuming;
 
@@ -69,26 +58,17 @@ export default function SeanceScreen() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
 
-  // Re-hydrates whenever selectedDate changes, not just on mount, so switching the date stepper
-  // to a day with an in-progress draft restores it, and switching away from one starts clean
-  // instead of bleeding the previous date's builder state into the new date.
   useEffect(() => {
-    setDraftHydrated(false);
-    loadSessionDraft(selectedDate).then((draft) => {
+    loadSessionDraft(todayKey()).then((draft) => {
       if (draft && draft.activeExerciseIds.length > 0) {
         setActiveExerciseIds(draft.activeExerciseIds);
         setDraftSets(draft.draftSets);
         setValidatedExerciseIds(new Set(draft.validatedExerciseIds));
         setResuming(draft.resuming);
-      } else {
-        setActiveExerciseIds([]);
-        setDraftSets({});
-        setValidatedExerciseIds(new Set());
-        setResuming(false);
       }
       setDraftHydrated(true);
     });
-  }, [selectedDate]);
+  }, []);
 
   useEffect(() => {
     if (!draftHydrated) return;
@@ -96,13 +76,13 @@ export default function SeanceScreen() {
       clearSessionDraft();
       return;
     }
-    saveSessionDraft(selectedDate, {
+    saveSessionDraft(todayKey(), {
       activeExerciseIds,
       draftSets,
       validatedExerciseIds: Array.from(validatedExerciseIds),
       resuming,
     });
-  }, [draftHydrated, selectedDate, activeExerciseIds, draftSets, validatedExerciseIds, resuming]);
+  }, [draftHydrated, activeExerciseIds, draftSets, validatedExerciseIds, resuming]);
 
   const availableExercises = useMemo(() => {
     const active = exercises.filter((e) => !e.deletedAt);
@@ -206,7 +186,6 @@ export default function SeanceScreen() {
     setValidatedExerciseIds(new Set());
     setRestTimerEndAt(null);
     clearSessionDraft();
-    setSelectedDate(todayKey());
   };
 
   const commitSession = async () => {
@@ -227,7 +206,7 @@ export default function SeanceScreen() {
         resetBuilder();
         setResuming(false);
       } else {
-        await addSession({ date: selectedDate, category: 'custom', notes: '' }, setInputs);
+        await addSession({ date: todayKey(), category: 'custom', notes: '' }, setInputs);
         resetBuilder();
         router.push('/(tabs)');
       }
@@ -259,14 +238,6 @@ export default function SeanceScreen() {
     );
   };
 
-  const dateStepper = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.md }}>
-      <IconButton name="chevron-back" onPress={() => shiftSelectedDate(-1)} />
-      <ThemedText variant="headline">{dateLabel}</ThemedText>
-      <IconButton name="chevron-forward" onPress={() => shiftSelectedDate(1)} disabled={isToday} />
-    </View>
-  );
-
   if (!showBuilder) {
     return (
       <ThemedView variant="grouped" style={{ flex: 1 }}>
@@ -279,8 +250,7 @@ export default function SeanceScreen() {
               paddingBottom: Spacing.xxl,
             }}
           >
-            {dateStepper}
-            <TodaySessionsReview date={selectedDate} title={dateLabel} />
+            <TodaySessionsReview />
             <Button
               title={t.seance.addForgottenExercise}
               variant="plain"
@@ -318,8 +288,6 @@ export default function SeanceScreen() {
               paddingBottom: Spacing.xxl,
             }}
           >
-              {!resuming && dateStepper}
-
               {!resuming && activeExerciseIds.length === 0 && workoutTemplates.length > 0 && (
                 <Card style={{ gap: Spacing.sm }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -356,7 +324,7 @@ export default function SeanceScreen() {
               )}
 
               {resumeTarget && resuming ? (
-                <TodaySessionsReview date={selectedDate} title={dateLabel} />
+                <TodaySessionsReview />
               ) : null}
 
               {resumeTarget && resuming && (
