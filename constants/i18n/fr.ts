@@ -316,6 +316,10 @@ export const fr = {
     estimated1RM: '1RM estimée :',
     sessionVolume: 'Volume max (1 séance) :',
     deletedNotice: 'Exercice supprimé de ta bibliothèque — conservé ici pour ton historique.',
+    progressTitle: 'Progression',
+    progressToggleWeight: 'Poids',
+    progressToggle1RM: '1RM estimée',
+    notEnoughData: 'Logge au moins 2 séances sur cet exercice pour voir le graphique.',
   },
   foodSearch: {
     scan: 'Scanner',

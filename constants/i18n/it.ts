@@ -317,6 +317,10 @@ export const it: TranslationDict = {
     estimated1RM: '1RM stimata:',
     sessionVolume: 'Volume max (1 allenamento):',
     deletedNotice: 'Rimosso dalla tua libreria — conservato qui per il tuo storico.',
+    progressTitle: 'Progressione',
+    progressToggleWeight: 'Peso',
+    progressToggle1RM: '1RM stimata',
+    notEnoughData: 'Registra almeno 2 allenamenti con questo esercizio per vedere il grafico.',
   },
   foodSearch: {
     scan: 'Scansiona',

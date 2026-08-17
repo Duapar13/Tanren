@@ -1,6 +1,12 @@
 import { ExercisePR, SetWithExercise, WorkoutSession } from '../types';
 import { estimate1RM } from './oneRepMax';
 
+export interface ExerciseHistoryPoint {
+  date: string;
+  maxWeightKg: number;
+  bestEstimated1RM: number;
+}
+
 function sessionDateMap(sessions: WorkoutSession[]): Map<number, string> {
   const map = new Map<number, string>();
   for (const s of sessions) map.set(s.id, s.date);
@@ -58,6 +64,40 @@ export function computeExercisePRs(
   }
 
   return prs;
+}
+
+// One point per session that logged this exercise — the heaviest set and best estimated 1RM
+// that session, sorted oldest -> newest. Feeds the per-exercise progress chart on the exercise
+// detail screen; a session that logged the exercise multiple times still contributes one point.
+export function computeExerciseHistory(
+  exerciseId: number,
+  sets: SetWithExercise[],
+  sessions: WorkoutSession[]
+): ExerciseHistoryPoint[] {
+  const dateBySession = sessionDateMap(sessions);
+  const bySession = new Map<number, ExerciseHistoryPoint & { sessionId: number }>();
+
+  for (const s of sets) {
+    if (s.exerciseId !== exerciseId) continue;
+    const date = dateBySession.get(s.sessionId) ?? s.createdAt.slice(0, 10);
+    const est1RM = estimate1RM(s.weightKg, s.reps);
+    const existing = bySession.get(s.sessionId);
+    if (!existing) {
+      bySession.set(s.sessionId, {
+        sessionId: s.sessionId,
+        date,
+        maxWeightKg: s.weightKg,
+        bestEstimated1RM: est1RM,
+      });
+    } else {
+      existing.maxWeightKg = Math.max(existing.maxWeightKg, s.weightKg);
+      existing.bestEstimated1RM = Math.max(existing.bestEstimated1RM, est1RM);
+    }
+  }
+
+  return Array.from(bySession.values())
+    .sort((a, b) => (a.date === b.date ? a.sessionId - b.sessionId : a.date < b.date ? -1 : 1))
+    .map(({ date, maxWeightKg, bestEstimated1RM }) => ({ date, maxWeightKg, bestEstimated1RM }));
 }
 
 export interface BrokenPR {

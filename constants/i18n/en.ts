@@ -317,6 +317,10 @@ export const en: TranslationDict = {
     estimated1RM: 'Estimated 1RM:',
     sessionVolume: 'Max volume (1 workout):',
     deletedNotice: 'Deleted from your library — kept here for your history.',
+    progressTitle: 'Progress',
+    progressToggleWeight: 'Weight',
+    progressToggle1RM: 'Est. 1RM',
+    notEnoughData: 'Log at least 2 workouts with this exercise to see the chart.',
   },
   foodSearch: {
     scan: 'Scan',
