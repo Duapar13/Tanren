@@ -118,6 +118,22 @@ CREATE TABLE IF NOT EXISTS nutrition_entries (
   INDEX idx_nutrition_user_date (user_id, date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- No shared ancestor with `exercises` — cascades cleanly off `users` on its own, no ordering
+-- workaround needed in routes/users.js unlike workout_templates/sessions above.
+CREATE TABLE IF NOT EXISTS friendships (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  requester_id INT NOT NULL,
+  addressee_id INT NOT NULL,
+  status ENUM('pending','accepted') NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  responded_at DATETIME NULL,
+  CONSTRAINT fk_friendship_requester FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_friendship_addressee FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_friendship_pair (requester_id, addressee_id),
+  INDEX idx_friendship_addressee (addressee_id, status),
+  INDEX idx_friendship_requester (requester_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS workout_templates (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,

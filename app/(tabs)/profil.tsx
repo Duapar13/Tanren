@@ -576,6 +576,26 @@ export default function ProfilScreen() {
           </Pressable>
 
           <Pressable
+            onPress={() => router.push('/friends')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacing.sm,
+              padding: Spacing.md,
+              borderRadius: 12,
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="people-outline" size={20} color={colors.text} />
+            <ThemedText variant="subhead" weight="600" style={{ flex: 1 }}>
+              {t.profil.friends}
+            </ThemedText>
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/support')}
             style={{
               flexDirection: 'row',
