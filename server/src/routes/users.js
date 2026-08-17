@@ -164,11 +164,29 @@ router.post('/me/avatar', (req, res, next) => {
 
 /** Every child table (sessions, sets via sessions, exercises, body weight, measurements,
  * nutrition, refresh tokens) has ON DELETE CASCADE back to users — deleting the row here is
- * enough to erase everything. Only the avatar file on disk isn't covered by that and needs
- * an explicit cleanup. Required for App Store review (guideline 5.1.1v: in-app account deletion). */
+ * enough to erase everything, EXCEPT that MySQL doesn't guarantee cascade order between sibling
+ * FK paths: it can try to cascade-delete `exercises` (users -> exercises) before it's cascaded
+ * `sessions` -> `sets`, and `sets.exercise_id` has no cascade of its own (deliberately — see
+ * db/exercises.ts's soft-delete comment, sets need to survive an exercise being removed) so that
+ * ordering fails the whole DELETE with a FK violation for any account with real logged history.
+ * Deleting sessions first (which does cascade its sets) removes the only thing still pointing at
+ * exercises before the users cascade ever reaches them, sidestepping the ordering ambiguity.
+ * Only the avatar file on disk isn't covered by any cascade and needs an explicit cleanup.
+ * Required for App Store review (guideline 5.1.1v: in-app account deletion). */
 router.delete('/me', async (req, res) => {
   const [[user]] = await pool.query('SELECT avatar_path FROM users WHERE id = ?', [req.userId]);
-  await pool.query('DELETE FROM users WHERE id = ?', [req.userId]);
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM sessions WHERE user_id = ?', [req.userId]);
+    await conn.query('DELETE FROM users WHERE id = ?', [req.userId]);
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
   if (user?.avatar_path) {
     fs.unlink(path.join(UPLOADS_DIR, user.avatar_path), () => {});
   }
