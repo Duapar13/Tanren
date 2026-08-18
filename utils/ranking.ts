@@ -28,6 +28,8 @@ export const RANKS = [
   'Master Divin',
   'Grand Master Divin',
   'Ultime',
+  'Master Ultime',
+  'Grand Master Ultime',
 ] as const;
 export type RankName = (typeof RANKS)[number];
 
@@ -52,6 +54,8 @@ export const RANK_COLORS: Record<RankName, string> = {
   'Master Divin': '#FF9F1C',
   'Grand Master Divin': '#FF2E9A',
   Ultime: '#3DDBD9',
+  'Master Ultime': '#5E60CE',
+  'Grand Master Ultime': '#FF006E',
 };
 
 export interface RankState {

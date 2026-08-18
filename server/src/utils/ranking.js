@@ -18,6 +18,8 @@ export const RANKS = [
   'Master Divin',
   'Grand Master Divin',
   'Ultime',
+  'Master Ultime',
+  'Grand Master Ultime',
 ];
 export const DIVISIONS = ['V', 'IV', 'III', 'II', 'I'];
 export const POINTS_PER_DIVISION = 100;

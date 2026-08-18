@@ -202,7 +202,9 @@ export const fr = {
     'rank-divin': { name: 'Rang Divin', description: 'Atteins le rang Divin ou plus sur la saison en cours.' },
     'rank-master-divin': { name: 'Rang Master Divin', description: 'Atteins le rang Master Divin ou plus sur la saison en cours.' },
     'rank-grand-master-divin': { name: 'Rang Grand Master Divin', description: 'Atteins le rang Grand Master Divin ou plus sur la saison en cours.' },
-    'rank-ultime': { name: 'Rang Ultime', description: 'Atteins le rang Ultime sur la saison en cours.' },
+    'rank-ultime': { name: 'Rang Ultime', description: 'Atteins le rang Ultime ou plus sur la saison en cours.' },
+    'rank-master-ultime': { name: 'Rang Master Ultime', description: 'Atteins le rang Master Ultime ou plus sur la saison en cours.' },
+    'rank-grand-master-ultime': { name: 'Rang Grand Master Ultime', description: 'Atteins le rang Grand Master Ultime sur la saison en cours.' },
   },
   seance: {
     all: 'Tout',
