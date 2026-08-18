@@ -13,6 +13,7 @@ import {
   RANKS,
   TOTAL_TIERS,
   type RankingParams,
+  type RankName,
 } from './ranking';
 
 export interface Badge {
@@ -20,6 +21,9 @@ export interface Badge {
   name: string;
   description: string;
   icon: keyof typeof Ionicons.glyphMap;
+  // Set only on "reach this rank" badges — lets the badge grid render the same custom
+  // RANK_ICON_IMAGES emblem the rank display itself uses, instead of the icon fallback above.
+  rank?: RankName;
 }
 
 export const BADGES: Badge[] = [
@@ -92,121 +96,141 @@ export const BADGES: Badge[] = [
     name: 'Rang Argent',
     description: 'Atteins le rang Argent ou plus sur la saison en cours.',
     icon: RANK_ICONS['Argent'],
+    rank: 'Argent',
   },
-  { id: 'rank-or', name: 'Rang Or', description: 'Atteins le rang Or ou plus sur la saison en cours.', icon: RANK_ICONS['Or'] },
+  { id: 'rank-or', name: 'Rang Or', description: 'Atteins le rang Or ou plus sur la saison en cours.', icon: RANK_ICONS['Or'], rank: 'Or' },
   {
     id: 'rank-amethyste',
     name: 'Rang Améthyste',
     description: 'Atteins le rang Améthyste ou plus sur la saison en cours.',
     icon: RANK_ICONS['Améthyste'],
+    rank: 'Améthyste',
   },
   {
     id: 'rank-emeraude',
     name: 'Rang Émeraude',
     description: 'Atteins le rang Émeraude ou plus sur la saison en cours.',
     icon: RANK_ICONS['Émeraude'],
+    rank: 'Émeraude',
   },
   {
     id: 'rank-rubis',
     name: 'Rang Rubis',
     description: 'Atteins le rang Rubis ou plus sur la saison en cours.',
     icon: RANK_ICONS['Rubis'],
+    rank: 'Rubis',
   },
   {
     id: 'rank-saphir',
     name: 'Rang Saphir',
     description: 'Atteins le rang Saphir ou plus sur la saison en cours.',
     icon: RANK_ICONS['Saphir'],
+    rank: 'Saphir',
   },
   {
     id: 'rank-grenat',
     name: 'Rang Grenat',
     description: 'Atteins le rang Grenat ou plus sur la saison en cours.',
     icon: RANK_ICONS['Grenat'],
+    rank: 'Grenat',
   },
   {
     id: 'rank-topaze',
     name: 'Rang Topaze',
     description: 'Atteins le rang Topaze ou plus sur la saison en cours.',
     icon: RANK_ICONS['Topaze'],
+    rank: 'Topaze',
   },
   {
     id: 'rank-onyx',
     name: 'Rang Onyx',
     description: 'Atteins le rang Onyx ou plus sur la saison en cours.',
     icon: RANK_ICONS['Onyx'],
+    rank: 'Onyx',
   },
   {
     id: 'rank-opale',
     name: 'Rang Opale',
     description: 'Atteins le rang Opale ou plus sur la saison en cours.',
     icon: RANK_ICONS['Opale'],
+    rank: 'Opale',
   },
   {
     id: 'rank-turquoise',
     name: 'Rang Turquoise',
     description: 'Atteins le rang Turquoise ou plus sur la saison en cours.',
     icon: RANK_ICONS['Turquoise'],
+    rank: 'Turquoise',
   },
   {
     id: 'rank-citrine',
     name: 'Rang Citrine',
     description: 'Atteins le rang Citrine ou plus sur la saison en cours.',
     icon: RANK_ICONS['Citrine'],
+    rank: 'Citrine',
   },
   {
     id: 'rank-tourmaline',
     name: 'Rang Tourmaline',
     description: 'Atteins le rang Tourmaline ou plus sur la saison en cours.',
     icon: RANK_ICONS['Tourmaline'],
+    rank: 'Tourmaline',
   },
   {
     id: 'rank-lapis-lazuli',
     name: 'Rang Lapis-Lazuli',
     description: 'Atteins le rang Lapis-Lazuli ou plus sur la saison en cours.',
     icon: RANK_ICONS['Lapis-Lazuli'],
+    rank: 'Lapis-Lazuli',
   },
   {
     id: 'rank-legende',
     name: 'Rang Légende',
     description: 'Atteins le rang Légende ou plus sur la saison en cours.',
     icon: RANK_ICONS['Légende'],
+    rank: 'Légende',
   },
   {
     id: 'rank-divin',
     name: 'Rang Divin',
     description: 'Atteins le rang Divin ou plus sur la saison en cours.',
     icon: RANK_ICONS['Divin'],
+    rank: 'Divin',
   },
   {
     id: 'rank-master-divin',
     name: 'Rang Master Divin',
     description: 'Atteins le rang Master Divin ou plus sur la saison en cours.',
     icon: RANK_ICONS['Master Divin'],
+    rank: 'Master Divin',
   },
   {
     id: 'rank-grand-master-divin',
     name: 'Rang Grand Master Divin',
     description: 'Atteins le rang Grand Master Divin ou plus sur la saison en cours.',
     icon: RANK_ICONS['Grand Master Divin'],
+    rank: 'Grand Master Divin',
   },
   {
     id: 'rank-ultime',
     name: 'Rang Ultime',
     description: 'Atteins le rang Ultime ou plus sur la saison en cours.',
     icon: RANK_ICONS['Ultime'],
+    rank: 'Ultime',
   },
   {
     id: 'rank-master-ultime',
     name: 'Rang Master Ultime',
     description: 'Atteins le rang Master Ultime ou plus sur la saison en cours.',
     icon: RANK_ICONS['Master Ultime'],
+    rank: 'Master Ultime',
   },
   {
     id: 'rank-grand-master-ultime',
     name: 'Rang Grand Master Ultime',
     description: 'Atteins le rang Grand Master Ultime sur la saison en cours.',
     icon: RANK_ICONS['Grand Master Ultime'],
+    rank: 'Grand Master Ultime',
   },
   { id: 'measurement-5', name: 'Métrologue', description: 'Logge une mensuration 5 jours différents.', icon: 'body' },
   {

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ImageSourcePropType } from 'react-native';
 import {
   BodyWeightEntry,
   MeasurementEntry,
@@ -102,6 +103,37 @@ export const RANK_ICONS: Record<RankName, keyof typeof Ionicons.glyphMap> = {
   Ultime: 'infinite',
   'Master Ultime': 'prism',
   'Grand Master Ultime': 'trophy',
+};
+
+// Custom-generated (Recraft V3) white-on-transparent stencil icons — one per rank, tintColor'd
+// per RANK_COLORS at render time, same idea as RANK_ICONS but a bespoke Ningyma emblem instead
+// of a generic Ionicons glyph. Metro requires string-literal require() paths, so this can't be
+// built from a loop. RANK_ICONS above stays as-is: a lightweight fallback path, still used
+// wherever an Ionicons glyph is genuinely simpler to reach for.
+export const RANK_ICON_IMAGES: Record<RankName, ImageSourcePropType> = {
+  Fer: require('../assets/rank-icons/fer.png'),
+  Bronze: require('../assets/rank-icons/bronze.png'),
+  Argent: require('../assets/rank-icons/argent.png'),
+  Or: require('../assets/rank-icons/or.png'),
+  Améthyste: require('../assets/rank-icons/amethyste.png'),
+  Émeraude: require('../assets/rank-icons/emeraude.png'),
+  Rubis: require('../assets/rank-icons/rubis.png'),
+  Saphir: require('../assets/rank-icons/saphir.png'),
+  Grenat: require('../assets/rank-icons/grenat.png'),
+  Topaze: require('../assets/rank-icons/topaze.png'),
+  Onyx: require('../assets/rank-icons/onyx.png'),
+  Opale: require('../assets/rank-icons/opale.png'),
+  Turquoise: require('../assets/rank-icons/turquoise.png'),
+  Citrine: require('../assets/rank-icons/citrine.png'),
+  Tourmaline: require('../assets/rank-icons/tourmaline.png'),
+  'Lapis-Lazuli': require('../assets/rank-icons/lapis-lazuli.png'),
+  Légende: require('../assets/rank-icons/legende.png'),
+  Divin: require('../assets/rank-icons/divin.png'),
+  'Master Divin': require('../assets/rank-icons/master-divin.png'),
+  'Grand Master Divin': require('../assets/rank-icons/grand-master-divin.png'),
+  Ultime: require('../assets/rank-icons/ultime.png'),
+  'Master Ultime': require('../assets/rank-icons/master-ultime.png'),
+  'Grand Master Ultime': require('../assets/rank-icons/grand-master-ultime.png'),
 };
 
 export interface RankState {

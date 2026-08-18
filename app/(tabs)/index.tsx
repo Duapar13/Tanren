@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,7 @@ import { Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
 import { toDateKey, todayKey } from '../../utils/date';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
-import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS, RANK_ICONS } from '../../utils/ranking';
+import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS, RANK_ICON_IMAGES } from '../../utils/ranking';
 
 export default function DashboardScreen() {
   const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
@@ -113,7 +113,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Ionicons name={RANK_ICONS[ranking.state.rank]} size={26} color={rankColor} />
+                    <Image source={RANK_ICON_IMAGES[ranking.state.rank]} style={{ width: 26, height: 26, tintColor: rankColor }} />
                   </View>
                   <View style={{ flex: 1, gap: 6 }}>
                     <ThemedText variant="body" weight="700">

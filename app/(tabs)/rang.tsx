@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +23,7 @@ import {
   DIVISIONS,
   POINTS_PER_DIVISION,
   RANK_COLORS,
-  RANK_ICONS,
+  RANK_ICON_IMAGES,
   RANKS,
   type SeasonMedal,
   type SeasonRanking,
@@ -193,7 +193,7 @@ export default function RangScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name={RANK_ICONS[state.rank]} size={44} color={rankColor} />
+              <Image source={RANK_ICON_IMAGES[state.rank]} style={{ width: 44, height: 44, tintColor: rankColor }} />
             </View>
             <ThemedText variant="title1" weight="700">
               {state.rank} {state.division}
@@ -255,7 +255,7 @@ export default function RangScreen() {
                             borderColor: RANK_COLORS[rank],
                           }}
                         >
-                          <Ionicons name={RANK_ICONS[rank]} size={24} color={RANK_COLORS[rank]} />
+                          <Image source={RANK_ICON_IMAGES[rank]} style={{ width: 24, height: 24, tintColor: RANK_COLORS[rank] }} />
                         </View>
                         <ThemedText
                           variant="caption"
@@ -340,7 +340,18 @@ export default function RangScreen() {
                             borderColor: unlocked ? colors.accent : colors.separator,
                           }}
                         >
-                          <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
+                          {badge.rank ? (
+                            <Image
+                              source={RANK_ICON_IMAGES[badge.rank]}
+                              style={{
+                                width: 26,
+                                height: 26,
+                                tintColor: unlocked ? colors.accent : colors.textTertiary,
+                              }}
+                            />
+                          ) : (
+                            <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
+                          )}
                         </View>
                         <ThemedText
                           variant="caption"
