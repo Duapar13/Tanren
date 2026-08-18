@@ -28,6 +28,10 @@ export const RANKS = [
   'Topaze',
   'Onyx',
   'Opale',
+  'Turquoise',
+  'Citrine',
+  'Tourmaline',
+  'Lapis-Lazuli',
   'Légende',
   'Divin',
   'Master Divin',
@@ -42,7 +46,7 @@ export const DIVISIONS = ['V', 'IV', 'III', 'II', 'I'] as const;
 export type Division = (typeof DIVISIONS)[number];
 
 export const POINTS_PER_DIVISION = 100;
-export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 95
+export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 115
 export const MAX_POINTS = TOTAL_TIERS * POINTS_PER_DIVISION;
 
 export const RANK_COLORS: Record<RankName, string> = {
@@ -56,8 +60,12 @@ export const RANK_COLORS: Record<RankName, string> = {
   Saphir: '#2E6FE0',
   Grenat: '#7B1E3A',
   Topaze: '#E85D04',
-  Onyx: '#1A1A2E',
+  Onyx: '#9C9CB5',
   Opale: '#B8E0D2',
+  Turquoise: '#30D5C8',
+  Citrine: '#F4D03F',
+  Tourmaline: '#D65780',
+  'Lapis-Lazuli': '#26428B',
   Légende: '#B15CDE',
   Divin: '#F2C744',
   'Master Divin': '#FF9F1C',
@@ -83,6 +91,10 @@ export const RANK_ICONS: Record<RankName, keyof typeof Ionicons.glyphMap> = {
   Topaze: 'sunny',
   Onyx: 'moon',
   Opale: 'sparkles',
+  Turquoise: 'water-outline',
+  Citrine: 'star-outline',
+  Tourmaline: 'color-palette',
+  'Lapis-Lazuli': 'planet-outline',
   Légende: 'star',
   Divin: 'flash',
   'Master Divin': 'planet',
