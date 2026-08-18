@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   BodyWeightEntry,
   MeasurementEntry,
@@ -41,7 +42,7 @@ export const DIVISIONS = ['V', 'IV', 'III', 'II', 'I'] as const;
 export type Division = (typeof DIVISIONS)[number];
 
 export const POINTS_PER_DIVISION = 100;
-export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 65
+export const TOTAL_TIERS = RANKS.length * DIVISIONS.length; // 95
 export const MAX_POINTS = TOTAL_TIERS * POINTS_PER_DIVISION;
 
 export const RANK_COLORS: Record<RankName, string> = {
@@ -64,6 +65,31 @@ export const RANK_COLORS: Record<RankName, string> = {
   Ultime: '#3DDBD9',
   'Master Ultime': '#5E60CE',
   'Grand Master Ultime': '#FF006E',
+};
+
+// One icon per rank, escalating from a humble outline shield through gem-themed icons to a
+// cosmic/mythic finish — used both for the rank hero/list display and the "reach this rank"
+// badges (utils/badges.ts).
+export const RANK_ICONS: Record<RankName, keyof typeof Ionicons.glyphMap> = {
+  Fer: 'shield-outline',
+  Bronze: 'shield-half',
+  Argent: 'shield',
+  Or: 'shield-checkmark',
+  Améthyste: 'diamond-outline',
+  Émeraude: 'diamond',
+  Rubis: 'flame',
+  Saphir: 'water',
+  Grenat: 'heart',
+  Topaze: 'sunny',
+  Onyx: 'moon',
+  Opale: 'sparkles',
+  Légende: 'star',
+  Divin: 'flash',
+  'Master Divin': 'planet',
+  'Grand Master Divin': 'rocket',
+  Ultime: 'infinite',
+  'Master Ultime': 'prism',
+  'Grand Master Ultime': 'trophy',
 };
 
 export interface RankState {

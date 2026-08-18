@@ -23,6 +23,7 @@ import {
   DIVISIONS,
   POINTS_PER_DIVISION,
   RANK_COLORS,
+  RANK_ICONS,
   RANKS,
   type SeasonMedal,
   type SeasonRanking,
@@ -192,7 +193,7 @@ export default function RangScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name="shield" size={44} color={rankColor} />
+              <Ionicons name={RANK_ICONS[state.rank]} size={44} color={rankColor} />
             </View>
             <ThemedText variant="title1" weight="700">
               {state.rank} {state.division}
@@ -254,7 +255,7 @@ export default function RangScreen() {
                             borderColor: RANK_COLORS[rank],
                           }}
                         >
-                          <Ionicons name="shield" size={24} color={RANK_COLORS[rank]} />
+                          <Ionicons name={RANK_ICONS[rank]} size={24} color={RANK_COLORS[rank]} />
                         </View>
                         <ThemedText
                           variant="caption"

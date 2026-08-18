@@ -19,7 +19,7 @@ import { Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
 import { toDateKey, todayKey } from '../../utils/date';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
-import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS } from '../../utils/ranking';
+import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS, RANK_ICONS } from '../../utils/ranking';
 
 export default function DashboardScreen() {
   const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
@@ -113,7 +113,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Ionicons name="shield" size={26} color={rankColor} />
+                    <Ionicons name={RANK_ICONS[ranking.state.rank]} size={26} color={rankColor} />
                   </View>
                   <View style={{ flex: 1, gap: 6 }}>
                     <ThemedText variant="body" weight="700">
