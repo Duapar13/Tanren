@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, View } from 'react-native';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
+import * as Sentry from '@sentry/react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
@@ -23,11 +24,25 @@ export default function SupportScreen() {
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  // Surfaced only in the empty-state Card below, small and muted — not a normal error banner,
+  // just enough that a real config problem (vs. a genuinely offering-less account) is visible
+  // on a screenshot instead of silently looking identical to "check back later".
+  const [debugError, setDebugError] = useState<string | null>(null);
 
   useEffect(() => {
     Purchases.getOfferings()
-      .then((offerings) => setPackages(offerings.current?.availablePackages ?? []))
-      .catch(() => setPackages([]))
+      .then((offerings) => {
+        setPackages(offerings.current?.availablePackages ?? []);
+        if (!offerings.current) {
+          setDebugError(`no current offering (${Object.keys(offerings.all).length} offering(s) total)`);
+        }
+      })
+      .catch((err) => {
+        setPackages([]);
+        const message = err instanceof Error ? err.message : String(err);
+        setDebugError(message);
+        Sentry.captureException(err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -73,10 +88,15 @@ export default function SupportScreen() {
         {loading ? (
           <ActivityIndicator style={{ marginTop: Spacing.xl }} />
         ) : packages.length === 0 ? (
-          <Card style={{ width: '100%' }}>
+          <Card style={{ width: '100%', gap: Spacing.xs }}>
             <ThemedText color="secondary" style={{ textAlign: 'center' }}>
               {t.support.noOfferings}
             </ThemedText>
+            {!!debugError && (
+              <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                {debugError}
+              </ThemedText>
+            )}
           </Card>
         ) : (
           <View style={{ width: '100%', gap: Spacing.sm }}>
