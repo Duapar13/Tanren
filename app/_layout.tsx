@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
+import * as Updates from 'expo-updates';
 import { setAudioModeAsync } from 'expo-audio';
 import { SQLiteProvider } from 'expo-sqlite';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -43,6 +44,26 @@ export default function RootLayout() {
     if (!fontsLoaded) return;
     SplashScreen.hideAsync().catch(() => {});
   }, [fontsLoaded]);
+
+  // expo-updates only ever applies a downloaded OTA update on the NEXT cold launch by default —
+  // the app boots off the currently-embedded bundle instantly, checks in the background, and a
+  // freshly-downloaded update just sits there until the user happens to relaunch a second time.
+  // Checking (and, if found, fetching + reloading) once right at startup means the very next
+  // launch after a "va y" OTA push already lands on the new version — no manual double-relaunch.
+  useEffect(() => {
+    if (__DEV__) return;
+    (async () => {
+      try {
+        const result = await Updates.checkForUpdateAsync();
+        if (result.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {
+        // Offline or update server unreachable — just continue on the current bundle.
+      }
+    })();
+  }, []);
 
   if (!fontsLoaded) return null;
 

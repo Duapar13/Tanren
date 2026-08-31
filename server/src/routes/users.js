@@ -115,7 +115,19 @@ router.patch('/me', async (req, res) => {
 
   const fields = [];
   const values = [];
-  if (displayName !== undefined) { fields.push('display_name = ?'); values.push(displayName); }
+  // display_name starts as a plain copy of the auto-generated username at signup (see
+  // findOrCreateOAuthUser in auth.js) and there's no separate "customize your display name" UI
+  // anywhere in the app — every rename flow (onboarding, Profil) only ever sends `username`. The
+  // client shows displayName ?? username everywhere (profile header, leaderboard, friends), so
+  // without this, renaming username silently has no visible effect anywhere. Keep display_name in
+  // sync unless the request explicitly sends its own displayName too.
+  if (displayName !== undefined) {
+    fields.push('display_name = ?');
+    values.push(displayName);
+  } else if (username !== undefined) {
+    fields.push('display_name = ?');
+    values.push(username);
+  }
   if (username !== undefined) { fields.push('username = ?'); values.push(username); }
   if (email !== undefined) { fields.push('email = ?'); values.push(email); }
   if (heightCm !== undefined) { fields.push('height_cm = ?'); values.push(heightCm); }
