@@ -63,7 +63,7 @@ export function AppShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="session"
-          options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }}
+          options={{ headerShown: false, animation: 'slide_from_bottom', gestureEnabled: false }}
         />
         <Stack.Screen name="session-recap" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen

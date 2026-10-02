@@ -11,6 +11,9 @@ import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { hasSeenTour, markTourSeen } from '../../lib/tour';
 import { openSession } from '../../lib/startSession';
+import { useData } from '../../context/DataContext';
+import { suggestSession } from '../../utils/sessionSuggestion';
+import { todayKey } from '../../utils/date';
 
 // Standard iOS tab bar content height — useBottomTabBarHeight() only works from a screen
 // rendered inside the tab navigator, and the tour needs to live one level up (as a sibling of
@@ -20,10 +23,17 @@ const TAB_BAR_CONTENT_HEIGHT = 49;
 /** Raised round button in the middle of the bar: one tap to start a workout from anywhere. */
 function CenterButton() {
   const { colors, scheme } = useTheme();
+  const { sessions, sets, exercises } = useData();
+  const startSuggested = () => {
+    // Same as the home card: pre-load the suggested workout, unless one is already done today
+    // (an unfinished draft is restored by the session screen itself).
+    const doneToday = sessions.some((s) => s.date === todayKey());
+    openSession(doneToday ? {} : { exerciseIds: suggestSession(sessions, sets, exercises).exerciseIds });
+  };
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <Pressable
-        onPress={() => openSession()}
+        onPress={startSuggested}
         accessibilityRole="button"
         style={({ pressed }) => ({
           width: 58,

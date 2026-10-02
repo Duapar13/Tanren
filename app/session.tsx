@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
@@ -24,6 +25,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { findExerciseGuide } from '../constants/exerciseGuides';
 import { todayKey } from '../utils/date';
+import { suggestSession } from '../utils/sessionSuggestion';
 import { computeExercisePRs } from '../utils/prStats';
 import { clearSessionDraft, DraftSet, loadSessionDraft, saveSessionDraft } from '../utils/sessionDraft';
 import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
@@ -62,6 +64,8 @@ export default function SessionScreen() {
   const { t } = useTranslation();
   const { ranking } = useRanking();
   const launch = useLocalSearchParams<{ exerciseIds?: string; templateId?: string }>();
+  const insets = useSafeAreaInsets();
+  const topInset = Math.max(insets.top, Constants.statusBarHeight ?? 0);
 
   const weightUnit = user?.weightUnit ?? 'kg';
   const rpeEnabled = user?.rpeEnabled ?? false;
@@ -146,6 +150,7 @@ export default function SessionScreen() {
   }, [activeIds, selectedId]);
 
   const exercisePRs = useMemo(() => computeExercisePRs(sets, sessions), [sets, sessions]);
+  const suggestion = useMemo(() => suggestSession(sessions, sets, exercises), [sessions, sets, exercises]);
   const selected = selectedId != null ? exercises.find((e) => e.id === selectedId) ?? null : null;
   const selectedSets = selectedId != null ? draftSets[selectedId] ?? [] : [];
 
@@ -385,7 +390,7 @@ export default function SessionScreen() {
 
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
-      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
+      <SafeAreaView edges={['bottom']} style={{ flex: 1, paddingTop: topInset }}>
         <PRCelebration record={celebration} onDone={() => setCelebration(null)} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm }}>
@@ -497,7 +502,31 @@ export default function SessionScreen() {
                 <ThemedText variant="title3" style={{ textAlign: 'center' }}>
                   {t.session.emptyTitle}
                 </ThemedText>
-                <Button title={t.session.addExercise} onPress={() => setPickerOpen(true)} />
+                {suggestion.exerciseIds.length > 0 && (
+                  <Pressable
+                    onPress={() => setActiveIds(suggestion.exerciseIds)}
+                    style={({ pressed }) => ({
+                      gap: 4,
+                      padding: Spacing.lg,
+                      borderRadius: Radius.lg,
+                      backgroundColor: colors.accentSoft,
+                      borderWidth: 1,
+                      borderColor: colors.accent + '4D',
+                      opacity: pressed ? 0.75 : 1,
+                    })}
+                  >
+                    <ThemedText variant="footnote" weight="800" color="accent" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                      {t.dashboard.suggested}
+                    </ThemedText>
+                    <ThemedText variant="title3">
+                      {suggestion.category === 'upper' ? t.dashboard.upper : t.dashboard.lower}
+                    </ThemedText>
+                    <ThemedText variant="footnote" color="secondary">
+                      {t.seance.exerciseCount(suggestion.exerciseIds.length)}
+                    </ThemedText>
+                  </Pressable>
+                )}
+                <Button title={t.session.addExercise} variant={suggestion.exerciseIds.length > 0 ? 'tonal' : 'filled'} onPress={() => setPickerOpen(true)} />
                 {workoutTemplates.length > 0 && (
                   <View style={{ gap: Spacing.sm }}>
                     <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
