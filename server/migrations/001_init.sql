@@ -156,5 +156,6 @@ CREATE TABLE IF NOT EXISTS workout_template_exercises (
   order_index INT NOT NULL DEFAULT 0,
   CONSTRAINT fk_template_exercise_template FOREIGN KEY (template_id) REFERENCES workout_templates(id) ON DELETE CASCADE,
   CONSTRAINT fk_template_exercise_exercise FOREIGN KEY (exercise_id) REFERENCES exercises(id),
+  UNIQUE KEY uq_template_exercise (template_id, exercise_id),
   INDEX idx_template_exercises_template (template_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

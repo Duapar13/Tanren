@@ -29,6 +29,13 @@ export async function insertWorkoutTemplate(
   db: SQLiteDatabase,
   input: WorkoutTemplateInput
 ): Promise<number> {
+  // Deduped once here rather than trusting every caller — seance.tsx's "save as template" in
+  // particular passes a plain exerciseId[] (not a Set like the dedicated templates screen uses),
+  // so it's a real path a duplicate id could slip in through. A duplicate link wouldn't even
+  // insert twice server-side (workout_template_exercises has a UNIQUE(templateId, exerciseId)
+  // constraint) — this just keeps the local copy consistent with what the server ends up with.
+  const uniqueExerciseIds = Array.from(new Set(input.exerciseIds));
+
   const now = new Date().toISOString();
   let templateId!: number;
   await db.withTransactionAsync(async () => {
@@ -38,11 +45,11 @@ export async function insertWorkoutTemplate(
       now
     );
     templateId = result.lastInsertRowId;
-    for (let i = 0; i < input.exerciseIds.length; i++) {
+    for (let i = 0; i < uniqueExerciseIds.length; i++) {
       await db.runAsync(
         'INSERT INTO workout_template_exercises (templateId, exerciseId, orderIndex) VALUES (?, ?, ?)',
         templateId,
-        input.exerciseIds[i],
+        uniqueExerciseIds[i],
         i
       );
     }

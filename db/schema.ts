@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DB_NAME = 'tanren.db';
-const CURRENT_VERSION = 10;
+const CURRENT_VERSION = 11;
 
 export async function migrateDb(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>(
@@ -19,6 +19,19 @@ export async function migrateDb(db: SQLiteDatabase) {
       DROP TABLE IF EXISTS sessions;
       DROP TABLE IF EXISTS exercises;
       DROP TABLE IF EXISTS profile;
+    `);
+  }
+
+  // v<=10 -> v11: a client bug could insert the same (templateId, exerciseId) pair into
+  // workout_template_exercises more than once. Collapse down to one row per pair (keeping
+  // the lowest id) before the UNIQUE index below is created, since CREATE UNIQUE INDEX would
+  // otherwise fail on existing installs that already have duplicates.
+  if (currentVersion > 0 && currentVersion < 11) {
+    await db.execAsync(`
+      DELETE FROM workout_template_exercises
+      WHERE id NOT IN (
+        SELECT MIN(id) FROM workout_template_exercises GROUP BY templateId, exerciseId
+      );
     `);
   }
 
@@ -119,6 +132,7 @@ export async function migrateDb(db: SQLiteDatabase) {
     CREATE INDEX IF NOT EXISTS idx_nutrition_date ON nutrition_entries (date);
     CREATE INDEX IF NOT EXISTS idx_measurement_type_date ON measurement_entries (type, date);
     CREATE INDEX IF NOT EXISTS idx_template_exercises_templateId ON workout_template_exercises (templateId);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_template_exercises ON workout_template_exercises (templateId, exerciseId);
   `);
 
   // v2 -> v3: existing installs already have these tables without the
