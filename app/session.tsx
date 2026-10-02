@@ -75,7 +75,8 @@ export default function SessionScreen() {
   const [hydrated, setHydrated] = useState(false);
   const [activeIds, setActiveIds] = useState<number[]>([]);
   const [draftSets, setDraftSets] = useState<Record<number, DraftSet[]>>({});
-  const [startedAt, setStartedAt] = useState(() => Date.now());
+  // The chrono only starts with the first logged set, not when the screen opens.
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [repsStr, setRepsStr] = useState('');
@@ -107,7 +108,7 @@ export default function SessionScreen() {
       if (draft && draft.activeExerciseIds.length > 0) {
         setActiveIds(draft.activeExerciseIds);
         setDraftSets(draft.draftSets);
-        setStartedAt(draft.startedAt ?? Date.now());
+        setStartedAt(draft.startedAt ?? null);
       } else {
         let ids: number[] = [];
         if (launch.templateId) {
@@ -117,7 +118,7 @@ export default function SessionScreen() {
         }
         ids = Array.from(new Set(ids)).filter((id) => exercises.some((e) => e.id === id && !e.deletedAt));
         setActiveIds(ids);
-        setStartedAt(Date.now());
+        setStartedAt(null);
       }
       setHydrated(true);
     })();
@@ -140,7 +141,7 @@ export default function SessionScreen() {
       draftSets,
       validatedExerciseIds: [],
       resuming: !!resumeTarget,
-      startedAt,
+      startedAt: startedAt ?? undefined,
     });
   }, [hydrated, activeIds, draftSets, startedAt, today, resumeTarget]);
 
@@ -197,7 +198,7 @@ export default function SessionScreen() {
     (sum, list) => sum + list.reduce((acc, s) => acc + s.weightKg * s.reps, 0),
     0
   );
-  const elapsedSeconds = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const elapsedSeconds = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
 
   const pickableExercises = useMemo(() => {
     const lastUsed = new Map<number, string>();
@@ -263,6 +264,7 @@ export default function SessionScreen() {
     const isRecord = previousBest > 0 && set.weightKg > bestSoFar;
 
     setDraftSets((prev) => ({ ...prev, [selectedId]: [...(prev[selectedId] ?? []), set] }));
+    setStartedAt((prev) => prev ?? Date.now());
 
     if (isRecord) {
       haptics.record();
@@ -346,7 +348,7 @@ export default function SessionScreen() {
       router.replace({
         pathname: '/session-recap',
         params: {
-          startedAt: String(startedAt),
+          startedAt: String(startedAt ?? Date.now()),
           sets: String(totalSets),
           volumeKg: String(totalVolumeKg),
           exercises: String(activeIds.filter((id) => (draftSets[id] ?? []).length > 0).length),
