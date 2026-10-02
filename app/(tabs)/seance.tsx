@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
@@ -83,6 +83,23 @@ export default function SeanceScreen() {
       resuming,
     });
   }, [draftHydrated, activeExerciseIds, draftSets, validatedExerciseIds, resuming]);
+
+  // Pre-load exercises requested by the entry points (centre button, home card, template chips).
+  // Never overrides a session already in progress; `nonce` makes repeated launches re-trigger.
+  const launchParams = useLocalSearchParams<{ exerciseIds?: string; templateId?: string; nonce?: string }>();
+  useEffect(() => {
+    if (!draftHydrated || !launchParams.nonce || activeExerciseIds.length > 0) return;
+    let ids: number[] = [];
+    if (launchParams.templateId) {
+      ids = workoutTemplates.find((tpl) => tpl.id === Number(launchParams.templateId))?.exerciseIds ?? [];
+    } else if (launchParams.exerciseIds) {
+      ids = launchParams.exerciseIds.split(',').map(Number);
+    }
+    ids = Array.from(new Set(ids)).filter((id) => exercises.some((e) => e.id === id && !e.deletedAt));
+    if (ids.length > 0) setActiveExerciseIds(ids);
+    // Only a new launch (nonce) should re-run this, not every data change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftHydrated, launchParams.nonce]);
 
   const availableExercises = useMemo(() => {
     const active = exercises.filter((e) => !e.deletedAt);

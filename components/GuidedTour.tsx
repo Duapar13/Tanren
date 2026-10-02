@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
 import { NinjaMascotFull } from './NinjaMascotFull';
@@ -13,20 +13,14 @@ import { Radius, Spacing } from '../constants/theme';
 // Mirrors the real tab order in app/(tabs)/_layout.tsx — the highlight ring below slides to
 // whichever position matches the tab bar icon it's currently describing, and the tour actually
 // navigates there too so the real screen shows through behind the tooltip, not just Accueil.
-const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
-  'home',
-  'barbell',
-  'trending-up',
-  'shield',
-  'nutrition',
-  'person',
-];
+const STEP_ICONS: (keyof typeof Ionicons.glyphMap)[] = ['home', 'stats-chart', 'barbell', 'nutrition', 'person'];
 
-const STEP_ROUTES = ['/(tabs)', '/(tabs)/seance', '/(tabs)/progression', '/(tabs)/rang', '/(tabs)/nutrition', '/(tabs)/profil'] as const;
+// null = the centre "start workout" button, which has no screen of its own to navigate to.
+const STEP_ROUTES = ['/(tabs)', '/(tabs)/progres', null, '/(tabs)/nutrition', '/(tabs)/profil'] as const;
 
 // Same reaction each tab's own ScreenHeader uses (see app/(tabs)/*.tsx), so Gyma wears the same
 // expression here as it will once the user actually lands on that tab.
-const STEP_REACTIONS: NinjaReaction[] = ['default', 'focused', 'excited', 'proud', 'content', 'friendly'];
+const STEP_REACTIONS: NinjaReaction[] = ['default', 'excited', 'focused', 'content', 'friendly'];
 
 const RING_SIZE = 56;
 
@@ -53,7 +47,8 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
   }, [visible]);
 
   useEffect(() => {
-    if (visible) router.navigate(STEP_ROUTES[stepIndex]);
+    const route = STEP_ROUTES[stepIndex];
+    if (visible && route) router.navigate(route as Href);
   }, [visible, stepIndex]);
 
   useEffect(() => {

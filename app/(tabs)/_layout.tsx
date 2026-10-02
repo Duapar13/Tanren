@@ -1,18 +1,52 @@
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GuidedTour } from '../../components/GuidedTour';
+import { LeaderboardReporter } from '../../components/LeaderboardReporter';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { hasSeenTour, markTourSeen } from '../../lib/tour';
+import { openSession } from '../../lib/startSession';
 
 // Standard iOS tab bar content height — useBottomTabBarHeight() only works from a screen
 // rendered inside the tab navigator, and the tour needs to live one level up (as a sibling of
 // <Tabs>) so it can survive real navigation between tabs as it steps through them.
 const TAB_BAR_CONTENT_HEIGHT = 49;
+
+/** Raised round button in the middle of the bar: one tap to start a workout from anywhere. */
+function CenterButton() {
+  const { colors, scheme } = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable
+        onPress={() => openSession()}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          width: 58,
+          height: 58,
+          borderRadius: 29,
+          marginTop: -22,
+          backgroundColor: colors.accent,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 4,
+          borderColor: colors.tabBarBackground,
+          shadowColor: colors.accent,
+          shadowOpacity: scheme === 'dark' ? 0.55 : 0.4,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+          transform: [{ scale: pressed ? 0.94 : 1 }],
+        })}
+      >
+        <Ionicons name="barbell" size={26} color={colors.onAccent} />
+      </Pressable>
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -35,6 +69,7 @@ export default function TabsLayout() {
 
   return (
     <View style={{ flex: 1 }}>
+      <LeaderboardReporter />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -59,30 +94,19 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="seance"
+          name="progres"
           options={{
-            title: t.tabs.session,
-            tabBarIcon: ({ color, size, focused }) => (
-              <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="progression"
-          options={{
-            title: t.tabs.progression,
+            title: t.tabs.progress,
             tabBarIcon: ({ color, size, focused }) => (
               <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size} color={color} />
             ),
           }}
         />
         <Tabs.Screen
-          name="rang"
+          name="start"
           options={{
-            title: t.tabs.rank,
-            tabBarIcon: ({ color, size, focused }) => (
-              <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
-            ),
+            title: t.tabs.session,
+            tabBarButton: () => <CenterButton />,
           }}
         />
         <Tabs.Screen
@@ -103,6 +127,8 @@ export default function TabsLayout() {
             ),
           }}
         />
+        {/* Reachable only through the centre button / home card, never from the tab bar. */}
+        <Tabs.Screen name="seance" options={{ href: null }} />
       </Tabs>
       <GuidedTour
         visible={showTour}
