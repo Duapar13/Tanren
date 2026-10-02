@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { emitAuthLost } from './authEvents';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://api-tanren.duapar.fr';
 
@@ -57,6 +58,13 @@ export class ApiError extends Error {
   }
 }
 
+/** True when the request never got a usable answer (offline, timeout, server down) — as opposed to
+ * the server explicitly rejecting it. Callers keep the session and local data in that case. */
+export function isNetworkError(err: unknown): boolean {
+  if (err instanceof ApiError) return err.status === 0 || err.status >= 500;
+  return true;
+}
+
 const REQUEST_TIMEOUT_MS = 15000;
 
 /** Native fetch never times out on its own — without this, a stuck server leaves the UI frozen forever. */
@@ -113,7 +121,9 @@ async function refreshAccessToken(): Promise<string | null> {
     });
     await setTokens(data.accessToken, data.refreshToken);
     return data.accessToken;
-  } catch {
+  } catch (err) {
+    // Offline or server down: keep the tokens, otherwise a plane ride would sign the user out.
+    if (isNetworkError(err)) throw err;
     await clearTokens();
     return null;
   }
@@ -144,7 +154,10 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       });
     }
     const newToken = await refreshPromise;
-    if (!newToken) throw new ApiError(401, 'unauthenticated');
+    if (!newToken) {
+      emitAuthLost();
+      throw new ApiError(401, 'unauthenticated');
+    }
     res = await request(newToken);
   }
 

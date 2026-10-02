@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { apiFetch, ApiError } from './api';
 import { getQueue, removeQueueItem, SyncQueueItem } from '../db/syncQueue';
+import { getSyncStatus, setSyncStatus } from './syncStatus';
 
 type Outcome = 'ok' | 'stop' | 'drop';
 
@@ -406,6 +407,10 @@ export async function wipeLocalData(db: SQLiteDatabase): Promise<void> {
 
 let running = false;
 let queuedRerun = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+const MIN_RETRY_MS = 15_000;
+const MAX_RETRY_MS = 5 * 60_000;
+let retryDelayMs = MIN_RETRY_MS;
 
 export async function runSync(db: SQLiteDatabase): Promise<void> {
   if (running) {
@@ -413,20 +418,58 @@ export async function runSync(db: SQLiteDatabase): Promise<void> {
     return;
   }
   running = true;
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  setSyncStatus({ syncing: true });
+  let hitTransientStop = false;
   try {
     const queue = await getQueue(db);
+    setSyncStatus({ pending: queue.length });
+    let remaining = queue.length;
     for (const item of queue) {
       const outcome = await processItem(db, item);
-      if (outcome === 'stop') break;
+      if (outcome === 'stop') {
+        hitTransientStop = true;
+        break;
+      }
       await removeQueueItem(db, item.id);
+      remaining -= 1;
+      setSyncStatus({ pending: remaining });
       if (outcome === 'drop') {
         console.warn(`[sync] dropped ${item.entity} ${item.operation} #${item.localId} (permanent error)`);
       }
     }
   } catch (err) {
     console.warn('[sync] run failed', err);
+    hitTransientStop = true;
   } finally {
     running = false;
+    let pending = getSyncStatus().pending;
+    try {
+      pending = (await getQueue(db)).length;
+    } catch {
+      // keep the last known count
+    }
+    const drained = pending === 0 && !hitTransientStop;
+    setSyncStatus({
+      syncing: false,
+      pending,
+      ...(drained && getSyncStatus().online ? { lastSyncAt: Date.now() } : {}),
+    });
+
+    if (drained) {
+      retryDelayMs = MIN_RETRY_MS;
+    } else if (pending > 0 && getSyncStatus().online && !queuedRerun) {
+      // Online but the server (or a dependency) wasn't ready: try again later with backoff.
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        runSync(db);
+      }, retryDelayMs);
+      retryDelayMs = Math.min(retryDelayMs * 2, MAX_RETRY_MS);
+    }
+
     if (queuedRerun) {
       queuedRerun = false;
       runSync(db);

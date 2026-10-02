@@ -84,6 +84,7 @@ export default function FriendsScreen() {
   const [outgoingRequests, setOutgoingRequests] = useState<OutgoingRequest[]>([]);
   const [username, setUsername] = useState('');
   const [adding, setAdding] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [expandedFriendId, setExpandedFriendId] = useState<number | null>(null);
   const [weekStats, setWeekStats] = useState<Record<number, WeekStats>>({});
 
@@ -93,8 +94,9 @@ export default function FriendsScreen() {
         setFriends(res.friends);
         setIncomingRequests(res.incomingRequests);
         setOutgoingRequests(res.outgoingRequests);
+        setLoadFailed(false);
       })
-      .catch(() => {});
+      .catch(() => setLoadFailed(true));
   }, []);
 
   useFocusEffect(
@@ -248,7 +250,10 @@ export default function FriendsScreen() {
 
         <Section title={t.friends.friendsListTitle}>
           {friends.length === 0 ? (
-            <EmptyState icon="people-outline" text={t.friends.emptyState} />
+            <EmptyState
+              icon={loadFailed ? 'cloud-offline-outline' : 'people-outline'}
+              text={loadFailed ? t.sync.requiresInternet : t.friends.emptyState}
+            />
           ) : (
             friends.map((friend) => {
               const expanded = expandedFriendId === friend.userId;

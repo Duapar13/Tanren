@@ -46,6 +46,7 @@ export default function ExerciseCatalogScreen() {
   const [meta, setMeta] = useState<CatalogMeta | null>(null);
   const [results, setResults] = useState<CatalogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     getCatalogMeta().then(setMeta).catch(() => {});
@@ -53,9 +54,13 @@ export default function ExerciseCatalogScreen() {
 
   const runSearch = useCallback(() => {
     setLoading(true);
+    setFailed(false);
     searchCatalog({ search: search.trim() || undefined, bodyPart: bodyPart ?? undefined, limit: 50 })
       .then(setResults)
-      .catch(() => setResults([]))
+      .catch(() => {
+        setResults([]);
+        setFailed(true);
+      })
       .finally(() => setLoading(false));
   }, [search, bodyPart]);
 
@@ -98,7 +103,10 @@ export default function ExerciseCatalogScreen() {
         contentContainerStyle={{ padding: Spacing.lg, paddingTop: 0, gap: Spacing.sm }}
         ListEmptyComponent={
           !loading ? (
-            <EmptyState icon="search-outline" text={t.exerciseCatalog.noResults} />
+            <EmptyState
+              icon={failed ? 'cloud-offline-outline' : 'search-outline'}
+              text={failed ? t.sync.requiresInternet : t.exerciseCatalog.noResults}
+            />
           ) : null
         }
         renderItem={({ item }) => (

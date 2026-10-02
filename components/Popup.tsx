@@ -1,6 +1,7 @@
 import { Modal, Pressable, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 /** App-themed replacement for the native Alert — used for informational popups (e.g. season details). */
 export function Popup({ visible, onClose, title, children }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -54,7 +56,7 @@ export function Popup({ visible, onClose, title, children }: Props) {
             }}
           >
             <ThemedText variant="subhead" weight="700" style={{ color: colors.onAccent }}>
-              Fermer
+              {t.common.close}
             </ThemedText>
           </Pressable>
         </Pressable>
