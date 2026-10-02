@@ -4,6 +4,7 @@ import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { Section } from '../components/Section';
 import { Button } from '../components/Button';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
@@ -18,16 +19,6 @@ function capitalize(s: string) {
   return s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View>
-      <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-        {title}
-      </ThemedText>
-      {children}
-    </View>
-  );
-}
 
 export default function ExerciseCatalogDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,8 +67,10 @@ export default function ExerciseCatalogDetailScreen() {
             width: '100%',
             aspectRatio: 1,
             backgroundColor: colors.fill,
-            borderRadius: 16,
+            borderRadius: 28,
             overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: colors.border,
             alignItems: 'center',
             justifyContent: 'center',
           }}

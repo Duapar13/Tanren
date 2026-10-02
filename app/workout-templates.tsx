@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { IconButton } from '../components/IconButton';
@@ -70,15 +71,17 @@ export default function WorkoutTemplatesScreen() {
                     onPress={() => toggleExercise(ex.id)}
                     style={{
                       paddingHorizontal: 14,
-                      paddingVertical: 8,
+                      paddingVertical: 9,
                       borderRadius: Radius.pill,
                       backgroundColor: selected ? colors.accent : colors.fill,
+                      borderWidth: 1,
+                      borderColor: selected ? colors.accent : colors.border,
                     }}
                   >
                     <ThemedText
                       variant="subhead"
                       weight="600"
-                      style={{ color: selected ? colors.onAccent : colors.text }}
+                      style={{ color: selected ? colors.onAccent : colors.textSecondary }}
                     >
                       {ex.name}
                     </ThemedText>
@@ -101,17 +104,20 @@ export default function WorkoutTemplatesScreen() {
         )}
 
         {workoutTemplates.length === 0 && !showCreate && (
-          <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.md }}>
-            {t.workoutTemplates.emptyState}
-          </ThemedText>
+          <EmptyState icon="list-outline" text={t.workoutTemplates.emptyState} />
         )}
 
         {workoutTemplates.map((tpl) => (
-          <Card key={tpl.id} style={{ gap: Spacing.xs }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <ThemedText variant="subhead" weight="600">
+          <Card key={tpl.id} style={{ gap: Spacing.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm }}>
+              <ThemedText variant="headline" weight="800" style={{ flex: 1 }} numberOfLines={1}>
                 {tpl.name}
               </ThemedText>
+              <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.pill, backgroundColor: colors.accentSoft }}>
+                <ThemedText variant="caption" weight="800" color="accent">
+                  {tpl.exerciseIds.length}
+                </ThemedText>
+              </View>
               <IconButton
                 name="trash-outline"
                 variant="destructive"

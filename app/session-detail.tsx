@@ -4,6 +4,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { Section } from '../components/Section';
+import { SetLine } from '../components/SetLine';
 import { Button } from '../components/Button';
 import { ShareCard } from '../components/ShareCard';
 import { ExerciseCard } from '../components/ExerciseCard';
@@ -72,10 +74,12 @@ export default function SessionDetailScreen() {
             {grouped.map(([exerciseId, exerciseSets]) => (
               <ExerciseCard key={exerciseId} title={exerciseSets[0].exerciseName}>
                 {exerciseSets.map((s, i) => (
-                  <ThemedText key={s.id} variant="subhead" color="secondary">
-                    {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
-                    {s.rpe ? ` · RPE ${s.rpe}` : ''}
-                  </ThemedText>
+                  <View key={s.id} style={{ flexDirection: 'row', paddingVertical: 4 }}>
+                    <SetLine index={i + 1}>
+                      {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
+                      {s.rpe ? ` · RPE ${s.rpe}` : ''}
+                    </SetLine>
+                  </View>
                 ))}
               </ExerciseCard>
             ))}
@@ -84,9 +88,11 @@ export default function SessionDetailScreen() {
 
         {grouped.length > 0 && (
           <>
-            <ThemedText variant="headline" style={{ alignSelf: 'flex-start', marginTop: Spacing.md }}>
-              {t.sessionDetail.yourSheet}
-            </ThemedText>
+            <View style={{ alignSelf: 'stretch', marginTop: Spacing.md }}>
+              <Section title={t.sessionDetail.yourSheet}>
+                <View />
+              </Section>
+            </View>
             <ShareCard ref={cardRef} variant="session" date={date ?? ''} sets={daySets} weightUnit={weightUnit} />
             <Button
               title={sharing ? t.sessionDetail.generating : t.sessionDetail.share}

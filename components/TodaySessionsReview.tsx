@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Keyboard, Pressable, View } from 'react-native';
 import { ExerciseCard } from './ExerciseCard';
+import { SetLine } from './SetLine';
 import { ThemedText } from './ThemedText';
 import { Input } from './Input';
 import { Button } from './Button';
@@ -79,14 +80,16 @@ export function TodaySessionsReview() {
 
   return (
     <View style={{ gap: Spacing.sm }}>
-      <ThemedText variant="headline">{t.dashboard.today}</ThemedText>
+      <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        {t.dashboard.today}
+      </ThemedText>
       {todaysSessions.map((session) => {
         const setsForSession = sets.filter((s) => s.sessionId === session.id);
         const grouped = groupByExercise(setsForSession);
 
         return (
           <View key={session.id} style={{ gap: Spacing.sm }}>
-            <ThemedText variant="title3" weight="700">
+            <ThemedText variant="title2" weight="800">
               {t.seance.exerciseCount(grouped.length)}
             </ThemedText>
 
@@ -149,11 +152,11 @@ export function TodaySessionsReview() {
                         alignItems: 'center',
                       }}
                     >
-                      <Pressable onPress={() => startEdit(s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
-                        <ThemedText variant="footnote" color="secondary">
-                          {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
+                      <Pressable onPress={() => startEdit(s)} style={{ flex: 1, flexDirection: 'row', paddingVertical: Spacing.sm }}>
+                        <SetLine index={i + 1}>
+                          {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                           {s.rpe ? ` · RPE ${s.rpe}` : ''}
-                        </ThemedText>
+                        </SetLine>
                       </Pressable>
                       <IconButton
                         name="trash-outline"

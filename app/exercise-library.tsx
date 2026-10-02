@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { NavRow } from '../components/SettingRow';
+import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { IconButton } from '../components/IconButton';
@@ -89,38 +91,19 @@ export default function ExerciseLibraryScreen() {
           </Card>
         ) : (
           <View style={{ gap: Spacing.sm }}>
-            <Pressable
+            <NavRow
+              icon="film-outline"
+              label={t.exerciseCatalog.browseButton}
+              hint={t.exerciseCatalog.browseButtonHint}
               onPress={() => router.push('/exercise-catalog')}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: Spacing.sm,
-                padding: Spacing.md,
-                borderRadius: 12,
-                backgroundColor: colors.accent + '14',
-                borderWidth: 1,
-                borderColor: colors.accent + '40',
-              }}
-            >
-              <Ionicons name="film-outline" size={20} color={colors.accent} />
-              <View style={{ flex: 1 }}>
-                <ThemedText variant="subhead" weight="600" color="accent">
-                  {t.exerciseCatalog.browseButton}
-                </ThemedText>
-                <ThemedText variant="caption" color="tertiary">
-                  {t.exerciseCatalog.browseButtonHint}
-                </ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.accent} />
-            </Pressable>
+              accent
+            />
             <Button title={t.seance.addExercise} onPress={() => setShowAddExercise(true)} />
           </View>
         )}
 
         {customExercises.length === 0 && !showAddExercise && (
-          <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.md }}>
-            {t.profil.noCustomExercises}
-          </ThemedText>
+          <EmptyState icon="barbell-outline" text={t.profil.noCustomExercises} />
         )}
 
         {customExercises.map((ex) =>
@@ -145,13 +128,27 @@ export default function ExerciseLibraryScreen() {
               key={ex.id}
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
             >
-              <Pressable onPress={() => startEditExercise(ex)} style={{ flex: 1 }}>
-                <ThemedText variant="subhead" weight="600">
-                  {ex.name}
-                </ThemedText>
-                <ThemedText variant="caption" color="tertiary">
-                  {ex.category === 'upper' ? t.common.upperBody : t.common.lowerBody}
-                </ThemedText>
+              <Pressable onPress={() => startEditExercise(ex)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: colors.accentSoft,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons name={ex.category === 'upper' ? 'barbell' : 'walk'} size={20} color={colors.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subhead" weight="700">
+                    {ex.name}
+                  </ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    {ex.category === 'upper' ? t.common.upperBody : t.common.lowerBody}
+                  </ThemedText>
+                </View>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
                 <IconButton name="pencil-outline" size={18} onPress={() => startEditExercise(ex)} />

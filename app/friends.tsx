@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { Section } from '../components/Section';
+import { EmptyState } from '../components/EmptyState';
+import { RankEmblem } from '../components/RankEmblem';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { IconButton } from '../components/IconButton';
@@ -60,12 +63,14 @@ function FriendAvatar({ avatarUrl, size = 40 }: { avatarUrl: string | null; size
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: colors.fill,
+        backgroundColor: colors.accentSoft,
+        borderWidth: 1.5,
+        borderColor: colors.accent + '66',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Ionicons name="person" size={size * 0.5} color={colors.textTertiary} />
+      <Ionicons name="person" size={size * 0.5} color={colors.accent} />
     </View>
   );
 }
@@ -177,9 +182,17 @@ export default function FriendsScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxl }}
+        contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl * 2 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Card style={{ gap: Spacing.sm }}>
+        <Card variant="accent" style={{ gap: Spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+            <Ionicons name="person-add" size={18} color={colors.accent} />
+            <ThemedText variant="subhead" weight="700" color="accent">
+              {t.friends.addFriendPlaceholder}
+            </ThemedText>
+          </View>
           <Input
             placeholder={t.friends.addFriendPlaceholder}
             value={username}
@@ -196,8 +209,7 @@ export default function FriendsScreen() {
         </Card>
 
         {incomingRequests.length > 0 && (
-          <View style={{ gap: Spacing.sm }}>
-            <ThemedText variant="headline">{t.friends.incomingRequestsTitle}</ThemedText>
+          <Section title={t.friends.incomingRequestsTitle}>
             {incomingRequests.map((req) => (
               <Card
                 key={req.id}
@@ -212,12 +224,11 @@ export default function FriendsScreen() {
                 </View>
               </Card>
             ))}
-          </View>
+          </Section>
         )}
 
         {outgoingRequests.length > 0 && (
-          <View style={{ gap: Spacing.sm }}>
-            <ThemedText variant="headline">{t.friends.outgoingRequestsTitle}</ThemedText>
+          <Section title={t.friends.outgoingRequestsTitle}>
             {outgoingRequests.map((req) => (
               <Card
                 key={req.id}
@@ -232,15 +243,12 @@ export default function FriendsScreen() {
                 </View>
               </Card>
             ))}
-          </View>
+          </Section>
         )}
 
-        <View style={{ gap: Spacing.sm }}>
-          <ThemedText variant="headline">{t.friends.friendsListTitle}</ThemedText>
+        <Section title={t.friends.friendsListTitle}>
           {friends.length === 0 ? (
-            <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.md }}>
-              {t.friends.emptyState}
-            </ThemedText>
+            <EmptyState icon="people-outline" text={t.friends.emptyState} />
           ) : (
             friends.map((friend) => {
               const expanded = expandedFriendId === friend.userId;
@@ -258,11 +266,12 @@ export default function FriendsScreen() {
                         {friend.displayName ?? friend.username}
                       </ThemedText>
                       {friend.seasonRank && (
-                        <ThemedText variant="caption" style={{ color: rankColor }}>
+                        <ThemedText variant="caption" weight="700" style={{ color: rankColor }}>
                           {friend.seasonRank} {friend.seasonDivision} · {friend.seasonPoints} pts
                         </ThemedText>
                       )}
                     </View>
+                    {friend.seasonRank && <RankEmblem rank={friend.seasonRank} size={36} />}
                     <IconButton
                       name="person-remove-outline"
                       variant="destructive"
@@ -331,7 +340,7 @@ export default function FriendsScreen() {
               );
             })
           )}
-        </View>
+        </Section>
       </ScrollView>
     </ThemedView>
   );

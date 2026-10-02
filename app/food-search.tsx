@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { MacroPills } from '../components/MacroPills';
+import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -230,9 +232,9 @@ export default function FoodSearchScreen() {
               <Pressable
                 onPress={handleSearch}
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: Radius.sm,
+                  width: 50,
+                  height: 50,
+                  borderRadius: Radius.md,
                   backgroundColor: colors.accent,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -250,13 +252,14 @@ export default function FoodSearchScreen() {
             <ScrollView contentContainerStyle={{ gap: Spacing.sm, paddingBottom: Spacing.xxl }}>
               {results.map((p) => (
                 <Pressable key={p.barcode + p.name} onPress={() => setSelected(p)}>
-                  <Card style={{ gap: 2 }}>
+                  <Card style={{ gap: 6 }}>
                     <ThemedText variant="subhead" weight="600">
                       {p.name}
                     </ThemedText>
                     <ThemedText variant="caption" color="tertiary">
-                      {t.foodSearch.per100(p.unit)} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
+                      {t.foodSearch.per100(p.unit)}
                     </ThemedText>
+                    <MacroPills protein={p.proteinPer100g} carbs={p.carbsPer100g} fat={p.fatPer100g} />
                   </Card>
                 </Pressable>
               ))}
@@ -265,20 +268,19 @@ export default function FoodSearchScreen() {
         ) : (
           <View style={{ flex: 1, paddingHorizontal: Spacing.lg }}>
             {recentFoods.length === 0 ? (
-              <ThemedText color="secondary" style={{ textAlign: 'center', marginTop: Spacing.lg }}>
-                {t.foodSearch.noRecentFoods}
-              </ThemedText>
+              <EmptyState icon="time-outline" text={t.foodSearch.noRecentFoods} />
             ) : (
               <ScrollView contentContainerStyle={{ gap: Spacing.sm, paddingBottom: Spacing.xxl }}>
                 {recentFoods.map((p) => (
                   <Pressable key={p.barcode + p.name} onPress={() => setSelected(p)}>
-                    <Card style={{ gap: 2 }}>
+                    <Card style={{ gap: 6 }}>
                       <ThemedText variant="subhead" weight="600">
                         {p.name}
                       </ThemedText>
                       <ThemedText variant="caption" color="tertiary">
-                        {t.foodSearch.per100(p.unit)} : P {p.proteinPer100g}g · G {p.carbsPer100g}g · L {p.fatPer100g}g
+                        {t.foodSearch.per100(p.unit)}
                       </ThemedText>
+                      <MacroPills protein={p.proteinPer100g} carbs={p.carbsPer100g} fat={p.fatPer100g} />
                     </Card>
                   </Pressable>
                 ))}

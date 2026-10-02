@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { ToggleRow } from '../components/SettingRow';
+import { NinjaMascot } from '../components/NinjaMascot';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -121,15 +123,16 @@ export default function OnboardingScreen() {
             onScrollBeginDrag={Keyboard.dismiss}
             contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl }}
           >
-              <View style={{ alignItems: 'center', gap: Spacing.xs }}>
-                <NingymaWordmark size={44} />
-                <ThemedText variant="subhead" color="secondary" style={{ textAlign: 'center' }}>
+              <View style={{ alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.md }}>
+                <NinjaMascot size={96} reaction="friendly" />
+                <NingymaWordmark size={48} />
+                <ThemedText variant="body" color="secondary" style={{ textAlign: 'center', maxWidth: 320 }}>
                   {t.onboarding.subtitle}
                 </ThemedText>
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">{t.onboarding.usernameTitle}</ThemedText>
+                <ThemedText variant="title3" weight="800">{t.onboarding.usernameTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
                   {t.onboarding.usernameHint}
                 </ThemedText>
@@ -153,7 +156,7 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">{t.onboarding.bodyTitle}</ThemedText>
+                <ThemedText variant="title3" weight="800">{t.onboarding.bodyTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
                   {t.onboarding.bodyHint}
                 </ThemedText>
@@ -194,14 +197,14 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">{t.onboarding.goalTitle}</ThemedText>
+                <ThemedText variant="title3" weight="800">{t.onboarding.goalTitle}</ThemedText>
                 <Card>
                   <SegmentedControl options={GOAL_OPTIONS} value={goal} onChange={setGoal} />
                 </Card>
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">{t.onboarding.programTitle}</ThemedText>
+                <ThemedText variant="title3" weight="800">{t.onboarding.programTitle}</ThemedText>
                 <ThemedText variant="footnote" color="tertiary">
                   {t.onboarding.programHint}
                 </ThemedText>
@@ -220,9 +223,11 @@ export default function OnboardingScreen() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: selected ? colors.accent : colors.fill,
+                            borderWidth: 1,
+                            borderColor: selected ? colors.accent : colors.border,
                           }}
                         >
-                          <ThemedText variant="subhead" weight="600" style={{ color: selected ? colors.onAccent : colors.text }}>
+                          <ThemedText variant="subhead" weight="700" style={{ color: selected ? colors.onAccent : colors.textSecondary }}>
                             {label}
                           </ThemedText>
                         </Pressable>
@@ -233,15 +238,14 @@ export default function OnboardingScreen() {
               </View>
 
               <View style={{ gap: Spacing.sm }}>
-                <ThemedText variant="headline">{t.onboarding.measurementsTitle}</ThemedText>
-                <Card style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText variant="subhead">{t.onboarding.measurementsToggleLabel}</ThemedText>
-                    <ThemedText variant="caption" color="tertiary">
-                      {t.onboarding.measurementsHint}
-                    </ThemedText>
-                  </View>
-                  <Switch value={measurementsEnabled} onValueChange={setMeasurementsEnabled} trackColor={{ true: colors.accent }} />
+                <ThemedText variant="title3" weight="800">{t.onboarding.measurementsTitle}</ThemedText>
+                <Card>
+                  <ToggleRow
+                    label={t.onboarding.measurementsToggleLabel}
+                    hint={t.onboarding.measurementsHint}
+                    value={measurementsEnabled}
+                    onValueChange={setMeasurementsEnabled}
+                  />
                 </Card>
               </View>
 

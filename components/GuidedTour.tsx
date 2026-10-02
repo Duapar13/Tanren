@@ -111,7 +111,7 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
           <View
             style={{
               backgroundColor: colors.card,
-              borderRadius: Radius.lg,
+              borderRadius: Radius.xl,
               borderWidth: 1,
               borderColor: colors.border,
               padding: Spacing.lg,
@@ -146,10 +146,10 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
                   <View
                     key={i}
                     style={{
-                      width: 6,
+                      width: i === stepIndex ? 18 : 6,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: i === stepIndex ? colors.accent : colors.separator,
+                      backgroundColor: i === stepIndex ? colors.accent : colors.fillSecondary,
                     }}
                   />
                 ))}
@@ -157,13 +157,14 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
               <Pressable
                 onPress={next}
                 style={{
-                  paddingVertical: Spacing.sm,
-                  paddingHorizontal: Spacing.md,
-                  borderRadius: Radius.md,
+                  minHeight: 40,
+                  justifyContent: 'center',
+                  paddingHorizontal: Spacing.lg,
+                  borderRadius: Radius.pill,
                   backgroundColor: colors.accent,
                 }}
               >
-                <ThemedText variant="footnote" weight="600" style={{ color: colors.onAccent }}>
+                <ThemedText variant="footnote" weight="800" style={{ color: colors.onAccent }}>
                   {isLast ? t.tour.start : t.tour.next}
                 </ThemedText>
               </Pressable>

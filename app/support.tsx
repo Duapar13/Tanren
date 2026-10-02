@@ -76,8 +76,23 @@ export default function SupportScreen() {
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.lg, alignItems: 'center' }}>
         <View style={{ alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.md }}>
-          <NinjaMascot size={72} reaction="friendly" />
-          <ThemedText variant="title2" weight="700" style={{ textAlign: 'center' }}>
+          <View
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              backgroundColor: colors.accentSoft,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: colors.accent,
+              shadowOpacity: 0.4,
+              shadowRadius: 24,
+              shadowOffset: { width: 0, height: 0 },
+            }}
+          >
+            <NinjaMascot size={84} reaction="friendly" />
+          </View>
+          <ThemedText variant="title1" style={{ textAlign: 'center', marginTop: Spacing.sm }}>
             {t.support.title}
           </ThemedText>
           <ThemedText color="secondary" style={{ textAlign: 'center' }}>
@@ -103,9 +118,9 @@ export default function SupportScreen() {
             {packages.map((pkg) => {
               const period = formatSubscriptionPeriod(pkg.product.subscriptionPeriod, t);
               return (
-                <Card key={pkg.identifier} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
+                <Card key={pkg.identifier} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md, paddingVertical: Spacing.lg }}>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <ThemedText variant="subhead" weight="600">
+                    <ThemedText variant="headline" weight="800">
                       {pkg.product.title}
                     </ThemedText>
                     {!!pkg.product.description && (

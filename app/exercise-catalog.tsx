@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { EmptyState } from '../components/EmptyState';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Input } from '../components/Input';
@@ -20,14 +22,16 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
     <Pressable
       onPress={onPress}
       style={{
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
         borderRadius: 999,
         backgroundColor: active ? colors.accent : colors.fill,
-        marginRight: 6,
+        borderWidth: 1,
+        borderColor: active ? colors.accent : colors.border,
+        marginRight: 8,
       }}
     >
-      <ThemedText variant="footnote" weight="600" style={{ color: active ? colors.onAccent : colors.text }}>
+      <ThemedText variant="footnote" weight="600" style={{ color: active ? colors.onAccent : colors.textSecondary }}>
         {label}
       </ThemedText>
     </Pressable>
@@ -94,9 +98,7 @@ export default function ExerciseCatalogScreen() {
         contentContainerStyle={{ padding: Spacing.lg, paddingTop: 0, gap: Spacing.sm }}
         ListEmptyComponent={
           !loading ? (
-            <ThemedText variant="subhead" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.xxl }}>
-              {t.exerciseCatalog.noResults}
-            </ThemedText>
+            <EmptyState icon="search-outline" text={t.exerciseCatalog.noResults} />
           ) : null
         }
         renderItem={({ item }) => (
@@ -106,21 +108,36 @@ export default function ExerciseCatalogScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: Spacing.md,
+              minHeight: 64,
               padding: Spacing.md,
-              borderRadius: Radius.md,
+              borderRadius: Radius.lg,
               backgroundColor: colors.card,
               borderWidth: 1,
               borderColor: colors.border,
             }}
           >
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                backgroundColor: colors.accentSoft,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="play" size={16} color={colors.accent} />
+            </View>
             <View style={{ flex: 1 }}>
-              <ThemedText variant="subhead" weight="600" style={{ textTransform: 'capitalize' }}>
+              <ThemedText variant="subhead" weight="700" style={{ textTransform: 'capitalize' }}>
                 {item.name}
               </ThemedText>
               <ThemedText variant="caption" color="tertiary">
                 {capitalize(bodyPartLabel(item.bodyPart, lang))} · {equipmentLabel(item.equipment, lang)}
               </ThemedText>
             </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
           </Pressable>
         )}
       />

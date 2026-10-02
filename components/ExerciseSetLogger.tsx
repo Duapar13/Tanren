@@ -7,6 +7,7 @@ import { Radius, Spacing } from '../constants/theme';
 import { ThemedText } from './ThemedText';
 import { Card } from './Card';
 import { Input } from './Input';
+import { SetLine } from './SetLine';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { displayToKg, formatWeight, kgToDisplay, WeightUnit } from '../utils/units';
@@ -314,26 +315,12 @@ export function ExerciseSetLogger({
             >
               <Pressable
                 onPress={() => startEdit(i, s)}
-                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.sm }}
+                style={{ flex: 1, flexDirection: 'row', paddingVertical: Spacing.sm }}
               >
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    backgroundColor: colors.accentSoft,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ThemedText variant="footnote" weight="800" color="accent">
-                    {i + 1}
-                  </ThemedText>
-                </View>
-                <ThemedText variant="subhead" weight="600" style={{ flex: 1 }}>
+                <SetLine index={i + 1}>
                   {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                   {s.rpe ? ` · RPE ${s.rpe}` : ''}
-                </ThemedText>
+                </SetLine>
               </Pressable>
               <IconButton name="trash-outline" variant="destructive" size={18} onPress={() => confirmRemove(i)} />
             </View>

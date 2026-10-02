@@ -21,16 +21,23 @@ export function ExerciseCard({ title, children }: { title: string; children: Rea
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: colors.accent,
-          borderRadius: expanded ? Radius.md : Radius.lg,
+          backgroundColor: colors.cardElevated,
+          borderTopLeftRadius: Radius.lg,
+          borderTopRightRadius: Radius.lg,
+          borderBottomLeftRadius: expanded ? 0 : Radius.lg,
+          borderBottomRightRadius: expanded ? 0 : Radius.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderLeftWidth: 4,
+          borderLeftColor: colors.accent,
           paddingHorizontal: Spacing.md,
           paddingVertical: Spacing.md,
         }}
       >
-        <ThemedText variant="headline" weight="700" style={{ color: colors.onAccent }}>
+        <ThemedText variant="headline" weight="800" style={{ flex: 1 }}>
           {title}
         </ThemedText>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.onAccent} />
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
       </Pressable>
       {expanded && (
         <View

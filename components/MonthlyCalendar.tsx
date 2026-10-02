@@ -60,27 +60,30 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
   return (
     <View style={{ gap: Spacing.sm }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable onPress={goPrev} hitSlop={8} style={{ padding: 4 }}>
-          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        <Pressable
+          onPress={goPrev}
+          hitSlop={6}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Ionicons name="chevron-back" size={18} color={colors.text} />
         </Pressable>
-        <ThemedText variant="subhead" weight="700">
-          {monthLabel(year, month, LOCALE_MAP[lang])}
-        </ThemedText>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <ThemedText variant="headline" weight="800">
+            {monthLabel(year, month, LOCALE_MAP[lang])}
+          </ThemedText>
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-          <Pressable onPress={goNext} hitSlop={8} style={{ padding: 4 }}>
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
+          <Pressable
+            onPress={goNext}
+            hitSlop={6}
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="chevron-forward" size={18} color={colors.text} />
           </Pressable>
           <Pressable
             onPress={onStatsPress}
-            hitSlop={8}
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: Radius.sm,
-              backgroundColor: colors.fill,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            hitSlop={6}
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}
           >
             <Ionicons name="stats-chart" size={16} color={colors.accent} />
           </Pressable>
@@ -115,12 +118,12 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
             >
               <View
                 style={{
-                  width: '78%',
-                  height: '78%',
-                  borderRadius: Radius.sm,
+                  width: '82%',
+                  height: '82%',
+                  borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: done ? colors.accent : missed ? colors.fillSecondary : 'transparent',
+                  backgroundColor: done ? colors.accent : missed ? colors.fill : 'transparent',
                   borderWidth: key === today ? 2 : 0,
                   borderColor: colors.accent,
                 }}
@@ -140,7 +143,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
 
       <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: 4 }}>
         <Legend color={colors.accent} label={t.monthlyCalendar.done} />
-        <Legend color={colors.fillSecondary} label={t.monthlyCalendar.missed} />
+        <Legend color={colors.fill} label={t.monthlyCalendar.missed} />
       </View>
     </View>
   );
@@ -149,7 +152,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color }} />
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 1, borderColor: color === 'transparent' ? 'transparent' : 'rgba(128,128,128,0.25)' }} />
       <ThemedText variant="caption" color="tertiary">
         {label}
       </ThemedText>

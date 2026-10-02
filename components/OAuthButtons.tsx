@@ -55,27 +55,7 @@ export function OAuthButtons() {
   };
 
   return (
-    <View style={{ gap: Spacing.sm }}>
-      <Pressable
-        onPress={handleGoogle}
-        style={(state) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          paddingVertical: Spacing.md,
-          borderRadius: Radius.md,
-          borderWidth: 1,
-          borderColor: colors.border,
-          opacity: state.pressed ? 0.7 : 1,
-        })}
-      >
-        <Ionicons name="logo-google" size={18} color={colors.text} />
-        <ThemedText variant="body" weight="600">
-          {t.login.continueWithGoogle}
-        </ThemedText>
-      </Pressable>
-
+    <View style={{ gap: Spacing.md }}>
       {Platform.OS === 'ios' && (
         <Pressable
           onPress={handleApple}
@@ -84,18 +64,39 @@ export function OAuthButtons() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            paddingVertical: Spacing.md,
+            minHeight: 54,
             borderRadius: Radius.md,
             backgroundColor: colors.text,
-            opacity: state.pressed ? 0.7 : 1,
+            opacity: state.pressed ? 0.75 : 1,
           })}
         >
           <Ionicons name="logo-apple" size={20} color={colors.background} />
-          <ThemedText variant="body" weight="600" style={{ color: colors.background }}>
+          <ThemedText variant="body" weight="700" style={{ color: colors.background }}>
             {t.login.continueWithApple}
           </ThemedText>
         </Pressable>
       )}
+      <Pressable
+        onPress={handleGoogle}
+        style={(state) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          minHeight: 54,
+          borderRadius: Radius.md,
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          opacity: state.pressed ? 0.75 : 1,
+        })}
+      >
+        <Ionicons name="logo-google" size={18} color={colors.text} />
+        <ThemedText variant="body" weight="700">
+          {t.login.continueWithGoogle}
+        </ThemedText>
+      </Pressable>
+
     </View>
   );
 }

@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
+import { MacroPills } from '../../components/MacroPills';
 import { Section } from '../../components/Section';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Input } from '../../components/Input';
@@ -240,13 +241,19 @@ export default function NutritionScreen() {
             <Card style={{ gap: Spacing.md }}>
               {targets ? (
                 <>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <ThemedText variant="title2" weight="700">
-                      {todayTotals.calories.toFixed(0)} kcal
-                    </ThemedText>
-                    <ThemedText variant="subhead" color="secondary">
-                      {t.nutrition.objective} : {targets.calories} kcal
-                    </ThemedText>
+                  <View style={{ gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                        <ThemedText variant="largeTitle">{todayTotals.calories.toFixed(0)}</ThemedText>
+                        <ThemedText variant="subhead" weight="700" color="secondary">
+                          kcal
+                        </ThemedText>
+                      </View>
+                      <ThemedText variant="footnote" color="secondary">
+                        {t.nutrition.objective} : {targets.calories} kcal
+                      </ThemedText>
+                    </View>
+                    <ProgressBar progress={todayTotals.calories / targets.calories} tintColor={colors.accent} height={14} />
                   </View>
 
                   <View style={{ gap: 6 }}>
@@ -296,13 +303,13 @@ export default function NutritionScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  paddingVertical: Spacing.md,
-                  borderRadius: 12,
+                  minHeight: 52,
+                  borderRadius: 14,
                   backgroundColor: colors.accent,
                 }}
               >
                 <Ionicons name="barcode-outline" size={20} color={colors.onAccent} />
-                <ThemedText variant="subhead" weight="600" style={{ color: colors.onAccent }}>
+                <ThemedText variant="subhead" weight="800" style={{ color: colors.onAccent }}>
                   {t.nutrition.scanOrSearchFood}
                 </ThemedText>
               </Pressable>
@@ -389,13 +396,14 @@ export default function NutritionScreen() {
                                 {entry.foodName} {entry.grams ? `· ${entry.grams}${entry.unit ?? 'g'}` : ''}
                               </ThemedText>
                               <ThemedText variant="caption" color="tertiary">
-                                P {entry.proteinG}g · G {entry.carbsG}g · L {entry.fatG}g
+                                {entry.proteinG * 4 + entry.carbsG * 4 + entry.fatG * 9 > 0
+                                  ? `${Math.round(entry.proteinG * 4 + entry.carbsG * 4 + entry.fatG * 9)} kcal`
+                                  : ''}
                               </ThemedText>
+                              <MacroPills protein={entry.proteinG} carbs={entry.carbsG} fat={entry.fatG} />
                             </>
                           ) : (
-                            <ThemedText variant="subhead" color="secondary">
-                              P {entry.proteinG}g · G {entry.carbsG}g · L {entry.fatG}g
-                            </ThemedText>
+                            <MacroPills protein={entry.proteinG} carbs={entry.carbsG} fat={entry.fatG} />
                           )}
                         </Pressable>
                         <IconButton

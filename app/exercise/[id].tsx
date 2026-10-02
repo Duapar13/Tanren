@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { LineChart } from 'react-native-gifted-charts';
@@ -23,7 +24,7 @@ const chartCommonProps = {
   hideAxesAndRules: true,
   dataPointsRadius: 2,
   areaChart: true,
-  startOpacity: 0.08,
+  startOpacity: 0.3,
   endOpacity: 0,
   xAxisColor: 'transparent',
   yAxisColor: 'transparent',
@@ -69,18 +70,30 @@ export default function ExerciseDetailScreen() {
         </View>
 
         {pr && (
-          <Card style={{ gap: Spacing.xs }}>
-            <ThemedText variant="headline">{t.exerciseDetail.records}</ThemedText>
-            <ThemedText color="secondary">
-              {t.exerciseDetail.maxWeight} {formatWeight(pr.maxWeightKg, weightUnit)} ({pr.maxWeightDate})
-            </ThemedText>
-            <ThemedText color="secondary">
-              {t.exerciseDetail.estimated1RM} {formatWeight(pr.bestEstimated1RM, weightUnit)} ({pr.bestEstimated1RMDate})
-            </ThemedText>
-            <ThemedText color="secondary">
-              {t.exerciseDetail.sessionVolume} {formatWeight(pr.maxSessionVolume, weightUnit, 0)} (
-              {pr.maxSessionVolumeDate})
-            </ThemedText>
+          <Card variant="accent" style={{ gap: Spacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Ionicons name="trophy" size={18} color={colors.accent} />
+              <ThemedText variant="headline">{t.exerciseDetail.records}</ThemedText>
+            </View>
+            {[
+              { label: t.exerciseDetail.maxWeight, value: formatWeight(pr.maxWeightKg, weightUnit), date: pr.maxWeightDate },
+              { label: t.exerciseDetail.estimated1RM, value: formatWeight(pr.bestEstimated1RM, weightUnit), date: pr.bestEstimated1RMDate },
+              { label: t.exerciseDetail.sessionVolume, value: formatWeight(pr.maxSessionVolume, weightUnit, 0), date: pr.maxSessionVolumeDate },
+            ].map((row) => (
+              <View key={row.label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subhead" weight="600">
+                    {row.label}
+                  </ThemedText>
+                  <ThemedText variant="caption" color="tertiary">
+                    {row.date}
+                  </ThemedText>
+                </View>
+                <ThemedText variant="title3" weight="800" color="accent">
+                  {row.value}
+                </ThemedText>
+              </View>
+            ))}
           </Card>
         )}
 
