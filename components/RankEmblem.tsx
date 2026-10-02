@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Image, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
@@ -10,12 +12,26 @@ interface Props {
   size?: number;
   /** Greyed-out silhouette for ranks not reached yet. */
   locked?: boolean;
+  /** Slow glow-pulse, for the player's current rank. */
+  pulse?: boolean;
 }
 
 /** The one place a rank is drawn — gradient disc, ring, soft coloured glow and the Ningyma
  * emblem on top — so the home card, rank hero, rank ladder and leaderboard all stay consistent. */
-export function RankEmblem({ rank, size = 56, locked = false }: Props) {
+export function RankEmblem({ rank, size = 56, locked = false, pulse = false }: Props) {
   const { colors, scheme } = useTheme();
+  const beat = useSharedValue(1);
+  useEffect(() => {
+    if (!pulse) return;
+    beat.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 1100, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+  }, [pulse, beat]);
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: beat.value }] }));
   const ringWidth = size >= 80 ? 3 : 2;
   const iconSize = Math.round(size * 0.5);
 
@@ -41,8 +57,8 @@ export function RankEmblem({ rank, size = 56, locked = false }: Props) {
 
   const color = locked ? colors.textTertiary : RANK_COLORS[rank];
   return (
-    <View
-      style={{
+    <Animated.View
+      style={[pulseStyle, {
         width: size,
         height: size,
         borderRadius: size / 2,
@@ -51,7 +67,7 @@ export function RankEmblem({ rank, size = 56, locked = false }: Props) {
         shadowRadius: size * 0.22,
         shadowOffset: { width: 0, height: 0 },
         opacity: locked ? 0.55 : 1,
-      }}
+      }]}
     >
       <LinearGradient
         colors={[color + '55', color + '12']}
@@ -68,6 +84,6 @@ export function RankEmblem({ rank, size = 56, locked = false }: Props) {
       >
         <Image source={RANK_ICON_IMAGES[rank]} style={{ width: iconSize, height: iconSize, tintColor: color }} />
       </LinearGradient>
-    </View>
+    </Animated.View>
   );
 }

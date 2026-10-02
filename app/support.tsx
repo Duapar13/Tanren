@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, View } from 'react-native';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
 import * as Sentry from '@sentry/react-native';
 import { ThemedText } from '../components/ThemedText';
@@ -7,6 +7,7 @@ import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { NinjaMascot } from '../components/NinjaMascot';
+import { GymaLoader } from '../components/GymaLoader';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../hooks/useTheme';
 import { Spacing } from '../constants/theme';
@@ -101,7 +102,7 @@ export default function SupportScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator style={{ marginTop: Spacing.xl }} />
+          <GymaLoader size={84} />
         ) : packages.length === 0 ? (
           <Card style={{ width: '100%', gap: Spacing.xs }}>
             <ThemedText color="secondary" style={{ textAlign: 'center' }}>

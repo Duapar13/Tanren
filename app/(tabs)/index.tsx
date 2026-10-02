@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,6 +93,7 @@ export default function DashboardScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
+          <Animated.View entering={FadeInDown.duration(420)}>
           <Card variant={quiet ? 'default' : 'accent'} style={{ gap: Spacing.lg, paddingVertical: Spacing.xl }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <View style={{ flex: 1, gap: Spacing.sm }}>
@@ -107,7 +109,7 @@ export default function DashboardScreen() {
               </View>
               <ThemedText variant="title1">{heroTitle}</ThemedText>
               </View>
-              <Gyma pose={gymaPose} reaction={gymaReaction} size={92} animated />
+              <Gyma pose={gymaPose} reaction={gymaReaction} size={92} animated interactive />
             </View>
 
             <View style={{ gap: 4 }}>
@@ -181,9 +183,10 @@ export default function DashboardScreen() {
               <Button title={t.dashboard.launch} onPress={() => openSession({ exerciseIds: suggestion.exerciseIds })} />
             )}
           </Card>
+          </Animated.View>
 
           {workoutTemplates.length > 0 && !hasDraft && !doneToday && (
-            <View style={{ gap: Spacing.sm }}>
+            <Animated.View entering={FadeInDown.delay(90).duration(420)} style={{ gap: Spacing.sm }}>
               <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {t.dashboard.chooseTemplate}
               </ThemedText>
@@ -219,12 +222,14 @@ export default function DashboardScreen() {
                 ))}
                 <View style={{ width: Spacing.lg - Spacing.sm }} />
               </ScrollView>
-            </View>
+            </Animated.View>
           )}
 
-          <Card>
-            <WeekStrip sessions={sessions} trainingDays={trainingDays} />
-          </Card>
+          <Animated.View entering={FadeInDown.delay(180).duration(420)}>
+            <Card>
+              <WeekStrip sessions={sessions} trainingDays={trainingDays} />
+            </Card>
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

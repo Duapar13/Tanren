@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +16,7 @@ import { openSession } from '../../lib/startSession';
 import { useData } from '../../context/DataContext';
 import { suggestSession } from '../../utils/sessionSuggestion';
 import { todayKey } from '../../utils/date';
+import { isTrainingDay } from '../../utils/program';
 
 // Standard iOS tab bar content height — useBottomTabBarHeight() only works from a screen
 // rendered inside the tab navigator, and the tour needs to live one level up (as a sibling of
@@ -24,6 +27,21 @@ const TAB_BAR_CONTENT_HEIGHT = 49;
 function CenterButton() {
   const { colors, scheme } = useTheme();
   const { sessions, sets, exercises } = useData();
+  const { user } = useAuth();
+  // Gentle call-to-action ring on training days until today's workout is logged.
+  const shouldPulse = isTrainingDay(new Date(), user?.trainingDays ?? []) && !sessions.some((s) => s.date === todayKey());
+  const ring = useSharedValue(0);
+  useEffect(() => {
+    if (!shouldPulse) {
+      ring.value = 0;
+      return;
+    }
+    ring.value = withRepeat(withTiming(1, { duration: 1900, easing: Easing.out(Easing.quad) }), -1);
+  }, [shouldPulse, ring]);
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: shouldPulse ? 0.55 * (1 - ring.value) : 0,
+    transform: [{ scale: 1 + ring.value * 0.55 }],
+  }));
   const startSuggested = () => {
     // Same as the home card: pre-load the suggested workout, unless one is already done today
     // (an unfinished draft is restored by the session screen itself).
@@ -32,6 +50,20 @@ function CenterButton() {
   };
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            width: 58,
+            height: 58,
+            marginTop: -22,
+            borderRadius: 29,
+            backgroundColor: colors.accent,
+          },
+          ringStyle,
+        ]}
+      />
       <Pressable
         onPress={startSuggested}
         accessibilityRole="button"

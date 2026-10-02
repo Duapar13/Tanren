@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
+import { GymaLoader } from '../components/GymaLoader';
 import { MacroPills } from '../components/MacroPills';
 import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
@@ -178,7 +179,7 @@ export default function FoodSearchScreen() {
         {mode === 'scan' ? (
           <View style={{ flex: 1, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.lg }}>
             {!permission ? (
-              <ActivityIndicator />
+              <GymaLoader />
             ) : !permission.granted ? (
               <Card style={{ gap: Spacing.md, alignItems: 'center' }}>
                 <ThemedText color="secondary" style={{ textAlign: 'center' }}>
@@ -200,7 +201,7 @@ export default function FoodSearchScreen() {
                       { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.overlay },
                     ]}
                   >
-                    <ActivityIndicator color="#FFFFFF" />
+                    <GymaLoader size={64} />
                   </View>
                 )}
               </View>
@@ -243,7 +244,7 @@ export default function FoodSearchScreen() {
                 <Ionicons name="search" size={20} color={colors.onAccent} />
               </Pressable>
             </View>
-            {searching && <ActivityIndicator />}
+            {searching && <GymaLoader />}
             {error && (
               <ThemedText color="secondary" style={{ textAlign: 'center' }}>
                 {error}

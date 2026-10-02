@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
 import { Spacing } from '../constants/theme';
 
@@ -9,10 +10,10 @@ interface Props {
   children: React.ReactNode;
 }
 
-/** Titled block used to group cards on every scrolling screen. */
+/** Titled block used to group cards on every scrolling screen. Slides up gently when it appears. */
 export function Section({ title, trailing, children }: Props) {
   return (
-    <View style={{ gap: Spacing.sm }}>
+    <Animated.View entering={FadeInDown.duration(380)} style={{ gap: Spacing.sm }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 }}>
         <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
           {title}
@@ -20,6 +21,6 @@ export function Section({ title, trailing, children }: Props) {
         {trailing}
       </View>
       {children}
-    </View>
+    </Animated.View>
   );
 }

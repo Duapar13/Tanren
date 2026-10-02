@@ -15,6 +15,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { Spacing, Radius } from '../constants/theme';
 import { apiFetch, ApiError, API_URL } from '../lib/api';
+import { showToast } from '../lib/toast';
 import { RANK_COLORS, RankName } from '../utils/ranking';
 
 interface Friend {
@@ -135,7 +136,7 @@ export default function FriendsScreen() {
       if (res.status === 'accepted') {
         Alert.alert(t.friends.friendsListTitle);
       } else {
-        Alert.alert(t.friends.requestSent);
+        showToast(t.friends.requestSent, 'friendly');
       }
     } catch (err) {
       Alert.alert(friendErrorMessage(err));

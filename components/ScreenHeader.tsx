@@ -26,7 +26,7 @@ export function ScreenHeader({ right, mascot, title, subtitle }: Props) {
         )}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           <SyncPill />
-          {right ?? (mascot && <NinjaMascot size={title ? 46 : 52} reaction={mascot} />)}
+          {right ?? (mascot && <NinjaMascot size={title ? 46 : 52} reaction={mascot} interactive />)}
         </View>
       </View>
       {subtitle ? (

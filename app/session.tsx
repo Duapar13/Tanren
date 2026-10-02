@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
@@ -30,6 +31,8 @@ import { computeExercisePRs } from '../utils/prStats';
 import { clearSessionDraft, DraftSet, loadSessionDraft, saveSessionDraft } from '../utils/sessionDraft';
 import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
 import { haptics } from '../lib/haptics';
+import { showToast } from '../lib/toast';
+import { NinjaMascot } from '../components/NinjaMascot';
 
 const parseNum = (v: string): number => {
   const n = parseFloat(v.replace(',', '.'));
@@ -380,7 +383,7 @@ export default function SessionScreen() {
     await addWorkoutTemplate({ name: templateName.trim(), exerciseIds: activeIds });
     setTemplateName('');
     setTemplatePopup(false);
-    Alert.alert(t.workoutTemplates.savedConfirmation);
+    showToast(t.workoutTemplates.savedConfirmation, 'happy');
   };
 
   const guide = selected ? findExerciseGuide(selected.name) : null;
@@ -570,9 +573,18 @@ export default function SessionScreen() {
             ) : (
               <>
                 <View style={{ gap: 6 }}>
-                  <ThemedText variant="title1" numberOfLines={2}>
-                    {selected.name}
-                  </ThemedText>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                    <ThemedText variant="title1" numberOfLines={2} style={{ flex: 1 }}>
+                      {selected.name}
+                    </ThemedText>
+                    <NinjaMascot
+                      size={64}
+                      reaction={celebration ? 'excited' : restTimerEndAt ? 'sleepy' : 'focused'}
+                      animated
+                      interactive
+                      hopKey={totalSets}
+                    />
+                  </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm }}>
                     {personalBest > 0 && (
                       <View
@@ -621,7 +633,8 @@ export default function SessionScreen() {
                 {selectedSets.length > 0 && (
                   <Card style={{ padding: Spacing.sm, gap: 4 }}>
                     {selectedSets.map((s, i) => (
-                      <SwipeableSetRow key={i} onDelete={() => deleteSet(i)} onEdit={() => setEditingIndex(i)}>
+                      <Animated.View key={i} entering={FadeInDown.duration(260)} exiting={FadeOutLeft.duration(180)} layout={LinearTransition}>
+                      <SwipeableSetRow onDelete={() => deleteSet(i)} onEdit={() => setEditingIndex(i)}>
                         <Pressable
                           onPress={() => setEditingIndex(editingIndex === i ? null : i)}
                           style={{
@@ -654,6 +667,7 @@ export default function SessionScreen() {
                           {editingIndex === i && <Ionicons name="pencil" size={16} color={colors.accent} />}
                         </Pressable>
                       </SwipeableSetRow>
+                      </Animated.View>
                     ))}
                   </Card>
                 )}

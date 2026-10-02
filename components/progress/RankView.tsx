@@ -127,7 +127,7 @@ export function RankView() {
               backgroundColor: rankColor + '1A',
             }}
           />
-          <RankEmblem rank={state.rank} size={120} />
+          <RankEmblem rank={state.rank} size={120} pulse />
           <ThemedText variant="title1" style={{ marginTop: Spacing.sm, color: rankColor }}>
             {state.rank} {state.division}
           </ThemedText>

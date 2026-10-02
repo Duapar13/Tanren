@@ -15,6 +15,7 @@ import { DataProvider } from '../context/DataContext';
 import { AuthProvider } from '../context/AuthContext';
 import { SyncEngine } from '../components/SyncEngine';
 import { AppShell } from '../components/AppShell';
+import { GymaToastHost } from '../components/GymaToastHost';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useTheme } from '../hooks/useTheme';
 import { configurePurchases } from '../lib/purchases';
@@ -78,6 +79,7 @@ export default function RootLayout() {
             <DataProvider>
               <SyncEngine />
               <AppShell />
+              <GymaToastHost />
             </DataProvider>
           </SQLiteProvider>
         </AuthProvider>
