@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
+import { Gyma } from './mascot/Gyma';
 import { Button } from './Button';
 import { RankEmblem } from './RankEmblem';
 import type { RankName } from '../utils/ranking';
@@ -71,6 +72,9 @@ export function PlacementReveal({ visible, rank, rankLabel, rankColor, bonusPoin
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={revealed ? onDone : undefined}>
       <View style={{ flex: 1, backgroundColor: '#000000F2', alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
+        <View style={{ marginBottom: Spacing.md }}>
+          <Gyma pose={revealed ? 'victory' : 'idle'} reaction={revealed ? 'happy' : 'excited'} size={revealed ? 96 : 84} animated />
+        </View>
         <ThemedText variant="title3" weight="700" color="secondary" style={{ marginBottom: Spacing.xl, textAlign: 'center' }}>
           {revealed ? t.rang.placementRevealedTitle : t.rang.placementRevealTitle}
         </ThemedText>

@@ -9,6 +9,7 @@ import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { WeekStrip } from '../../components/WeekStrip';
+import { Gyma } from '../../components/mascot/Gyma';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
@@ -75,6 +76,10 @@ export default function DashboardScreen() {
     heroIcon = 'moon';
   }
 
+  // Gyma mirrors the state of the day: ready, resting, mid-workout, or done.
+  const gymaPose = hasDraft ? 'lift' : doneToday ? 'victory' : isRestToday ? 'rest' : 'idle';
+  const gymaReaction = hasDraft ? 'focused' : doneToday ? 'happy' : isRestToday ? 'sleepy' : 'excited';
+
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -89,6 +94,8 @@ export default function DashboardScreen() {
         >
           <Card variant={quiet ? 'default' : 'accent'} style={{ gap: Spacing.lg, paddingVertical: Spacing.xl }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <View style={{ flex: 1, gap: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <Ionicons
                 name={heroIcon}
                 size={18}
@@ -97,10 +104,13 @@ export default function DashboardScreen() {
               <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {heroEyebrow}
               </ThemedText>
+              </View>
+              <ThemedText variant="title1">{heroTitle}</ThemedText>
+              </View>
+              <Gyma pose={gymaPose} reaction={gymaReaction} size={92} animated />
             </View>
 
             <View style={{ gap: 4 }}>
-              <ThemedText variant="largeTitle">{heroTitle}</ThemedText>
               {!hasDraft && !doneToday && !isRestToday && suggestion.basedOnDate && (
                 <ThemedText variant="subhead" color="secondary">
                   {t.dashboard.basedOn(formatLongDate(suggestion.basedOnDate, LOCALE_MAP[lang]))}

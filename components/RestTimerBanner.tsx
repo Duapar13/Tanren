@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { ThemedText } from './ThemedText';
+import { NinjaMascot } from './NinjaMascot';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
@@ -61,9 +62,12 @@ export function RestTimerBanner({ endAt, mode, onDone }: Props) {
         paddingHorizontal: Spacing.lg,
       }}
     >
-      <ThemedText variant="subhead" weight="600" style={{ color: colors.onAccent }}>
-        {isCountdown ? t.restTimer.label : t.restTimer.chronoLabel}
-      </ThemedText>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+        <NinjaMascot size={44} reaction={isCountdown && elapsed <= 5 ? 'excited' : 'sleepy'} animated={false} />
+        <ThemedText variant="subhead" weight="600" style={{ color: colors.onAccent }}>
+          {isCountdown ? t.restTimer.label : t.restTimer.chronoLabel}
+        </ThemedText>
+      </View>
       <ThemedText variant="title2" weight="700" style={{ color: colors.onAccent }}>
         {mm}:{String(ss).padStart(2, '0')}
       </ThemedText>

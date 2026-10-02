@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { NingymaWordmark } from './NingymaWordmark';
 import { NinjaMascot } from './NinjaMascot';
+import { Gyma } from './mascot/Gyma';
 import { useTheme } from '../hooks/useTheme';
 import { GOLD_ACCENT } from '../constants/theme';
 
@@ -87,7 +88,7 @@ export function SplashView({ style }: { style?: StyleProp<ViewStyle> }) {
       ]}
     >
       <Animated.View style={ninjaStyle}>
-        <NinjaMascot size={72} />
+        <Gyma pose="idle" size={96} animated />
       </Animated.View>
 
       <View style={{ alignItems: 'center', justifyContent: 'center' }}>

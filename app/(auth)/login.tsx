@@ -5,7 +5,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { OAuthButtons } from '../../components/OAuthButtons';
 import { NingymaWordmark } from '../../components/NingymaWordmark';
-import { NinjaMascot } from '../../components/NinjaMascot';
+import { Gyma } from '../../components/mascot/Gyma';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Spacing } from '../../constants/theme';
@@ -23,7 +23,7 @@ export default function LoginScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ flex: 1, justifyContent: 'space-between', padding: Spacing.lg, paddingBottom: Spacing.xl }}>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md }}>
-            <NinjaMascot size={132} reaction="proud" />
+            <Gyma pose="idle" reaction="happy" size={140} animated entrance />
             <NingymaWordmark size={60} />
             <ThemedText variant="body" color="secondary" style={{ textAlign: 'center', maxWidth: 300 }}>
               {t.login.subtitle}

@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
+import { Gyma } from '../components/mascot/Gyma';
 import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -95,28 +96,12 @@ export default function SessionRecapScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ alignItems: 'center', gap: Spacing.md, paddingTop: Spacing.xl }}>
-            <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 200, height: 220, alignItems: 'center', justifyContent: 'center' }}>
               {Array.from({ length: DOT_COUNT }, (_, i) => (
                 <BurstDot key={i} index={i} progress={burst} color={confettiColors[i % confettiColors.length]} />
               ))}
-              <Animated.View
-                style={[
-                  {
-                    width: 104,
-                    height: 104,
-                    borderRadius: 52,
-                    backgroundColor: colors.accent,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    shadowColor: colors.accent,
-                    shadowOpacity: 0.55,
-                    shadowRadius: 24,
-                    shadowOffset: { width: 0, height: 6 },
-                  },
-                  trophyStyle,
-                ]}
-              >
-                <Ionicons name="trophy" size={52} color={colors.onAccent} />
+              <Animated.View style={trophyStyle}>
+                <Gyma pose="victory" size={150} animated />
               </Animated.View>
             </View>
             <ThemedText variant="largeTitle" style={{ textAlign: 'center' }}>

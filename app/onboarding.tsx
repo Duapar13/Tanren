@@ -6,6 +6,7 @@ import { ThemedView } from '../components/ThemedView';
 import { Card } from '../components/Card';
 import { ToggleRow } from '../components/SettingRow';
 import { NinjaMascot } from '../components/NinjaMascot';
+import { Gyma } from '../components/mascot/Gyma';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -124,7 +125,7 @@ export default function OnboardingScreen() {
             contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.xl, paddingBottom: Spacing.xxl }}
           >
               <View style={{ alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.md }}>
-                <NinjaMascot size={96} reaction="friendly" />
+                <Gyma pose="idle" reaction="friendly" size={104} animated entrance />
                 <NingymaWordmark size={48} />
                 <ThemedText variant="body" color="secondary" style={{ textAlign: 'center', maxWidth: 320 }}>
                   {t.onboarding.subtitle}

@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../ThemedText';
+import { NinjaMascot } from '../NinjaMascot';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Radius, Spacing } from '../../constants/theme';
@@ -72,20 +73,25 @@ export function PRCelebration({ record, onDone }: Props) {
           bannerStyle,
         ]}
       >
-        <Animated.View
-          style={[
-            {
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              backgroundColor: colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-            },
-            trophyStyle,
-          ]}
-        >
-          <Ionicons name="trophy" size={26} color={colors.onAccent} />
+        <Animated.View style={trophyStyle}>
+          <View>
+            <NinjaMascot size={64} reaction="excited" animated={false} />
+            <View
+              style={{
+                position: 'absolute',
+                right: -4,
+                bottom: -2,
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="trophy" size={13} color={colors.onAccent} />
+            </View>
+          </View>
         </Animated.View>
         <View style={{ flex: 1 }}>
           <ThemedText variant="headline" weight="800" color="accent">
