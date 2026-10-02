@@ -326,6 +326,42 @@ function computeCarryoverEvent(params, seasonInfo, effectiveEnd) {
   return { date: triggerDate, points: bonus, source: 'carryover' };
 }
 
+/**
+ * Mirrors utils/ranking.ts's computePlacementStatus exactly (same gating as
+ * computeCarryoverEvent above, just exposed before the bonus itself exists) — this is what lets
+ * routes/leaderboard.js store season_in_placement and mask a placing player's rank/points on the
+ * global leaderboard the same way the client already hides its own placement card.
+ */
+export function computePlacementStatus(params, seasonInfo) {
+  const notApplicable = {
+    applicable: false,
+    inPlacement: false,
+    sessionsCompleted: SEASON_CARRYOVER_MIN_SESSIONS,
+    sessionsNeeded: SEASON_CARRYOVER_MIN_SESSIONS,
+  };
+  if (seasonInfo.seasonNumber <= 1) return notApplicable;
+
+  const previousSeasonInfo = seasonInfoForNumber(seasonInfo.seasonNumber - 1);
+  const today = todayKey();
+  const previousEffectiveEnd = previousSeasonInfo.endDate < today ? previousSeasonInfo.endDate : today;
+  const peakRank = peakRankForSeason(params, previousSeasonInfo, previousEffectiveEnd);
+  const peakIndex = RANKS.indexOf(peakRank);
+  if (peakIndex <= 0) return notApplicable;
+
+  const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
+  const sessionsInSeason = params.sessions.filter(
+    (s) => s.date >= seasonInfo.startDate && s.date <= effectiveEnd
+  );
+  const sessionsCompleted = Math.min(sessionsInSeason.length, SEASON_CARRYOVER_MIN_SESSIONS);
+
+  return {
+    applicable: true,
+    inPlacement: sessionsInSeason.length < SEASON_CARRYOVER_MIN_SESSIONS,
+    sessionsCompleted,
+    sessionsNeeded: SEASON_CARRYOVER_MIN_SESSIONS,
+  };
+}
+
 const PERFORMANCE_POINTS_PER_EXERCISE = 5;
 const PERFORMANCE_POINTS_CAP = 30;
 

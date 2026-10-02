@@ -61,9 +61,10 @@ interface LeaderboardEntry {
   userId: number;
   username: string;
   displayName: string | null;
-  points: number;
-  rank: string;
-  division: string;
+  points: number | null;
+  rank: string | null;
+  division: string | null;
+  inPlacement: boolean;
 }
 
 interface MyLeaderboardEntry extends LeaderboardEntry {
@@ -497,11 +498,11 @@ export default function RangScreen() {
                           {entry.displayName ?? entry.username}
                         </ThemedText>
                         <ThemedText variant="caption" color="tertiary">
-                          {entry.rank} {entry.division}
+                          {entry.inPlacement ? t.rang.placementTitle : `${entry.rank} ${entry.division}`}
                         </ThemedText>
                       </View>
                       <ThemedText variant="subhead" weight="700">
-                        {entry.points} pts
+                        {entry.inPlacement ? '—' : `${entry.points} pts`}
                       </ThemedText>
                     </View>
                   );
@@ -530,11 +531,11 @@ export default function RangScreen() {
                     {myEntry.displayName ?? myEntry.username}
                   </ThemedText>
                   <ThemedText variant="caption" color="tertiary">
-                    {myEntry.rank} {myEntry.division}
+                    {myEntry.inPlacement ? t.rang.placementTitle : `${myEntry.rank} ${myEntry.division}`}
                   </ThemedText>
                 </View>
                 <ThemedText variant="subhead" weight="700">
-                  {myEntry.points} pts
+                  {myEntry.inPlacement ? '—' : `${myEntry.points} pts`}
                 </ThemedText>
               </View>
             )}

@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { computeSeasonRanking, currentSeasonInfo, seasonInfoForNumber, estimate1RM } from '../utils/ranking.js';
+import {
+  computePlacementStatus,
+  computeSeasonRanking,
+  currentSeasonInfo,
+  seasonInfoForNumber,
+  estimate1RM,
+} from '../utils/ranking.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -93,30 +99,50 @@ router.post('/report', async (req, res) => {
   );
   const globalExerciseAverages = await fetchGlobalExerciseAverages();
 
-  const ranking = computeSeasonRanking(
-    {
-      sessions,
-      sets,
-      nutritionEntries,
-      measurementEntries,
-      bodyWeightEntries,
-      measurementsEnabled: !!user.measurements_enabled,
-      trainingDays: user.training_days ? user.training_days.split(',').filter(Boolean).map(Number) : [],
-      goal: user.goal,
-      accountCreatedAt: String(user.created_at).slice(0, 10),
-      globalExerciseAverages,
-    },
-    seasonInfo
-  );
+  const rankingParams = {
+    sessions,
+    sets,
+    nutritionEntries,
+    measurementEntries,
+    bodyWeightEntries,
+    measurementsEnabled: !!user.measurements_enabled,
+    trainingDays: user.training_days ? user.training_days.split(',').filter(Boolean).map(Number) : [],
+    goal: user.goal,
+    accountCreatedAt: String(user.created_at).slice(0, 10),
+    globalExerciseAverages,
+  };
+  const ranking = computeSeasonRanking(rankingParams, seasonInfo);
+  const placement = computePlacementStatus(rankingParams, seasonInfo);
 
   await pool.query(
-    'UPDATE users SET season_number = ?, season_points = ?, season_rank = ?, season_division = ? WHERE id = ?',
-    [seasonInfo.seasonNumber, ranking.totalPoints, ranking.rank, ranking.division, req.userId]
+    'UPDATE users SET season_number = ?, season_points = ?, season_rank = ?, season_division = ?, season_in_placement = ? WHERE id = ?',
+    [
+      seasonInfo.seasonNumber,
+      ranking.totalPoints,
+      ranking.rank,
+      ranking.division,
+      placement.applicable && placement.inPlacement ? 1 : 0,
+      req.userId,
+    ]
   );
   res.status(204).end();
 });
 
+// While a player is mid-placement (see computePlacementStatus), their real rank/division/points
+// are hidden from everyone else too — not just their own device's UI — otherwise the global
+// leaderboard would leak exactly the number the app is trying not to show them yet.
 function publicEntry(r) {
+  if (r.season_in_placement) {
+    return {
+      userId: r.id,
+      username: r.username,
+      displayName: r.display_name,
+      points: null,
+      rank: null,
+      division: null,
+      inPlacement: true,
+    };
+  }
   return {
     userId: r.id,
     username: r.username,
@@ -124,6 +150,7 @@ function publicEntry(r) {
     points: r.season_points,
     rank: r.season_rank,
     division: r.season_division,
+    inPlacement: false,
   };
 }
 
@@ -132,7 +159,7 @@ router.get('/', async (req, res) => {
   if (!Number.isInteger(seasonNumber)) return res.status(400).json({ error: 'invalid_season' });
 
   const [rows] = await pool.query(
-    `SELECT id, username, display_name, season_points, season_rank, season_division
+    `SELECT id, username, display_name, season_points, season_rank, season_division, season_in_placement
      FROM users
      WHERE season_number = ?
      ORDER BY season_points DESC
@@ -144,7 +171,7 @@ router.get('/', async (req, res) => {
   // client still has something to pin at the bottom instead of the caller wondering where
   // they rank at all.
   const [[me]] = await pool.query(
-    `SELECT u.id, u.username, u.display_name, u.season_points, u.season_rank, u.season_division,
+    `SELECT u.id, u.username, u.display_name, u.season_points, u.season_rank, u.season_division, u.season_in_placement,
        (SELECT COUNT(*) + 1 FROM users u2 WHERE u2.season_number = ? AND u2.season_points > u.season_points) AS position
      FROM users u
      WHERE u.id = ? AND u.season_number = ?`,
