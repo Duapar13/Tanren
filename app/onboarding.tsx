@@ -222,7 +222,7 @@ export default function OnboardingScreen() {
                             backgroundColor: selected ? colors.accent : colors.fill,
                           }}
                         >
-                          <ThemedText variant="subhead" weight="600" style={{ color: selected ? '#FFFFFF' : colors.text }}>
+                          <ThemedText variant="subhead" weight="600" style={{ color: selected ? colors.onAccent : colors.text }}>
                             {label}
                           </ThemedText>
                         </Pressable>

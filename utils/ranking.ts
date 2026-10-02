@@ -77,8 +77,7 @@ export const RANK_COLORS: Record<RankName, string> = {
 };
 
 // One icon per rank, escalating from a humble outline shield through gem-themed icons to a
-// cosmic/mythic finish — used both for the rank hero/list display and the "reach this rank"
-// badges (utils/badges.ts).
+// cosmic/mythic finish — a lightweight Ionicons fallback to the bespoke RANK_ICON_IMAGES below.
 export const RANK_ICONS: Record<RankName, keyof typeof Ionicons.glyphMap> = {
   Fer: 'shield-outline',
   Bronze: 'shield-half',

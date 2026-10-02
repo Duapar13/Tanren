@@ -78,7 +78,7 @@ export default function WorkoutTemplatesScreen() {
                     <ThemedText
                       variant="subhead"
                       weight="600"
-                      style={{ color: selected ? '#FFFFFF' : colors.text }}
+                      style={{ color: selected ? colors.onAccent : colors.text }}
                     >
                       {ex.name}
                     </ThemedText>

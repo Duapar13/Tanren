@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../hooks/useTheme';
 import { Radius } from '../constants/theme';
@@ -24,16 +24,18 @@ export function ChipSelector({ options, value, onChange }: Props) {
             key={opt}
             onPress={() => onChange(opt)}
             style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
+              paddingHorizontal: 16,
+              paddingVertical: 9,
               borderRadius: Radius.pill,
               backgroundColor: selected ? colors.accent : colors.fill,
+              borderWidth: 1,
+              borderColor: selected ? colors.accent : colors.border,
             }}
           >
             <ThemedText
               variant="subhead"
               weight="600"
-              style={{ color: selected ? '#FFFFFF' : colors.text }}
+              style={{ color: selected ? colors.onAccent : colors.text }}
             >
               {opt}
             </ThemedText>

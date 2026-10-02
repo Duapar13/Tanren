@@ -61,14 +61,14 @@ export function RestTimerBanner({ endAt, mode, onDone }: Props) {
         paddingHorizontal: Spacing.lg,
       }}
     >
-      <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+      <ThemedText variant="subhead" weight="600" style={{ color: colors.onAccent }}>
         {isCountdown ? t.restTimer.label : t.restTimer.chronoLabel}
       </ThemedText>
-      <ThemedText variant="title2" weight="700" style={{ color: '#FFFFFF' }}>
+      <ThemedText variant="title2" weight="700" style={{ color: colors.onAccent }}>
         {mm}:{String(ss).padStart(2, '0')}
       </ThemedText>
       <View>
-        <ThemedText variant="caption" style={{ color: '#FFFFFF' }}>
+        <ThemedText variant="caption" style={{ color: colors.onAccent }}>
           {isCountdown ? t.restTimer.tapToSkip : t.restTimer.tapToStop}
         </ThemedText>
       </View>

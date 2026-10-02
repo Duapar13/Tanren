@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Image, Keyboard, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Image, Keyboard, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,6 +9,8 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
+import { Section } from '../../components/Section';
+import { NavRow, ToggleRow } from '../../components/SettingRow';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { IconButton } from '../../components/IconButton';
@@ -17,12 +19,13 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
-import { Spacing } from '../../constants/theme';
+import { Radius, Spacing } from '../../constants/theme';
 import { NutritionGoal } from '../../types';
 import { API_URL } from '../../lib/api';
 import { authErrorMessage } from '../../lib/authErrors';
 import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
 import { cmToDisplay, displayToCm } from '../../utils/units';
+import { setPreference, usePreference, type ThemeMode } from '../../lib/preferences';
 
 const REST_DURATIONS = [60, 90, 120, 180];
 
@@ -41,6 +44,13 @@ export default function ProfilScreen() {
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const themeMode = usePreference('themeMode');
+  const showLeaderboard = usePreference('showLeaderboard');
+  const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
+    { label: t.profil.themeSystem, value: 'system' },
+    { label: t.profil.themeLight, value: 'light' },
+    { label: t.profil.themeDark, value: 'dark' },
+  ];
 
   const WEIGHT_UNIT_OPTIONS: { label: string; value: 'kg' | 'lbs' }[] = [
     { label: 'kg', value: 'kg' },
@@ -191,18 +201,17 @@ export default function ProfilScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader mascot="friendly" />
+        <ScreenHeader title={t.tabs.profile} mascot="friendly" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,
-            gap: Spacing.lg,
-            paddingBottom: Spacing.xxl,
+            gap: Spacing.xl,
+            paddingBottom: Spacing.xxl * 2,
           }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.account}
-            </ThemedText>
+          <Section title={t.profil.account}>
             <Card style={{ gap: Spacing.md }}>
               <Pressable
                 onPress={() => (editingAccount ? setEditingAccount(false) : startEditAccount())}
@@ -212,23 +221,23 @@ export default function ProfilScreen() {
                   {user?.avatarUrl ? (
                     <Image
                       source={{ uri: `${API_URL}${user.avatarUrl}` }}
-                      style={{ width: 56, height: 56, borderRadius: 28, opacity: uploadingAvatar ? 0.5 : 1 }}
+                      style={{ width: 64, height: 64, borderRadius: 32, opacity: uploadingAvatar ? 0.5 : 1 }}
                     />
                   ) : (
                     <View
                       style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 28,
-                        backgroundColor: colors.fill,
-                        borderWidth: 1,
-                        borderColor: colors.border,
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        backgroundColor: colors.accentSoft,
+                        borderWidth: 2,
+                        borderColor: colors.accent,
                         alignItems: 'center',
                         justifyContent: 'center',
                         opacity: uploadingAvatar ? 0.5 : 1,
                       }}
                     >
-                      <ThemedText variant="title2" weight="700" color="secondary">
+                      <ThemedText variant="title2" weight="800" color="accent">
                         {(user?.displayName ?? user?.username ?? '?').charAt(0).toUpperCase()}
                       </ThemedText>
                     </View>
@@ -238,9 +247,9 @@ export default function ProfilScreen() {
                       position: 'absolute',
                       bottom: -2,
                       right: -2,
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
                       backgroundColor: colors.accent,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -248,11 +257,11 @@ export default function ProfilScreen() {
                       borderColor: colors.card,
                     }}
                   >
-                    <Ionicons name="camera" size={12} color="#FFFFFF" />
+                    <Ionicons name="camera" size={12} color={colors.onAccent} />
                   </View>
                 </Pressable>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <ThemedText variant="subhead" weight="600" numberOfLines={1}>
+                  <ThemedText variant="headline" numberOfLines={1}>
                     {user?.displayName ?? user?.username}
                   </ThemedText>
                   <ThemedText variant="caption" color="tertiary" numberOfLines={1} ellipsizeMode="tail">
@@ -268,14 +277,14 @@ export default function ProfilScreen() {
 
               {editingAccount ? (
                 <View style={{ gap: Spacing.sm }}>
-                  <View>
-                    <ThemedText variant="caption" color="tertiary">
+                  <View style={{ gap: 4 }}>
+                    <ThemedText variant="caption" weight="600" color="secondary">
                       {t.profil.username}
                     </ThemedText>
                     <Input value={editUsername} onChangeText={setEditUsername} autoCapitalize="none" autoCorrect={false} />
                   </View>
-                  <View>
-                    <ThemedText variant="caption" color="tertiary">
+                  <View style={{ gap: 4 }}>
+                    <ThemedText variant="caption" weight="600" color="secondary">
                       {t.profil.email}
                     </ThemedText>
                     <Input
@@ -305,15 +314,29 @@ export default function ProfilScreen() {
                 <Button title={t.profil.logout} variant="destructive" onPress={handleLogout} />
               )}
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.bodyAndGoal}
-            </ThemedText>
-            <Card style={{ gap: Spacing.md }}>
-              <View>
-                <ThemedText variant="caption" color="tertiary">
+          <Section title={t.profil.appearance}>
+            <Card style={{ gap: Spacing.lg }}>
+              <View style={{ gap: 8 }}>
+                <ThemedText variant="subhead" weight="600">
+                  {t.profil.theme}
+                </ThemedText>
+                <SegmentedControl options={THEME_OPTIONS} value={themeMode} onChange={(m) => setPreference('themeMode', m)} />
+              </View>
+              <ToggleRow
+                label={t.profil.showLeaderboard}
+                hint={t.profil.showLeaderboardHint}
+                value={showLeaderboard}
+                onValueChange={(v) => setPreference('showLeaderboard', v)}
+              />
+            </Card>
+          </Section>
+
+          <Section title={t.profil.bodyAndGoal}>
+            <Card style={{ gap: Spacing.lg }}>
+              <View style={{ gap: 4 }}>
+                <ThemedText variant="caption" weight="600" color="secondary">
                   {t.profil.height} ({lengthUnit})
                 </ThemedText>
                 <Input
@@ -326,8 +349,8 @@ export default function ProfilScreen() {
                   placeholder={lengthUnit === 'cm' ? 'ex. 178' : 'ex. 70'}
                 />
               </View>
-              <View>
-                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+              <View style={{ gap: 8 }}>
+                <ThemedText variant="caption" weight="600" color="secondary">
                   {t.profil.goal}
                 </ThemedText>
                 <SegmentedControl
@@ -337,15 +360,12 @@ export default function ProfilScreen() {
                 />
               </View>
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.units}
-            </ThemedText>
-            <Card style={{ gap: Spacing.md }}>
-              <View>
-                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+          <Section title={t.profil.units}>
+            <Card style={{ gap: Spacing.lg }}>
+              <View style={{ gap: 8 }}>
+                <ThemedText variant="caption" weight="600" color="secondary">
                   {t.profil.weight}
                 </ThemedText>
                 <SegmentedControl
@@ -354,8 +374,8 @@ export default function ProfilScreen() {
                   onChange={(weightUnit) => updateProfile({ weightUnit })}
                 />
               </View>
-              <View>
-                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
+              <View style={{ gap: 8 }}>
+                <ThemedText variant="caption" weight="600" color="secondary">
                   {t.profil.lengthUnits}
                 </ThemedText>
                 <SegmentedControl
@@ -365,66 +385,53 @@ export default function ProfilScreen() {
                 />
               </View>
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.program}
-            </ThemedText>
+          <Section title={t.profil.program}>
             <Card style={{ gap: Spacing.md }}>
-              <View>
-                <ThemedText variant="caption" color="tertiary" style={{ marginBottom: 6 }}>
-                  {t.profil.trainingDays}
-                </ThemedText>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {WEEKDAYS.map(({ label, dow }) => {
-                    const selected = (user?.trainingDays ?? []).includes(dow);
-                    return (
-                      <Pressable
-                        key={dow}
-                        onPress={() => toggleTrainingDay(dow)}
-                        style={{
-                          flex: 1,
-                          aspectRatio: 1,
-                          borderRadius: 999,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: selected ? colors.accent : colors.fill,
-                        }}
+              <ThemedText variant="caption" weight="600" color="secondary">
+                {t.profil.trainingDays}
+              </ThemedText>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                {WEEKDAYS.map(({ label, dow }) => {
+                  const selected = (user?.trainingDays ?? []).includes(dow);
+                  return (
+                    <Pressable
+                      key={dow}
+                      onPress={() => toggleTrainingDay(dow)}
+                      style={{
+                        flex: 1,
+                        aspectRatio: 1,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: selected ? colors.accent : colors.fill,
+                        borderWidth: 1,
+                        borderColor: selected ? colors.accent : colors.border,
+                      }}
+                    >
+                      <ThemedText
+                        variant="subhead"
+                        weight="700"
+                        style={{ color: selected ? colors.onAccent : colors.textSecondary }}
                       >
-                        <ThemedText
-                          variant="subhead"
-                          weight="600"
-                          style={{ color: selected ? '#FFFFFF' : colors.text }}
-                        >
-                          {label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                        {label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
               </View>
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.session}
-            </ThemedText>
-            <Card style={{ gap: Spacing.md }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">{t.profil.restTimer}</ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
-                    {t.profil.restTimerHint}
-                  </ThemedText>
-                </View>
-                <Switch
-                  value={user?.restTimerEnabled ?? false}
-                  onValueChange={(v) => updateProfile({ restTimerEnabled: v })}
-                  trackColor={{ true: colors.accent }}
-                />
-              </View>
+          <Section title={t.profil.session}>
+            <Card style={{ gap: Spacing.lg }}>
+              <ToggleRow
+                label={t.profil.restTimer}
+                hint={t.profil.restTimerHint}
+                value={user?.restTimerEnabled ?? false}
+                onValueChange={(v) => updateProfile({ restTimerEnabled: v })}
+              />
 
               {user?.restTimerEnabled && (
                 <SegmentedControl
@@ -447,16 +454,19 @@ export default function ProfilScreen() {
                         onPress={() => updateProfile({ restTimerSeconds: d })}
                         style={{
                           flex: 1,
-                          paddingVertical: 8,
+                          minHeight: 40,
+                          justifyContent: 'center',
                           borderRadius: 999,
                           alignItems: 'center',
                           backgroundColor: selected ? colors.accent : colors.fill,
+                          borderWidth: 1,
+                          borderColor: selected ? colors.accent : colors.border,
                         }}
                       >
                         <ThemedText
                           variant="footnote"
-                          weight="600"
-                          style={{ color: selected ? '#FFFFFF' : colors.text }}
+                          weight="700"
+                          style={{ color: selected ? colors.onAccent : colors.textSecondary }}
                         >
                           {d}s
                         </ThemedText>
@@ -466,167 +476,75 @@ export default function ProfilScreen() {
                 </View>
               )}
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">{t.common.rpe}</ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
-                    {t.profil.rpeHint}
-                  </ThemedText>
-                </View>
-                <Switch
-                  value={user?.rpeEnabled ?? false}
-                  onValueChange={(v) => updateProfile({ rpeEnabled: v })}
-                  trackColor={{ true: colors.accent }}
-                />
-              </View>
+              <ToggleRow
+                label={t.common.rpe}
+                hint={t.profil.rpeHint}
+                value={user?.rpeEnabled ?? false}
+                onValueChange={(v) => updateProfile({ rpeEnabled: v })}
+              />
             </Card>
+          </Section>
+
+          <Section title={t.profil.measurements}>
+            <Card>
+              <ToggleRow
+                label={t.profil.measurementsToggle}
+                hint={t.profil.measurementsToggleHint}
+                value={user?.measurementsEnabled ?? false}
+                onValueChange={(v) => updateProfile({ measurementsEnabled: v })}
+              />
+            </Card>
+          </Section>
+
+          <Section title={t.profil.notifications}>
+            <Card>
+              <ToggleRow
+                label={t.profil.pushNotifications}
+                hint={t.profil.pushNotificationsHint}
+                value={user?.pushNotificationsEnabled ?? false}
+                onValueChange={handleTogglePush}
+                disabled={togglingPush}
+              />
+            </Card>
+          </Section>
+
+          <View style={{ gap: Spacing.sm }}>
+            <NavRow
+              icon="barbell-outline"
+              label={t.profil.exerciseLibrary}
+              hint={t.seance.exerciseCount(customExercises.length)}
+              onPress={() => router.push('/exercise-library')}
+            />
+            <NavRow
+              icon="list-outline"
+              label={t.profil.workoutTemplates}
+              hint={t.profil.workoutTemplatesCount(workoutTemplates.length)}
+              onPress={() => router.push('/workout-templates')}
+            />
+            <NavRow icon="people-outline" label={t.profil.friends} onPress={() => router.push('/friends')} />
+            <NavRow icon="heart" label={t.screenTitles.support} onPress={() => router.push('/support')} accent />
           </View>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.measurements}
-            </ThemedText>
-            <Card style={{ gap: Spacing.md }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">{t.profil.measurementsToggle}</ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
-                    {t.profil.measurementsToggleHint}
-                  </ThemedText>
-                </View>
-                <Switch
-                  value={user?.measurementsEnabled ?? false}
-                  onValueChange={(v) => updateProfile({ measurementsEnabled: v })}
-                  trackColor={{ true: colors.accent }}
-                />
-              </View>
-            </Card>
-          </View>
-
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.profil.notifications}
-            </ThemedText>
-            <Card style={{ gap: Spacing.md }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <ThemedText variant="subhead">{t.profil.pushNotifications}</ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
-                    {t.profil.pushNotificationsHint}
-                  </ThemedText>
-                </View>
-                <Switch
-                  value={user?.pushNotificationsEnabled ?? false}
-                  onValueChange={handleTogglePush}
-                  disabled={togglingPush}
-                  trackColor={{ true: colors.accent }}
-                />
-              </View>
-            </Card>
-          </View>
-
-          <Pressable
-            onPress={() => router.push('/exercise-library')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacing.sm,
-              padding: Spacing.md,
-              borderRadius: 12,
-              backgroundColor: colors.card,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="barbell-outline" size={20} color={colors.text} />
-            <View style={{ flex: 1 }}>
-              <ThemedText variant="subhead" weight="600">
-                {t.profil.exerciseLibrary}
-              </ThemedText>
-              <ThemedText variant="caption" color="tertiary">
-                {t.seance.exerciseCount(customExercises.length)}
-              </ThemedText>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/workout-templates')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacing.sm,
-              padding: Spacing.md,
-              borderRadius: 12,
-              backgroundColor: colors.card,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="list-outline" size={20} color={colors.text} />
-            <View style={{ flex: 1 }}>
-              <ThemedText variant="subhead" weight="600">
-                {t.profil.workoutTemplates}
-              </ThemedText>
-              <ThemedText variant="caption" color="tertiary">
-                {t.profil.workoutTemplatesCount(workoutTemplates.length)}
-              </ThemedText>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/friends')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacing.sm,
-              padding: Spacing.md,
-              borderRadius: 12,
-              backgroundColor: colors.card,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="people-outline" size={20} color={colors.text} />
-            <ThemedText variant="subhead" weight="600" style={{ flex: 1 }}>
-              {t.profil.friends}
-            </ThemedText>
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/support')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacing.sm,
-              padding: Spacing.md,
-              borderRadius: 12,
-              backgroundColor: colors.accent + '14',
-              borderWidth: 1,
-              borderColor: colors.accent + '40',
-            }}
-          >
-            <Ionicons name="heart" size={20} color={colors.accent} />
-            <ThemedText variant="subhead" weight="600" color="accent" style={{ flex: 1 }}>
-              {t.screenTitles.support}
-            </ThemedText>
-            <Ionicons name="chevron-forward" size={18} color={colors.accent} />
-          </Pressable>
-
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm, color: colors.negative }}>
-              {t.profil.dangerZone}
-            </ThemedText>
-            <Pressable onPress={handleDeleteAccount} disabled={deletingAccount} style={{ paddingVertical: Spacing.sm }}>
-              <ThemedText variant="subhead" weight="600" style={{ color: colors.negative, opacity: deletingAccount ? 0.5 : 1 }}>
+          <Section title={t.profil.dangerZone}>
+            <Pressable
+              onPress={handleDeleteAccount}
+              disabled={deletingAccount}
+              style={{
+                minHeight: 50,
+                justifyContent: 'center',
+                paddingHorizontal: Spacing.lg,
+                borderRadius: Radius.md,
+                backgroundColor: colors.negative + '14',
+                opacity: deletingAccount ? 0.5 : 1,
+              }}
+            >
+              <ThemedText variant="subhead" weight="700" style={{ color: colors.negative }}>
                 {t.profil.deleteAccount}
               </ThemedText>
             </Pressable>
-          </View>
+          </Section>
 
-          <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.sm }}>
+          <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
             Ningyma {Application.nativeApplicationVersion} ({Application.nativeBuildVersion}) ·{' '}
             {Platform.OS === 'ios' ? 'iOS' : 'Android'}
           </ThemedText>

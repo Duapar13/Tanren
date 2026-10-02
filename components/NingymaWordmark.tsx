@@ -1,5 +1,5 @@
 import { Text, TextStyle } from 'react-native';
-import { GOLD_ACCENT } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
 
 interface Props {
   size?: number;
@@ -7,13 +7,14 @@ interface Props {
 }
 
 export function NingymaWordmark({ size = 36, style }: Props) {
+  const { colors } = useTheme();
   return (
     <Text
       style={[
         {
           fontFamily: 'PermanentMarker_400Regular',
           fontSize: size,
-          color: GOLD_ACCENT,
+          color: colors.accent,
           includeFontPadding: false,
         },
         style,

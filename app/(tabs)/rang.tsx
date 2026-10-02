@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,9 +7,11 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
+import { Section } from '../../components/Section';
 import { ProgressBar } from '../../components/ProgressBar';
 import { SkillBanner } from '../../components/SkillBanner';
 import { Popup } from '../../components/Popup';
+import { RankEmblem } from '../../components/RankEmblem';
 import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
 import { PlacementReveal } from '../../components/PlacementReveal';
 import { useData } from '../../context/DataContext';
@@ -25,37 +27,17 @@ import {
   DIVISIONS,
   POINTS_PER_DIVISION,
   RANK_COLORS,
-  RANK_ICON_IMAGES,
   RANKS,
+  type RankName,
   type SeasonMedal,
   type SeasonRanking,
 } from '../../utils/ranking';
-import { computeBadgeStatuses, type BadgeProgress, type BadgeStatus } from '../../utils/badges';
 import { toDateKey, todayKey } from '../../utils/date';
 import { hasShownPlacementReveal, markPlacementRevealShown } from '../../utils/placementReveal';
+import { usePreference } from '../../lib/preferences';
 import { apiFetch } from '../../lib/api';
-import { TranslationDict } from '../../constants/i18n/fr';
 
-const BADGES_PER_PAGE = 4;
-const RANKS_PER_PAGE = 4;
-
-// Tier badges (one per rank+division, e.g. "Acier III") are generated from RANKS/DIVISIONS
-// rather than hand-authored per language — so their description reuses the already-translated
-// pointsThreshold copy instead of needing 47 x 4 translated strings kept in sync with the ladder.
-function badgeDescription(status: BadgeStatus, t: TranslationDict): string {
-  if (status.badge.id.startsWith('tier-') && status.progress.kind !== 'rank') {
-    return t.rang.pointsThreshold(status.progress.target);
-  }
-  return t.badges[status.badge.id as keyof typeof t.badges]?.description ?? status.badge.description;
-}
-
-function formatBadgeProgress(progress: BadgeProgress, t: TranslationDict): string {
-  if (progress.kind === 'rank') {
-    return progress.unlocked ? t.rang.unlocked : t.rang.currentRank(progress.rank);
-  }
-  const suffix = progress.kind === 'kg' ? ' kg' : progress.kind === 'days' ? ` ${t.rang.daysUnit}` : '';
-  return `${progress.current}/${progress.target}${suffix}`;
-}
+const LADDER_ITEM_WIDTH = 88;
 
 interface LeaderboardEntry {
   userId: number;
@@ -82,6 +64,10 @@ function monthLabelForSegment(medal: SeasonMedal, index: number, locale: string)
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+function asRankName(rank: string | null): RankName | null {
+  return rank && (RANKS as readonly string[]).includes(rank) ? (rank as RankName) : null;
+}
+
 interface MedalSelection {
   medal: SeasonMedal;
   isCurrent: boolean;
@@ -93,8 +79,8 @@ export default function RangScreen() {
   const { colors } = useTheme();
   const { t, lang } = useTranslation();
   const locale = LOCALE_MAP[lang];
+  const showLeaderboard = usePreference('showLeaderboard');
 
-  const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
   const [selectedMedal, setSelectedMedal] = useState<MedalSelection | null>(null);
 
   const rankingParams = useMemo(
@@ -115,33 +101,23 @@ export default function RangScreen() {
 
   const ranking = useMemo(() => computeSeasonRanking(rankingParams), [rankingParams]);
   const seasonMedals = useMemo(() => computeSeasonMedalHistory(rankingParams), [rankingParams]);
-  const badgeStatuses = useMemo(() => computeBadgeStatuses(rankingParams), [rankingParams]);
-  const badgePages = useMemo(() => {
-    const pages: BadgeStatus[][] = [];
-    for (let i = 0; i < badgeStatuses.length; i += BADGES_PER_PAGE) {
-      pages.push(badgeStatuses.slice(i, i + BADGES_PER_PAGE));
-    }
-    return pages;
-  }, [badgeStatuses]);
-  const [badgePageIndex, setBadgePageIndex] = useState(0);
-  const { width: windowWidth } = useWindowDimensions();
-  const badgePageWidth = windowWidth - Spacing.lg * 2;
-
-  const rankPages = useMemo(() => {
-    const pages: (typeof RANKS[number])[][] = [];
-    for (let i = 0; i < RANKS.length; i += RANKS_PER_PAGE) {
-      pages.push(RANKS.slice(i, i + RANKS_PER_PAGE) as (typeof RANKS[number])[]);
-    }
-    return pages;
-  }, []);
-  const [rankPageIndex, setRankPageIndex] = useState(0);
 
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
+  const currentRankIndex = RANKS.indexOf(state.rank);
   const placement = useMemo(
     () => computePlacementStatus(rankingParams, ranking.seasonInfo),
     [rankingParams, ranking.seasonInfo]
   );
+  const inPlacement = placement.applicable && placement.inPlacement;
+
+  const ladderRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    // Land the ladder on the player's current rank instead of always starting at Fer.
+    const x = Math.max(0, currentRankIndex * LADDER_ITEM_WIDTH - LADDER_ITEM_WIDTH);
+    const id = setTimeout(() => ladderRef.current?.scrollTo({ x, animated: false }), 50);
+    return () => clearTimeout(id);
+  }, [currentRankIndex]);
 
   // Fires once, the first time this screen notices placement just finished (sessionsCompleted
   // reached sessionsNeeded) — hasShownPlacementReveal guards against replaying it on every later
@@ -160,15 +136,13 @@ export default function RangScreen() {
     };
   }, [placement.applicable, placement.inPlacement, ranking.seasonInfo.seasonNumber]);
 
-  // Ranking has no server-side scoring engine — this just reports what this device already
-  // computed for itself, so the leaderboard is only as fresh as each player's last report.
+  // The server recomputes the score itself from synced data — this is just the trigger. It keeps
+  // firing even when the leaderboard is hidden locally, so the player stays ranked for others.
   useEffect(() => {
     apiFetch('/leaderboard/report', {
       method: 'POST',
       body: JSON.stringify({ seasonNumber: ranking.seasonInfo.seasonNumber }),
     }).catch(() => {});
-    // Only the trigger to recompute needs to fire on real changes — the server derives the
-    // actual points/rank/division itself from synced data, ignoring anything the client sends.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ranking.seasonInfo.seasonNumber, ranking.totalPoints, state.rank, state.division]);
 
@@ -176,6 +150,7 @@ export default function RangScreen() {
   const [myEntry, setMyEntry] = useState<MyLeaderboardEntry | null>(null);
   useFocusEffect(
     useCallback(() => {
+      if (!showLeaderboard) return;
       apiFetch(`/leaderboard?seasonNumber=${ranking.seasonInfo.seasonNumber}`)
         .then((res: { entries: LeaderboardEntry[]; me: MyLeaderboardEntry | null }) => {
           setLeaderboard(res.entries);
@@ -183,7 +158,7 @@ export default function RangScreen() {
         })
         .catch(() => {});
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ranking.seasonInfo.seasonNumber])
+    }, [ranking.seasonInfo.seasonNumber, showLeaderboard])
   );
 
   const showPinnedMe = !!myEntry && !leaderboard.some((e) => e.userId === myEntry.userId);
@@ -194,357 +169,233 @@ export default function RangScreen() {
     return computeSeasonRanking(rankingParams, selectedMedal.medal.seasonInfo);
   }, [selectedMedal, ranking, rankingParams]);
 
+  const renderLeaderboardRow = (entry: LeaderboardEntry, position: number, pinned = false) => {
+    const isMe = entry.userId === user?.id;
+    const rank = entry.inPlacement ? null : asRankName(entry.rank);
+    const topColor = position === 1 ? '#F5C542' : position === 2 ? '#B8BEC9' : position === 3 ? '#C98A5A' : null;
+    return (
+      <View
+        key={`${pinned ? 'me-' : ''}${entry.userId}`}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: Spacing.md,
+          paddingVertical: Spacing.sm,
+          paddingHorizontal: Spacing.md,
+          borderRadius: Radius.md,
+          backgroundColor: isMe ? colors.accentSoft : 'transparent',
+          borderWidth: isMe ? 1 : 0,
+          borderColor: colors.accent + '4D',
+        }}
+      >
+        <View style={{ width: 30, alignItems: 'center' }}>
+          {topColor ? (
+            <Ionicons name="trophy" size={20} color={topColor} />
+          ) : (
+            <ThemedText variant="subhead" weight="700" color={isMe ? 'accent' : 'tertiary'}>
+              {pinned ? `#${position}` : position}
+            </ThemedText>
+          )}
+        </View>
+        <RankEmblem rank={rank} size={38} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <ThemedText variant="subhead" weight={isMe ? '700' : '600'} numberOfLines={1}>
+            {entry.displayName ?? entry.username}
+          </ThemedText>
+          <ThemedText variant="caption" color="tertiary">
+            {entry.inPlacement ? t.rang.placementTitle : `${entry.rank} ${entry.division}`}
+          </ThemedText>
+        </View>
+        <ThemedText variant="subhead" weight="800">
+          {entry.inPlacement ? '—' : `${entry.points} pts`}
+        </ThemedText>
+      </View>
+    );
+  };
+
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader mascot="proud" />
+        <ScreenHeader title={t.tabs.rank} mascot="proud" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,
-            gap: Spacing.lg,
-            paddingBottom: Spacing.xxl,
+            gap: Spacing.xl,
+            paddingBottom: Spacing.xxl * 2,
           }}
+          showsVerticalScrollIndicator={false}
         >
-          {placement.applicable && placement.inPlacement ? (
-            <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
-              <View
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: 999,
-                  backgroundColor: colors.accent + '1A',
-                  borderWidth: 2,
-                  borderColor: colors.accent,
-                  borderStyle: 'dashed',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="help" size={44} color={colors.accent} />
-              </View>
-              <ThemedText variant="title1" weight="700">
+          {inPlacement ? (
+            <Card variant="accent" style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
+              <RankEmblem rank={null} size={112} />
+              <ThemedText variant="title1" style={{ marginTop: Spacing.sm }}>
                 {t.rang.placementTitle}
               </ThemedText>
               <ThemedText variant="subhead" color="secondary">
                 {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
               </ThemedText>
 
-              <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
-                <ProgressBar
-                  progress={placement.sessionsCompleted / placement.sessionsNeeded}
-                  tintColor={colors.accent}
-                />
-                <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+              <View style={{ width: '100%', gap: 8, marginTop: Spacing.md }}>
+                <ProgressBar progress={placement.sessionsCompleted / placement.sessionsNeeded} tintColor={colors.accent} />
+                <ThemedText variant="footnote" weight="700" color="accent" style={{ textAlign: 'center' }}>
                   {t.rang.placementProgress(placement.sessionsCompleted, placement.sessionsNeeded)}
                 </ThemedText>
               </View>
 
-              <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.xs }}>
+              <ThemedText variant="caption" color="secondary" style={{ textAlign: 'center' }}>
                 {t.rang.placementHint}
               </ThemedText>
             </Card>
           ) : (
-            <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
+            <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl, overflow: 'hidden' }}>
               <View
+                pointerEvents="none"
                 style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: 999,
-                  backgroundColor: rankColor + '26',
-                  borderWidth: 2,
-                  borderColor: rankColor,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  position: 'absolute',
+                  top: -90,
+                  width: 320,
+                  height: 320,
+                  borderRadius: 160,
+                  backgroundColor: rankColor + '1A',
                 }}
-              >
-                <Image source={RANK_ICON_IMAGES[state.rank]} style={{ width: 44, height: 44, tintColor: rankColor }} />
-              </View>
-              <ThemedText variant="title1" weight="700">
+              />
+              <RankEmblem rank={state.rank} size={120} />
+              <ThemedText variant="title1" style={{ marginTop: Spacing.sm, color: rankColor }}>
                 {state.rank} {state.division}
               </ThemedText>
-              <ThemedText variant="subhead" color="secondary">
-                {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
-              </ThemedText>
+              <View
+                style={{
+                  paddingHorizontal: Spacing.md,
+                  paddingVertical: 4,
+                  borderRadius: Radius.pill,
+                  backgroundColor: colors.fill,
+                }}
+              >
+                <ThemedText variant="caption" weight="700" color="secondary">
+                  {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)} · {ranking.totalPoints} pts
+                </ThemedText>
+              </View>
 
-              <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
+              <View style={{ width: '100%', gap: 8, marginTop: Spacing.md }}>
                 {state.isMaxTier ? (
-                  <ThemedText variant="footnote" color="accent" weight="600" style={{ textAlign: 'center' }}>
+                  <ThemedText variant="footnote" color="accent" weight="700" style={{ textAlign: 'center' }}>
                     {t.rang.maxRankReached}
                   </ThemedText>
                 ) : (
                   <>
-                    <ProgressBar progress={state.pointsInDivision / POINTS_PER_DIVISION} tintColor={rankColor} />
-                    <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                    <ProgressBar progress={state.pointsInDivision / POINTS_PER_DIVISION} tintColor={rankColor} height={12} />
+                    <ThemedText variant="caption" color="secondary" style={{ textAlign: 'center' }}>
                       {t.rang.pointsToNextDivision(state.pointsInDivision, POINTS_PER_DIVISION)}
                     </ThemedText>
                   </>
                 )}
               </View>
 
-              <ThemedText variant="caption" color="tertiary">
-                {t.rang.newSeasonIn(daysUntilNextSeason())}
-              </ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing.xs }}>
+                <Ionicons name="time-outline" size={14} color={colors.textTertiary} />
+                <ThemedText variant="caption" color="tertiary">
+                  {t.rang.newSeasonIn(daysUntilNextSeason())}
+                </ThemedText>
+              </View>
             </Card>
           )}
 
           <PlacementReveal
             visible={showReveal}
+            rank={state.rank}
             rankLabel={`${state.rank} ${state.division}`}
             rankColor={rankColor}
-            rankIcon={RANK_ICON_IMAGES[state.rank]}
             bonusPoints={ranking.breakdown.carryover}
             onDone={() => setShowReveal(false)}
           />
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.rang.ranksListTitle}
-            </ThemedText>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
-              onScroll={(e) => {
-                setRankPageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
-              }}
-            >
-              {rankPages.map((page, pageIndex) => (
-                <Card key={pageIndex} style={{ width: badgePageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
-                  {page.map((rank, indexInPage) => {
-                    const i = pageIndex * RANKS_PER_PAGE + indexInPage;
-                    const isCurrent = rank === state.rank;
-                    const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
-                    return (
-                      <View key={rank} style={{ width: '45%', alignItems: 'center', gap: 4 }}>
-                        <View
-                          style={{
-                            width: 52,
-                            height: 52,
-                            borderRadius: 999,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: RANK_COLORS[rank] + '26',
-                            borderWidth: isCurrent ? 3 : 2,
-                            borderColor: RANK_COLORS[rank],
-                          }}
-                        >
-                          <Image source={RANK_ICON_IMAGES[rank]} style={{ width: 24, height: 24, tintColor: RANK_COLORS[rank] }} />
-                        </View>
-                        <ThemedText
-                          variant="caption"
-                          weight={isCurrent ? '700' : '600'}
-                          style={{ textAlign: 'center' }}
-                        >
-                          {rank}
-                        </ThemedText>
-                        <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
-                          {t.rang.pointsThreshold(threshold)}
-                        </ThemedText>
-                        {isCurrent && <Ionicons name="checkmark-circle" size={16} color={colors.accent} />}
-                      </View>
-                    );
-                  })}
-                </Card>
-              ))}
-            </ScrollView>
-            {rankPages.length > 1 && (
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: Spacing.sm }}>
-                {rankPages.map((_, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: i === rankPageIndex ? colors.accent : colors.separator,
-                    }}
-                  />
-                ))}
+          {!inPlacement && (
+            <Section title={t.rang.breakdownTitle}>
+              <View style={{ gap: Spacing.sm }}>
+                <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
+                <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
+                <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
+                <SkillBanner icon="calendar" label={t.skills.frequency} points={ranking.breakdown.frequency} />
+                {ranking.breakdown.carryover > 0 && (
+                  <SkillBanner icon="arrow-redo" label={t.skills.carryover} points={ranking.breakdown.carryover} />
+                )}
+                {user?.measurementsEnabled && (
+                  <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
+                )}
               </View>
-            )}
-          </View>
-
-          {!(placement.applicable && placement.inPlacement) && (
-            <View style={{ gap: Spacing.sm }}>
-              <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
-              <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
-              <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
-              <SkillBanner icon="calendar" label={t.skills.frequency} points={ranking.breakdown.frequency} />
-              {ranking.breakdown.carryover > 0 && (
-                <SkillBanner icon="arrow-redo" label={t.skills.carryover} points={ranking.breakdown.carryover} />
-              )}
-              {user?.measurementsEnabled && (
-                <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
-              )}
-            </View>
+            </Section>
           )}
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.rang.badges}
-            </ThemedText>
+          <Section title={t.rang.ranksListTitle}>
             <ScrollView
+              ref={ladderRef}
               horizontal
-              pagingEnabled
               showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
-              onScroll={(e) => {
-                setBadgePageIndex(Math.round(e.nativeEvent.contentOffset.x / badgePageWidth));
-              }}
+              contentContainerStyle={{ gap: Spacing.sm, paddingVertical: 4 }}
+              style={{ marginHorizontal: -Spacing.lg }}
+              contentInset={{ left: Spacing.lg, right: Spacing.lg }}
             >
-              {badgePages.map((page, pageIndex) => (
-                <Card key={pageIndex} style={{ width: badgePageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
-                  {page.map((status) => {
-                    const { badge, unlocked } = status;
-                    const label = t.badges[badge.id as keyof typeof t.badges]?.name ?? badge.name;
-                    return (
-                      <Pressable
-                        key={badge.id}
-                        onPress={() => setSelectedBadge(status)}
-                        style={{ width: '45%', alignItems: 'center', gap: 6 }}
-                      >
-                        <View
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 999,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: unlocked ? colors.accent + '26' : colors.fill,
-                            borderWidth: 2,
-                            borderColor: unlocked ? colors.accent : colors.separator,
-                          }}
-                        >
-                          {badge.rank ? (
-                            <Image
-                              source={RANK_ICON_IMAGES[badge.rank]}
-                              style={{
-                                width: 26,
-                                height: 26,
-                                tintColor: unlocked ? colors.accent : colors.textTertiary,
-                              }}
-                            />
-                          ) : (
-                            <Ionicons name={badge.icon} size={26} color={unlocked ? colors.accent : colors.textTertiary} />
-                          )}
-                        </View>
-                        <ThemedText
-                          variant="caption"
-                          weight="600"
-                          color={unlocked ? 'primary' : 'tertiary'}
-                          style={{ textAlign: 'center' }}
-                        >
-                          {label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </Card>
-              ))}
-            </ScrollView>
-            {badgePages.length > 1 && (
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: Spacing.sm }}>
-                {badgePages.map((_, i) => (
+              <View style={{ width: Spacing.lg - Spacing.sm }} />
+              {RANKS.map((rank, i) => {
+                const isCurrent = !inPlacement && rank === state.rank;
+                const reached = !inPlacement && i <= currentRankIndex;
+                const threshold = i * DIVISIONS.length * POINTS_PER_DIVISION;
+                return (
                   <View
-                    key={i}
+                    key={rank}
                     style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: i === badgePageIndex ? colors.accent : colors.separator,
+                      width: LADDER_ITEM_WIDTH - Spacing.sm,
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingVertical: Spacing.md,
+                      borderRadius: Radius.lg,
+                      backgroundColor: isCurrent ? RANK_COLORS[rank] + '1F' : colors.card,
+                      borderWidth: isCurrent ? 2 : 1,
+                      borderColor: isCurrent ? RANK_COLORS[rank] : colors.border,
                     }}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
-
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.rang.globalLeaderboard}
-            </ThemedText>
-            {leaderboard.length === 0 ? (
-              <Card>
-                <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                  {t.rang.noScoreYet}
-                </ThemedText>
-              </Card>
-            ) : (
-              <Card style={{ gap: 0 }}>
-                {leaderboard.map((entry, i) => {
-                  const isMe = entry.userId === user?.id;
-                  return (
-                    <View
-                      key={entry.userId}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: Spacing.sm,
-                        paddingVertical: Spacing.xs,
-                        borderTopWidth: i === 0 ? 0 : 1,
-                        borderTopColor: colors.separator,
-                        backgroundColor: isMe ? colors.accent + '14' : 'transparent',
-                        marginHorizontal: isMe ? -Spacing.md : 0,
-                        paddingHorizontal: isMe ? Spacing.md : 0,
-                        borderRadius: isMe ? 8 : 0,
-                      }}
+                  >
+                    <RankEmblem rank={rank} size={48} locked={!reached} />
+                    <ThemedText
+                      variant="caption"
+                      weight={isCurrent ? '800' : '600'}
+                      color={reached ? 'primary' : 'tertiary'}
+                      numberOfLines={1}
+                      style={{ textAlign: 'center', paddingHorizontal: 4 }}
                     >
-                      <ThemedText variant="subhead" weight="700" color="tertiary" style={{ width: 24 }}>
-                        {i + 1}
-                      </ThemedText>
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <ThemedText variant="subhead" weight={isMe ? '700' : '400'} numberOfLines={1}>
-                          {entry.displayName ?? entry.username}
-                        </ThemedText>
-                        <ThemedText variant="caption" color="tertiary">
-                          {entry.inPlacement ? t.rang.placementTitle : `${entry.rank} ${entry.division}`}
-                        </ThemedText>
-                      </View>
-                      <ThemedText variant="subhead" weight="700">
-                        {entry.inPlacement ? '—' : `${entry.points} pts`}
-                      </ThemedText>
-                    </View>
-                  );
-                })}
-              </Card>
-            )}
-            {showPinnedMe && myEntry && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: Spacing.sm,
-                  marginTop: Spacing.sm,
-                  padding: Spacing.md,
-                  borderRadius: Radius.md,
-                  backgroundColor: colors.accent + '14',
-                  borderWidth: 1,
-                  borderColor: colors.accent + '40',
-                }}
-              >
-                <ThemedText variant="subhead" weight="700" color="accent" style={{ width: 32 }}>
-                  #{myEntry.position}
-                </ThemedText>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <ThemedText variant="subhead" weight="700" numberOfLines={1}>
-                    {myEntry.displayName ?? myEntry.username}
-                  </ThemedText>
-                  <ThemedText variant="caption" color="tertiary">
-                    {myEntry.inPlacement ? t.rang.placementTitle : `${myEntry.rank} ${myEntry.division}`}
-                  </ThemedText>
-                </View>
-                <ThemedText variant="subhead" weight="700">
-                  {myEntry.inPlacement ? '—' : `${myEntry.points} pts`}
-                </ThemedText>
-              </View>
-            )}
-          </View>
+                      {rank}
+                    </ThemedText>
+                    <ThemedText variant="caption" color="tertiary" style={{ fontSize: 10 }}>
+                      {threshold} pts
+                    </ThemedText>
+                  </View>
+                );
+              })}
+              <View style={{ width: Spacing.lg - Spacing.sm }} />
+            </ScrollView>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.rang.seasonHistory}
-            </ThemedText>
+          {showLeaderboard && (
+            <Section title={t.rang.globalLeaderboard}>
+              {leaderboard.length === 0 ? (
+                <Card>
+                  <ThemedText color="secondary" style={{ textAlign: 'center' }}>
+                    {t.rang.noScoreYet}
+                  </ThemedText>
+                </Card>
+              ) : (
+                <Card style={{ gap: 2, padding: Spacing.sm }}>
+                  {leaderboard.map((entry, i) => renderLeaderboardRow(entry, i + 1))}
+                </Card>
+              )}
+              {showPinnedMe && myEntry && (
+                <Card variant="accent" style={{ padding: Spacing.sm }}>
+                  {renderLeaderboardRow(myEntry, myEntry.position, true)}
+                </Card>
+              )}
+            </Section>
+          )}
+
+          <Section title={t.rang.seasonHistory}>
             <Card>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.lg }}>
                 {seasonMedals.map((medal, i) => (
@@ -554,33 +405,15 @@ export default function RangScreen() {
                     style={{ alignItems: 'center', gap: 4, width: 92 }}
                   >
                     <SeasonMedalBadge medal={medal} size={84} />
-                    <ThemedText variant="caption" weight="600" color={medal.isComplete ? 'secondary' : 'accent'}>
+                    <ThemedText variant="caption" weight="700" color={medal.isComplete ? 'secondary' : 'accent'}>
                       {medal.isComplete ? t.rang.completed : t.rang.inProgress}
                     </ThemedText>
                   </Pressable>
                 ))}
               </ScrollView>
             </Card>
-          </View>
-
+          </Section>
         </ScrollView>
-
-        <Popup
-          title={selectedBadge ? t.badges[selectedBadge.badge.id as keyof typeof t.badges]?.name ?? selectedBadge.badge.name : ''}
-          visible={!!selectedBadge}
-          onClose={() => setSelectedBadge(null)}
-        >
-          {selectedBadge && (
-            <View style={{ gap: Spacing.sm }}>
-              <ThemedText color="secondary" style={{ textAlign: 'center' }}>
-                {badgeDescription(selectedBadge, t)}
-              </ThemedText>
-              <ThemedText weight="600" style={{ textAlign: 'center' }}>
-                {formatBadgeProgress(selectedBadge.progress, t)}
-              </ThemedText>
-            </View>
-          )}
-        </Popup>
 
         <Popup
           title={selectedMedal ? t.rang.seasonLabel(selectedMedal.medal.seasonInfo.seasonNumber) : ''}
@@ -594,7 +427,7 @@ export default function RangScreen() {
               </View>
               <ThemedText weight="600" style={{ textAlign: 'center' }}>
                 {t.rang.peakRank}{' '}
-                <ThemedText weight="700" style={{ color: RANK_COLORS[selectedMedal.medal.peakRank] }}>
+                <ThemedText weight="800" style={{ color: RANK_COLORS[selectedMedal.medal.peakRank] }}>
                   {selectedMedal.medal.peakRank}
                 </ThemedText>
               </ThemedText>
@@ -610,12 +443,9 @@ export default function RangScreen() {
               )}
               <View style={{ gap: 4 }}>
                 {selectedMedal.medal.segments.map((rank, i) => (
-                  <View
-                    key={i}
-                    style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}
-                  >
+                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
                     <ThemedText color="secondary">{monthLabelForSegment(selectedMedal.medal, i, locale)}</ThemedText>
-                    <ThemedText weight="600" style={{ color: rank ? RANK_COLORS[rank] : colors.textTertiary }}>
+                    <ThemedText weight="700" style={{ color: rank ? RANK_COLORS[rank] : colors.textTertiary }}>
                       {rank ?? '—'}
                     </ThemedText>
                   </View>

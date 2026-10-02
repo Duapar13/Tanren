@@ -26,11 +26,11 @@ export function IconButton({ name, onPress, variant = 'default', size = 20, disa
 
   const backgroundColor =
     variant === 'destructive'
-      ? colors.negative + '1A'
+      ? colors.negative + '1F'
       : variant === 'positive'
-        ? colors.positive + '1A'
+        ? colors.positive + '1F'
         : variant === 'accent'
-          ? colors.accent + '1A'
+          ? colors.accentSoft
           : colors.fill;
 
   return (
@@ -41,7 +41,7 @@ export function IconButton({ name, onPress, variant = 'default', size = 20, disa
       style={{
         width: 44,
         height: 44,
-        borderRadius: Radius.sm,
+        borderRadius: Radius.md,
         backgroundColor,
         alignItems: 'center',
         justifyContent: 'center',

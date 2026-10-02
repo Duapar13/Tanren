@@ -19,6 +19,15 @@ interface Props extends TextProps {
   weight?: '400' | '500' | '600' | '700' | '800';
 }
 
+// Big titles get tightened tracking, small captions slightly opened — the usual display-type feel.
+const LETTER_SPACING: Partial<Record<Variant, number>> = {
+  largeTitle: -0.8,
+  title1: -0.6,
+  title2: -0.4,
+  title3: -0.2,
+  caption: 0.2,
+};
+
 export function ThemedText({
   variant = 'body',
   color = 'primary',
@@ -39,15 +48,20 @@ export function ThemedText({
   const defaultWeight =
     weight ??
     (variant === 'largeTitle' || variant === 'title1'
-      ? '700'
+      ? '800'
       : variant === 'title2' || variant === 'title3' || variant === 'headline'
-        ? '600'
+        ? '700'
         : '400');
 
   return (
     <Text
       style={[
-        { color: textColor, fontSize: FontSizes[variant], fontWeight: defaultWeight },
+        {
+          color: textColor,
+          fontSize: FontSizes[variant],
+          fontWeight: defaultWeight,
+          letterSpacing: LETTER_SPACING[variant],
+        },
         style,
       ]}
       {...rest}

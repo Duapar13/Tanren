@@ -5,7 +5,8 @@ import { Radius, Spacing } from '../constants/theme';
 
 interface Props extends PressableProps {
   title: string;
-  variant?: 'filled' | 'plain' | 'destructive';
+  /** `tonal` is the quieter secondary action: tinted fill, accent text. */
+  variant?: 'filled' | 'tonal' | 'plain' | 'destructive';
 }
 
 export function Button({ title, variant = 'filled', style, ...rest }: Props) {
@@ -13,7 +14,7 @@ export function Button({ title, variant = 'filled', style, ...rest }: Props) {
 
   if (variant === 'plain') {
     return (
-      <Pressable style={style} {...rest}>
+      <Pressable hitSlop={8} style={style} {...rest}>
         <ThemedText variant="body" weight="600" color="accent">
           {title}
         </ThemedText>
@@ -22,29 +23,30 @@ export function Button({ title, variant = 'filled', style, ...rest }: Props) {
   }
 
   const isDestructive = variant === 'destructive';
+  const isTonal = variant === 'tonal';
+
+  const backgroundColor = isDestructive ? colors.negative + '14' : isTonal ? colors.accentSoft : colors.accent;
+  const textColor = isDestructive ? colors.negative : isTonal ? colors.accent : colors.onAccent;
 
   return (
     <Pressable
       style={(state) => [
         {
-          backgroundColor: isDestructive ? 'transparent' : colors.accent,
+          backgroundColor,
           borderRadius: Radius.md,
+          minHeight: 50,
           paddingVertical: Spacing.md,
+          paddingHorizontal: Spacing.lg,
           alignItems: 'center',
-          opacity: rest.disabled ? 0.4 : state.pressed ? 0.7 : 1,
-          ...(isDestructive
-            ? { borderWidth: 1, borderColor: colors.negative }
-            : null),
+          justifyContent: 'center',
+          opacity: rest.disabled ? 0.4 : state.pressed ? 0.75 : 1,
+          transform: [{ scale: state.pressed ? 0.985 : 1 }],
         },
         typeof style === 'function' ? style(state) : style,
       ]}
       {...rest}
     >
-      <ThemedText
-        variant="body"
-        weight="600"
-        style={{ color: isDestructive ? colors.negative : '#FFFFFF' }}
-      >
+      <ThemedText variant="body" weight="700" style={{ color: textColor }}>
         {title}
       </ThemedText>
     </Pressable>

@@ -23,7 +23,7 @@ export function XPBadge({ points, size = 'md' }: Props) {
         alignItems: 'center',
         gap: 3,
         alignSelf: 'flex-start',
-        backgroundColor: tint + '1F',
+        backgroundColor: tint + '24',
         borderRadius: 999,
         paddingHorizontal: size === 'sm' ? 8 : 10,
         paddingVertical: size === 'sm' ? 3 : 5,

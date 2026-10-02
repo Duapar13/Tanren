@@ -47,7 +47,7 @@ export function WeekStrip({ sessions, trainingDays }: Props) {
               <ThemedText
                 variant="caption"
                 weight="600"
-                style={{ color: done ? '#FFFFFF' : colors.textSecondary }}
+                style={{ color: done ? colors.onAccent : colors.textSecondary }}
               >
                 {day.getDate()}
               </ThemedText>

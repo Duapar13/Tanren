@@ -128,7 +128,7 @@ export function MonthlyCalendar({ year, month, sessions, trainingDays, onChangeM
                 <ThemedText
                   variant="footnote"
                   weight={done ? '700' : '400'}
-                  style={{ color: done ? '#FFFFFF' : isFuture ? colors.textTertiary : colors.text }}
+                  style={{ color: done ? colors.onAccent : isFuture ? colors.textTertiary : colors.text }}
                 >
                   {day}
                 </ThemedText>

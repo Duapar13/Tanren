@@ -27,10 +27,10 @@ export function ExerciseCard({ title, children }: { title: string; children: Rea
           paddingVertical: Spacing.md,
         }}
       >
-        <ThemedText variant="headline" weight="700" style={{ color: '#FFFFFF' }}>
+        <ThemedText variant="headline" weight="700" style={{ color: colors.onAccent }}>
           {title}
         </ThemedText>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color="#FFFFFF" />
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.onAccent} />
       </Pressable>
       {expanded && (
         <View

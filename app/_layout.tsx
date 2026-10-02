@@ -19,8 +19,10 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useTheme } from '../hooks/useTheme';
 import { configurePurchases } from '../lib/purchases';
 import { configureSentry } from '../lib/sentry';
+import { loadPreferences } from '../lib/preferences';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+loadPreferences();
 configurePurchases();
 configureSentry();
 setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});

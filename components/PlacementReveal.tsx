@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Modal, Pressable, View, type ImageSourcePropType } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,18 +8,19 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { Button } from './Button';
+import { RankEmblem } from './RankEmblem';
+import type { RankName } from '../utils/ranking';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 
 interface Props {
   visible: boolean;
+  rank: RankName;
   rankLabel: string;
   rankColor: string;
-  rankIcon: ImageSourcePropType;
   bonusPoints: number;
   onDone: () => void;
 }
@@ -27,7 +28,7 @@ interface Props {
 /** Plays once, the first time the app notices placement finished — a LoL/Valorant-style
  * "mystery rank until your 10 placement games are done" reveal, rather than a silent stat change
  * the player has to go notice themselves. See utils/placementReveal.ts for the one-time gating. */
-export function PlacementReveal({ visible, rankLabel, rankColor, rankIcon, bonusPoints, onDone }: Props) {
+export function PlacementReveal({ visible, rank, rankLabel, rankColor, bonusPoints, onDone }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [revealed, setRevealed] = useState(false);
@@ -75,42 +76,12 @@ export function PlacementReveal({ visible, rankLabel, rankColor, rankIcon, bonus
         </ThemedText>
 
         <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center' }}>
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                width: 160,
-                height: 160,
-                borderRadius: 999,
-                borderWidth: 3,
-                borderColor: colors.accent,
-                backgroundColor: colors.accent + '1A',
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-              mysteryStyle,
-            ]}
-          >
-            <Ionicons name="help" size={84} color={colors.accent} />
+          <Animated.View style={[{ position: 'absolute' }, mysteryStyle]}>
+            <RankEmblem rank={null} size={160} />
           </Animated.View>
 
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                width: 160,
-                height: 160,
-                borderRadius: 999,
-                borderWidth: 3,
-                borderColor: rankColor,
-                backgroundColor: rankColor + '26',
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-              rankStyle,
-            ]}
-          >
-            <Image source={rankIcon} style={{ width: 76, height: 76, tintColor: rankColor }} />
+          <Animated.View style={[{ position: 'absolute' }, rankStyle]}>
+            <RankEmblem rank={rank} size={160} />
           </Animated.View>
         </View>
 
@@ -140,11 +111,12 @@ export function PlacementReveal({ visible, rankLabel, rankColor, rankIcon, bonus
               style={{
                 backgroundColor: colors.accent,
                 borderRadius: Radius.md,
-                paddingVertical: Spacing.md,
+                minHeight: 50,
+                justifyContent: 'center',
                 alignItems: 'center',
               }}
             >
-              <ThemedText variant="subhead" weight="700" style={{ color: '#FFFFFF' }}>
+              <ThemedText variant="subhead" weight="700" style={{ color: colors.onAccent }}>
                 {t.rang.placementRevealButton}
               </ThemedText>
             </Pressable>

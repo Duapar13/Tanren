@@ -27,7 +27,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         marginRight: 6,
       }}
     >
-      <ThemedText variant="footnote" weight="600" style={{ color: active ? '#FFFFFF' : colors.text }}>
+      <ThemedText variant="footnote" weight="600" style={{ color: active ? colors.onAccent : colors.text }}>
         {label}
       </ThemedText>
     </Pressable>

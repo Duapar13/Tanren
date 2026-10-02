@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Button } from '../components/Button';
+import { Section } from '../components/Section';
 import { ShareCard } from '../components/ShareCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
@@ -101,10 +102,7 @@ export default function MonthRecapScreen() {
           </View>
         )}
 
-        <View>
-          <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            {t.monthRecap.bestOfMonth}
-          </ThemedText>
+        <Section title={t.monthRecap.bestOfMonth}>
           {current.bestPerformances.length === 0 ? (
             <ThemedText variant="footnote" color="tertiary">
               {t.monthRecap.noNewRecord}
@@ -148,12 +146,9 @@ export default function MonthRecapScreen() {
               )}
             </>
           )}
-        </View>
+        </Section>
 
-        <View>
-          <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-            {t.monthRecap.toChallenge}
-          </ThemedText>
+        <Section title={t.monthRecap.toChallenge}>
           {current.stagnant.length === 0 ? (
             <ThemedText variant="footnote" color="tertiary">
               {t.monthRecap.noneToChallenge}
@@ -177,7 +172,7 @@ export default function MonthRecapScreen() {
               ))}
             </View>
           )}
-        </View>
+        </Section>
 
         <ThemedText variant="headline">{t.sessionDetail.yourSheet}</ThemedText>
         <View style={{ alignItems: 'center', gap: Spacing.md }}>

@@ -68,7 +68,7 @@ export const ShareCard = forwardRef<View, Props>((props, ref) => {
     >
       <View style={{ alignItems: 'center', gap: Spacing.xs }}>
         <NinjaMascot size={64} reaction={props.variant === 'session' ? 'focused' : 'proud'} />
-        <NingymaWordmark size={30} />
+        <NingymaWordmark size={30} style={{ color: GOLD_ACCENT }} />
       </View>
 
       <View style={{ alignItems: 'center' }}>

@@ -242,12 +242,12 @@ export default function SeanceScreen() {
     return (
       <ThemedView variant="grouped" style={{ flex: 1 }}>
         <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-          <ScreenHeader mascot="focused" />
+          <ScreenHeader title={t.tabs.session} mascot="focused" />
           <ScrollView
             contentContainerStyle={{
               padding: Spacing.lg,
               gap: Spacing.lg,
-              paddingBottom: Spacing.xxl,
+              paddingBottom: Spacing.xxl * 2,
             }}
           >
             <TodaySessionsReview />
@@ -265,7 +265,7 @@ export default function SeanceScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader mascot="focused" />
+        <ScreenHeader title={t.tabs.session} mascot="focused" />
         {restTimerEndAt && (
           <View style={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm }}>
             <RestTimerBanner
@@ -285,7 +285,7 @@ export default function SeanceScreen() {
             contentContainerStyle={{
               padding: Spacing.lg,
               gap: Spacing.lg,
-              paddingBottom: Spacing.xxl,
+              paddingBottom: Spacing.xxl * 2,
             }}
           >
               {!resuming && activeExerciseIds.length === 0 && workoutTemplates.length > 0 && (
@@ -308,13 +308,15 @@ export default function SeanceScreen() {
                         key={tpl.id}
                         onPress={() => startFromTemplate(tpl.id)}
                         style={{
-                          paddingHorizontal: 14,
-                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
                           borderRadius: Radius.pill,
-                          backgroundColor: colors.fill,
+                          backgroundColor: colors.accentSoft,
+                          borderWidth: 1,
+                          borderColor: colors.accent + '4D',
                         }}
                       >
-                        <ThemedText variant="subhead" weight="600">
+                        <ThemedText variant="subhead" weight="700" color="accent">
                           {tpl.name}
                         </ThemedText>
                       </Pressable>

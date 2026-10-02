@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
+import { Section } from '../../components/Section';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
@@ -227,7 +228,7 @@ export default function NutritionScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader mascot="content" />
+        <ScreenHeader title={t.tabs.nutrition} mascot="content" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,
@@ -235,10 +236,7 @@ export default function NutritionScreen() {
             paddingBottom: Spacing.xxl,
           }}
         >
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.nutrition.today}
-            </ThemedText>
+          <Section title={t.nutrition.today}>
             <Card style={{ gap: Spacing.md }}>
               {targets ? (
                 <>
@@ -303,8 +301,8 @@ export default function NutritionScreen() {
                   backgroundColor: colors.accent,
                 }}
               >
-                <Ionicons name="barcode-outline" size={20} color="#FFFFFF" />
-                <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+                <Ionicons name="barcode-outline" size={20} color={colors.onAccent} />
+                <ThemedText variant="subhead" weight="600" style={{ color: colors.onAccent }}>
                   {t.nutrition.scanOrSearchFood}
                 </ThemedText>
               </Pressable>
@@ -412,12 +410,9 @@ export default function NutritionScreen() {
                 </View>
               )}
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.nutrition.nutritionalGoal}
-            </ThemedText>
+          <Section title={t.nutrition.nutritionalGoal}>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
@@ -474,12 +469,9 @@ export default function NutritionScreen() {
                 </View>
               )}
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.nutrition.bodyWeight}
-            </ThemedText>
+          <Section title={t.nutrition.bodyWeight}>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <ThemedText variant="title2" weight="700">
@@ -539,13 +531,10 @@ export default function NutritionScreen() {
                 </View>
               )}
             </Card>
-          </View>
+          </Section>
 
           {user?.measurementsEnabled && (
-            <View>
-              <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-                {t.nutrition.measurements}
-              </ThemedText>
+            <Section title={t.nutrition.measurements}>
               <Card style={{ gap: Spacing.md }}>
                 <ChipSelector
                   options={MEASUREMENT_TYPE_OPTIONS.map((o) => o.label)}
@@ -605,14 +594,11 @@ export default function NutritionScreen() {
                   </View>
                 )}
               </Card>
-            </View>
+            </Section>
           )}
 
           {currentBmi != null && (
-            <View>
-              <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-                {t.nutrition.bmi}
-              </ThemedText>
+            <Section title={t.nutrition.bmi}>
               <Card style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <ThemedText variant="title2" weight="700">
                   {currentBmi.toFixed(1)}
@@ -621,13 +607,10 @@ export default function NutritionScreen() {
                   {t.nutrition.bmiCategories[bmiCategory(currentBmi)]}
                 </ThemedText>
               </Card>
-            </View>
+            </Section>
           )}
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.nutrition.evolution}
-            </ThemedText>
+          <Section title={t.nutrition.evolution}>
             <Card style={{ gap: Spacing.md }}>
               <SegmentedControl options={MACRO_OPTIONS} value={macro} onChange={setMacro} />
               {macroSeries.some((p) => p[macro] > 0) ? (
@@ -646,7 +629,7 @@ export default function NutritionScreen() {
               )}
               <SegmentedControl options={RANGE_OPTIONS} value={range} onChange={setRange} />
             </Card>
-          </View>
+          </Section>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

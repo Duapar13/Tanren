@@ -46,7 +46,10 @@ export function AppShell() {
       key={!user ? 'anon' : needsOnboarding ? 'onboarding' : 'authed'}
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.text,
+        headerTintColor: colors.accent,
+        headerTitleStyle: { color: colors.text, fontWeight: '700' },
+        headerShadowVisible: false,
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.background },
       }}
     >

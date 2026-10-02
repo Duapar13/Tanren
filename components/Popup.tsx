@@ -10,7 +10,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-/** App-themed replacement for the native Alert — used for informational popups (e.g. badge details). */
+/** App-themed replacement for the native Alert — used for informational popups (e.g. season details). */
 export function Popup({ visible, onClose, title, children }: Props) {
   const { colors } = useTheme();
 
@@ -32,11 +32,11 @@ export function Popup({ visible, onClose, title, children }: Props) {
             width: '100%',
             maxWidth: 360,
             backgroundColor: colors.card,
-            borderRadius: Radius.lg,
+            borderRadius: Radius.xl,
             borderWidth: 1,
             borderColor: colors.border,
-            padding: Spacing.lg,
-            gap: Spacing.md,
+            padding: Spacing.xl,
+            gap: Spacing.lg,
           }}
         >
           <ThemedText variant="title3" weight="700" style={{ textAlign: 'center' }}>
@@ -46,13 +46,14 @@ export function Popup({ visible, onClose, title, children }: Props) {
           <Pressable
             onPress={onClose}
             style={{
-              paddingVertical: Spacing.md,
+              minHeight: 48,
+              justifyContent: 'center',
               borderRadius: Radius.md,
               backgroundColor: colors.accent,
               alignItems: 'center',
             }}
           >
-            <ThemedText variant="subhead" weight="600" style={{ color: '#FFFFFF' }}>
+            <ThemedText variant="subhead" weight="700" style={{ color: colors.onAccent }}>
               Fermer
             </ThemedText>
           </Pressable>

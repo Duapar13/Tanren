@@ -8,9 +8,10 @@ interface Props {
   tintColor?: string;
 }
 
-export function ProgressBar({ progress, height = 8, tintColor }: Props) {
+export function ProgressBar({ progress, height = 10, tintColor }: Props) {
   const { colors } = useTheme();
   const clamped = Math.max(0, Math.min(1, progress));
+  const tint = tintColor ?? colors.accent;
 
   return (
     <View
@@ -24,9 +25,11 @@ export function ProgressBar({ progress, height = 8, tintColor }: Props) {
       <View
         style={{
           width: `${clamped * 100}%`,
+          // Never collapse to an invisible sliver — a non-zero value should always read as "started".
+          minWidth: clamped > 0 ? height : 0,
           height: '100%',
           borderRadius: Radius.pill,
-          backgroundColor: tintColor ?? colors.accent,
+          backgroundColor: tint,
         }}
       />
     </View>

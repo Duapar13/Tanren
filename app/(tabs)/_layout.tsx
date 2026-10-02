@@ -43,15 +43,18 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: colors.tabBarBackground,
             borderTopColor: colors.border,
+            borderTopWidth: 1,
+            elevation: 0,
           },
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.2 },
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
             title: t.tabs.home,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
             ),
           }}
         />
@@ -59,8 +62,8 @@ export default function TabsLayout() {
           name="seance"
           options={{
             title: t.tabs.session,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="barbell-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={size} color={color} />
             ),
           }}
         />
@@ -68,8 +71,8 @@ export default function TabsLayout() {
           name="progression"
           options={{
             title: t.tabs.progression,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="trending-up-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size} color={color} />
             ),
           }}
         />
@@ -77,8 +80,8 @@ export default function TabsLayout() {
           name="rang"
           options={{
             title: t.tabs.rank,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="shield-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
             ),
           }}
         />
@@ -86,8 +89,8 @@ export default function TabsLayout() {
           name="nutrition"
           options={{
             title: t.tabs.nutrition,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="nutrition-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'nutrition' : 'nutrition-outline'} size={size} color={color} />
             ),
           }}
         />
@@ -95,8 +98,8 @@ export default function TabsLayout() {
           name="profil"
           options={{
             title: t.tabs.profile,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
             ),
           }}
         />

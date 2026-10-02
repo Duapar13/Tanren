@@ -6,6 +6,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { Card } from '../../components/Card';
+import { Section } from '../../components/Section';
 import { MonthlyCalendar } from '../../components/MonthlyCalendar';
 import { StatTile } from '../../components/StatTile';
 import { useData } from '../../context/DataContext';
@@ -50,7 +51,7 @@ export default function ProgressionScreen() {
   return (
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScreenHeader mascot="excited" />
+        <ScreenHeader title={t.tabs.progression} mascot="excited" />
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,
@@ -58,10 +59,7 @@ export default function ProgressionScreen() {
             paddingBottom: Spacing.xxl,
           }}
         >
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.progression.regularity}
-            </ThemedText>
+          <Section title={t.progression.regularity}>
             <Card>
               <MonthlyCalendar
                 year={viewYear}
@@ -81,17 +79,14 @@ export default function ProgressionScreen() {
                 }
               />
             </Card>
-          </View>
+          </Section>
 
-          <View>
-            <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
-              {t.progression.thisYear}
-            </ThemedText>
+          <Section title={t.progression.thisYear}>
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <StatTile label={t.dashboard.sessionsDone} value={String(yearStats.done)} />
               <StatTile label={t.progression.missedSessions} value={String(yearStats.missed)} />
             </View>
-          </View>
+          </Section>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

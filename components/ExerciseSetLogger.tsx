@@ -129,15 +129,20 @@ export function ExerciseSetLogger({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: colors.accent,
-        borderRadius: Radius.md,
+        backgroundColor: colors.cardElevated,
+        borderTopLeftRadius: Radius.lg,
+        borderTopRightRadius: Radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.accent,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.md,
-        opacity: canCollapse ? 1 : 0.6,
+        opacity: canCollapse ? 1 : 0.85,
       }}
     >
       <View style={{ flex: 1, gap: 2 }}>
-        <ThemedText variant="headline" weight="700" style={{ color: '#FFFFFF' }}>
+        <ThemedText variant="headline" weight="800">
           {exercise.name}
         </ThemedText>
         {!!bestWeightKg && (
@@ -145,12 +150,12 @@ export function ExerciseSetLogger({
             <Ionicons
               name="barbell-outline"
               size={13}
-              color={recordBeaten ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
+              color={recordBeaten ? colors.positive : colors.textSecondary}
             />
             <ThemedText
               variant="caption"
               weight={recordBeaten ? '700' : '600'}
-              style={{ color: recordBeaten ? '#FFFFFF' : 'rgba(255,255,255,0.8)' }}
+              style={{ color: recordBeaten ? colors.positive : colors.textSecondary }}
             >
               {recordBeaten
                 ? t.seance.bestWeightBeaten
@@ -161,12 +166,24 @@ export function ExerciseSetLogger({
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {draftSets.length > 0 && (
-          <ThemedText variant="footnote" weight="600" style={{ color: '#FFFFFF' }}>
-            {draftSets.length}
-          </ThemedText>
+          <View
+            style={{
+              minWidth: 26,
+              height: 26,
+              paddingHorizontal: 8,
+              borderRadius: 13,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ThemedText variant="footnote" weight="800" style={{ color: colors.onAccent }}>
+              {draftSets.length}
+            </ThemedText>
+          </View>
         )}
         {canCollapse && (
-          <Ionicons name={validated ? 'chevron-down' : 'chevron-up'} size={20} color="#FFFFFF" />
+          <Ionicons name={validated ? 'chevron-down' : 'chevron-up'} size={20} color={colors.textSecondary} />
         )}
       </View>
     </Pressable>
@@ -295,9 +312,26 @@ export function ExerciseSetLogger({
                 justifyContent: 'space-between',
               }}
             >
-              <Pressable onPress={() => startEdit(i, s)} style={{ flex: 1, paddingVertical: Spacing.sm }}>
-                <ThemedText variant="subhead" color="secondary">
-                  {t.seance.setLabel(i + 1)} · {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
+              <Pressable
+                onPress={() => startEdit(i, s)}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.sm }}
+              >
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: colors.accentSoft,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ThemedText variant="footnote" weight="800" color="accent">
+                    {i + 1}
+                  </ThemedText>
+                </View>
+                <ThemedText variant="subhead" weight="600" style={{ flex: 1 }}>
+                  {s.reps} {t.common.reps.toLowerCase()} × {formatWeight(s.weightKg, weightUnit)}
                   {s.rpe ? ` · RPE ${s.rpe}` : ''}
                 </ThemedText>
               </Pressable>
@@ -351,15 +385,15 @@ export function ExerciseSetLogger({
           <Pressable
             onPress={handleAdd}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: Radius.sm,
+              width: 50,
+              height: 50,
+              borderRadius: Radius.md,
               backgroundColor: colors.accent,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Ionicons name="add" size={24} color="#FFFFFF" />
+            <Ionicons name="add" size={24} color={colors.onAccent} />
           </Pressable>
         </View>
 

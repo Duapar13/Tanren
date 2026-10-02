@@ -163,7 +163,7 @@ export function GuidedTour({ visible, onFinish, tabBarHeight }: Props) {
                   backgroundColor: colors.accent,
                 }}
               >
-                <ThemedText variant="footnote" weight="600" style={{ color: '#FFFFFF' }}>
+                <ThemedText variant="footnote" weight="600" style={{ color: colors.onAccent }}>
                   {isLast ? t.tour.start : t.tour.next}
                 </ThemedText>
               </Pressable>

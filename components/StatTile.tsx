@@ -19,21 +19,20 @@ export function StatTile({ label, value, delta, deltaPositive }: Props) {
         backgroundColor: colors.fill,
         borderRadius: Radius.md,
         padding: Spacing.md,
-        gap: 4,
+        gap: 2,
       }}
     >
-      <ThemedText variant="caption" color="secondary">
+      <ThemedText variant="caption" color="secondary" weight="600">
         {label}
       </ThemedText>
-      <ThemedText variant="title2" weight="700">
+      <ThemedText variant="title2" weight="800">
         {value}
       </ThemedText>
       {delta ? (
         <ThemedText
           variant="caption"
-          weight="600"
-          color={deltaPositive ? 'primary' : 'secondary'}
-          style={{ opacity: deltaPositive ? 1 : 0.7 }}
+          weight="700"
+          style={{ color: deltaPositive ? colors.positive : colors.textSecondary }}
         >
           {delta}
         </ThemedText>

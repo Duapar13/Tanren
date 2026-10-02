@@ -21,7 +21,9 @@ export function SkillBanner({ icon, label, points }: Props) {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: colors.fill,
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
         borderRadius: Radius.md,
         paddingVertical: Spacing.sm,
         paddingHorizontal: Spacing.md,
@@ -30,10 +32,10 @@ export function SkillBanner({ icon, label, points }: Props) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
         <View
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: colors.accent + '26',
+            width: 34,
+            height: 34,
+            borderRadius: Radius.sm,
+            backgroundColor: colors.accentSoft,
             alignItems: 'center',
             justifyContent: 'center',
           }}

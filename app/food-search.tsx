@@ -238,7 +238,7 @@ export default function FoodSearchScreen() {
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="search" size={20} color="#FFFFFF" />
+                <Ionicons name="search" size={20} color={colors.onAccent} />
               </Pressable>
             </View>
             {searching && <ActivityIndicator />}
