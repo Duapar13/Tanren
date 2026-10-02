@@ -62,6 +62,11 @@ export function AppShell() {
       <Stack.Protected guard={!!user && !needsOnboarding}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
+          name="session"
+          options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }}
+        />
+        <Stack.Screen name="session-recap" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen
           name="exercise/[id]"
           options={{ title: t.screenTitles.exercise }}
         />

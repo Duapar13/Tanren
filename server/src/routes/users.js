@@ -52,6 +52,7 @@ function publicUser(row) {
     onboardingCompleted: !!row.onboarding_completed,
     avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
     pushNotificationsEnabled: !!row.expo_push_token,
+    dailyReminderEnabled: row.daily_reminder_enabled === undefined ? true : !!row.daily_reminder_enabled,
     weightUnit: row.weight_unit,
     lengthUnit: row.length_unit,
   };
@@ -80,6 +81,7 @@ router.patch('/me', async (req, res) => {
     customFatG,
     onboardingCompleted,
     pushToken,
+    dailyReminderEnabled,
     weightUnit,
     lengthUnit,
   } = req.body ?? {};
@@ -143,6 +145,7 @@ router.patch('/me', async (req, res) => {
   if (customFatG !== undefined) { fields.push('custom_fat_g = ?'); values.push(customFatG); }
   if (onboardingCompleted !== undefined) { fields.push('onboarding_completed = ?'); values.push(onboardingCompleted ? 1 : 0); }
   if (pushToken !== undefined) { fields.push('expo_push_token = ?'); values.push(pushToken); }
+  if (dailyReminderEnabled !== undefined) { fields.push('daily_reminder_enabled = ?'); values.push(dailyReminderEnabled ? 1 : 0); }
   if (weightUnit !== undefined) { fields.push('weight_unit = ?'); values.push(weightUnit); }
   if (lengthUnit !== undefined) { fields.push('length_unit = ?'); values.push(lengthUnit); }
 

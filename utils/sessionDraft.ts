@@ -1,7 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DraftSet } from '../components/ExerciseSetLogger';
 
 const STORAGE_KEY = 'seance:draft';
+
+export interface DraftSet {
+  reps: number;
+  weightKg: number;
+  rpe: number | null;
+}
 
 interface StoredSessionDraft {
   date: string;
@@ -9,6 +14,7 @@ interface StoredSessionDraft {
   draftSets: Record<number, DraftSet[]>;
   validatedExerciseIds: number[];
   resuming: boolean;
+  startedAt?: number;
 }
 
 export interface SessionDraftState {
@@ -16,6 +22,8 @@ export interface SessionDraftState {
   draftSets: Record<number, DraftSet[]>;
   validatedExerciseIds: number[];
   resuming: boolean;
+  /** Epoch ms when the workout started — drives the session chrono. */
+  startedAt?: number;
 }
 
 // Snapshot of the in-progress séance builder, written on every change so a killed/crashed
@@ -38,6 +46,7 @@ export async function loadSessionDraft(date: string): Promise<SessionDraftState 
       draftSets: parsed.draftSets,
       validatedExerciseIds: parsed.validatedExerciseIds,
       resuming: parsed.resuming,
+      startedAt: parsed.startedAt,
     };
   } catch {
     return null;

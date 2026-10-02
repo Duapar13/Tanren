@@ -15,7 +15,7 @@ async function runDailyReminder() {
   const dow = new Date().getDay(); // 0=dimanche..6=samedi, same convention as the app
 
   const [users] = await pool.query(
-    'SELECT id, training_days, expo_push_token FROM users WHERE expo_push_token IS NOT NULL'
+    'SELECT id, training_days, expo_push_token FROM users WHERE expo_push_token IS NOT NULL AND daily_reminder_enabled = 1'
   );
   console.log(`[push] daily reminder run at ${new Date().toISOString()} — ${users.length} user(s) with a token`);
 

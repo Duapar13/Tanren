@@ -26,6 +26,7 @@ import { authErrorMessage } from '../../lib/authErrors';
 import { registerForPushNotificationsAsync } from '../../hooks/usePushNotifications';
 import { cmToDisplay, displayToCm } from '../../utils/units';
 import { setPreference, usePreference, type ThemeMode } from '../../lib/preferences';
+import { requestReminderPermission } from '../../lib/reminders';
 
 const REST_DURATIONS = [60, 90, 120, 180];
 
@@ -46,6 +47,10 @@ export default function ProfilScreen() {
   const [deletingAccount, setDeletingAccount] = useState(false);
   const themeMode = usePreference('themeMode');
   const showLeaderboard = usePreference('showLeaderboard');
+  const hapticsEnabled = usePreference('hapticsEnabled');
+  const reminderEnabled = usePreference('reminderEnabled');
+  const reminderHour = usePreference('reminderHour');
+  const reminderMinute = usePreference('reminderMinute');
   const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
     { label: t.profil.themeSystem, value: 'system' },
     { label: t.profil.themeLight, value: 'light' },
@@ -150,6 +155,22 @@ export default function ProfilScreen() {
   };
 
   const [togglingPush, setTogglingPush] = useState(false);
+
+  const handleToggleReminder = async (enabled: boolean) => {
+    if (enabled && !(await requestReminderPermission())) {
+      Alert.alert(t.common.permissionRequired, t.profil.reminderDenied);
+      return;
+    }
+    setPreference('reminderEnabled', enabled);
+    // The local reminder replaces the server's fixed 19:00 nudge so the user isn't pinged twice.
+    updateProfile({ dailyReminderEnabled: !enabled }).catch(() => {});
+  };
+
+  const shiftReminder = (deltaMinutes: number) => {
+    const total = (reminderHour * 60 + reminderMinute + deltaMinutes + 24 * 60) % (24 * 60);
+    setPreference('reminderHour', Math.floor(total / 60));
+    setPreference('reminderMinute', total % 60);
+  };
 
   const handleTogglePush = async (enabled: boolean) => {
     setTogglingPush(true);
@@ -330,6 +351,12 @@ export default function ProfilScreen() {
                 value={showLeaderboard}
                 onValueChange={(v) => setPreference('showLeaderboard', v)}
               />
+              <ToggleRow
+                label={t.profil.haptics}
+                hint={t.profil.hapticsHint}
+                value={hapticsEnabled}
+                onValueChange={(v) => setPreference('hapticsEnabled', v)}
+              />
             </Card>
           </Section>
 
@@ -497,7 +524,7 @@ export default function ProfilScreen() {
           </Section>
 
           <Section title={t.profil.notifications}>
-            <Card>
+            <Card style={{ gap: Spacing.lg }}>
               <ToggleRow
                 label={t.profil.pushNotifications}
                 hint={t.profil.pushNotificationsHint}
@@ -505,6 +532,26 @@ export default function ProfilScreen() {
                 onValueChange={handleTogglePush}
                 disabled={togglingPush}
               />
+              <ToggleRow
+                label={t.profil.reminder}
+                hint={t.profil.reminderHint}
+                value={reminderEnabled}
+                onValueChange={handleToggleReminder}
+              />
+              {reminderEnabled && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md }}>
+                  <ThemedText variant="subhead" weight="600">
+                    {t.profil.reminderTime}
+                  </ThemedText>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                    <IconButton name="remove" onPress={() => shiftReminder(-30)} />
+                    <ThemedText variant="title3" weight="800" style={{ minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] }}>
+                      {String(reminderHour).padStart(2, '0')}:{String(reminderMinute).padStart(2, '0')}
+                    </ThemedText>
+                    <IconButton name="add" onPress={() => shiftReminder(30)} />
+                  </View>
+                </View>
+              )}
             </Card>
           </Section>
 

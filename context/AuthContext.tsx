@@ -37,6 +37,7 @@ type ProfilePatch = Partial<{
   customFatG: number | null;
   onboardingCompleted: boolean;
   pushToken: string | null;
+  dailyReminderEnabled: boolean;
   weightUnit: User['weightUnit'];
   lengthUnit: User['lengthUnit'];
 }>;

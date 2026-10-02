@@ -7,10 +7,21 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 interface Preferences {
   themeMode: ThemeMode;
   showLeaderboard: boolean;
+  hapticsEnabled: boolean;
+  reminderEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
 }
 
 const STORAGE_KEY = 'ningyma:preferences';
-const DEFAULTS: Preferences = { themeMode: 'system', showLeaderboard: true };
+const DEFAULTS: Preferences = {
+  themeMode: 'system',
+  showLeaderboard: true,
+  hapticsEnabled: true,
+  reminderEnabled: false,
+  reminderHour: 18,
+  reminderMinute: 0,
+};
 
 let current: Preferences = DEFAULTS;
 const listeners = new Set<() => void>();
@@ -41,6 +52,10 @@ export function setPreference<K extends keyof Preferences>(key: K, value: Prefer
   if (key === 'themeMode') applyThemeMode(value as ThemeMode);
   emit();
   AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(current)).catch(() => {});
+}
+
+export function getPreference<K extends keyof Preferences>(key: K): Preferences[K] {
+  return current[key];
 }
 
 export function usePreference<K extends keyof Preferences>(key: K): Preferences[K] {

@@ -9,13 +9,14 @@ import { SetLine } from '../components/SetLine';
 import { Button } from '../components/Button';
 import { ShareCard } from '../components/ShareCard';
 import { ExerciseCard } from '../components/ExerciseCard';
+import { TodaySessionsReview } from '../components/TodaySessionsReview';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 import { Spacing } from '../constants/theme';
 import { shareCardAsImage } from '../lib/shareCard';
 import { formatWeight } from '../utils/units';
-import { formatLongDate } from '../utils/date';
+import { formatLongDate, todayKey } from '../utils/date';
 import { SetWithExercise } from '../types';
 
 function groupByExercise(sets: SetWithExercise[]) {
@@ -63,7 +64,11 @@ export default function SessionDetailScreen() {
           {date ? formatLongDate(date, LOCALE_MAP[lang]) : ''}
         </ThemedText>
 
-        {grouped.length === 0 ? (
+        {date === todayKey() && grouped.length > 0 ? (
+          <View style={{ width: '100%' }}>
+            <TodaySessionsReview />
+          </View>
+        ) : grouped.length === 0 ? (
           <Card style={{ width: '100%' }}>
             <ThemedText color="secondary" style={{ textAlign: 'center' }}>
               {t.sessionDetail.noExercisesThatDay}

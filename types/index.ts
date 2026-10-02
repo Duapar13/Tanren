@@ -155,6 +155,8 @@ export interface User {
   onboardingCompleted: boolean;
   avatarUrl: string | null;
   pushNotificationsEnabled: boolean;
+  /** Server-side 19:00 push nudge; turned off when the user uses the local reminder instead. */
+  dailyReminderEnabled?: boolean;
   weightUnit: 'kg' | 'lbs';
   lengthUnit: 'cm' | 'in';
 }

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GuidedTour } from '../../components/GuidedTour';
 import { LeaderboardReporter } from '../../components/LeaderboardReporter';
+import { WorkoutReminders } from '../../components/WorkoutReminders';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -70,6 +71,7 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
       <LeaderboardReporter />
+      <WorkoutReminders />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -127,8 +129,6 @@ export default function TabsLayout() {
             ),
           }}
         />
-        {/* Reachable only through the centre button / home card, never from the tab bar. */}
-        <Tabs.Screen name="seance" options={{ href: null }} />
       </Tabs>
       <GuidedTour
         visible={showTour}

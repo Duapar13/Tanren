@@ -34,6 +34,7 @@ function publicUser(row) {
     onboardingCompleted: !!row.onboarding_completed,
     avatarUrl: row.avatar_path ? `/uploads/avatars/${row.avatar_path}` : null,
     pushNotificationsEnabled: !!row.expo_push_token,
+    dailyReminderEnabled: row.daily_reminder_enabled === undefined ? true : !!row.daily_reminder_enabled,
     weightUnit: row.weight_unit,
     lengthUnit: row.length_unit,
   };
