@@ -171,6 +171,9 @@ export const es: TranslationDict = {
     firstSessionPrompt: 'Registra tu primer entreno para ver tus estadísticas aquí.',
   },
   nutrition: {
+    segMeals: 'Comidas',
+    segBody: 'Cuerpo',
+    segGoal: 'Objetivo',
     today: 'Hoy',
     objective: 'Objetivo',
     protein: 'Proteínas',

@@ -169,6 +169,9 @@ export const fr = {
     firstSessionPrompt: 'Logge ta première séance pour voir tes statistiques ici.',
   },
   nutrition: {
+    segMeals: 'Repas',
+    segBody: 'Corps',
+    segGoal: 'Objectif',
     today: "Aujourd'hui",
     objective: 'Objectif',
     protein: 'Protéines',

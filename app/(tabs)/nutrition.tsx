@@ -87,6 +87,7 @@ export default function NutritionScreen() {
     { label: t.nutrition.fat, value: 'fatG' },
   ];
 
+  const [segment, setSegment] = useState<'meals' | 'body' | 'goal'>('meals');
   const [proteinInput, setProteinInput] = useState('');
   const [carbsInput, setCarbsInput] = useState('');
   const [fatInput, setFatInput] = useState('');
@@ -230,13 +231,26 @@ export default function NutritionScreen() {
     <ThemedView variant="grouped" style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScreenHeader title={t.tabs.nutrition} mascot="content" />
+        <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm }}>
+          <SegmentedControl
+            options={[
+              { label: t.nutrition.segMeals, value: 'meals' as const },
+              { label: t.nutrition.segBody, value: 'body' as const },
+              { label: t.nutrition.segGoal, value: 'goal' as const },
+            ]}
+            value={segment}
+            onChange={setSegment}
+          />
+        </View>
         <ScrollView
           contentContainerStyle={{
             padding: Spacing.lg,
             gap: Spacing.lg,
-            paddingBottom: Spacing.xxl,
+            paddingBottom: Spacing.xxl * 3,
           }}
+          showsVerticalScrollIndicator={false}
         >
+          {segment === 'meals' && (
           <Section title={t.nutrition.today}>
             <Card style={{ gap: Spacing.md }}>
               {targets ? (
@@ -419,7 +433,9 @@ export default function NutritionScreen() {
               )}
             </Card>
           </Section>
+          )}
 
+          {segment === 'goal' && (
           <Section title={t.nutrition.nutritionalGoal}>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -478,7 +494,10 @@ export default function NutritionScreen() {
               )}
             </Card>
           </Section>
+          )}
 
+          {segment === 'body' && (
+          <>
           <Section title={t.nutrition.bodyWeight}>
             <Card style={{ gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -617,7 +636,10 @@ export default function NutritionScreen() {
               </Card>
             </Section>
           )}
+          </>
+          )}
 
+          {segment === 'meals' && (
           <Section title={t.nutrition.evolution}>
             <Card style={{ gap: Spacing.md }}>
               <SegmentedControl options={MACRO_OPTIONS} value={macro} onChange={setMacro} />
@@ -638,6 +660,7 @@ export default function NutritionScreen() {
               <SegmentedControl options={RANGE_OPTIONS} value={range} onChange={setRange} />
             </Card>
           </Section>
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
