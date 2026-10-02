@@ -504,6 +504,57 @@ function computeCarryoverEvent(params: RankingParams, seasonInfo: SeasonInfo, ef
   };
 }
 
+export interface PlacementStatus {
+  /** False for a brand-new season-1 player, or a returning player whose previous season never
+   * got past Fer — there's nothing earned to carry over, so showing a mystery "?" rank and a
+   * reveal later would be pure theater over a number that was never going anywhere interesting. */
+  applicable: boolean;
+  /** True while sessionsCompleted < sessionsNeeded. Only meaningful when `applicable`. */
+  inPlacement: boolean;
+  sessionsCompleted: number;
+  sessionsNeeded: number;
+}
+
+/**
+ * Mirrors computeCarryoverEvent's own gating, but exposes it *before* the bonus actually lands —
+ * the carryover event itself only exists once all `sessionsNeeded` are in, so the UI has nothing
+ * to key "we're mid-placement" off otherwise. Keeping both in sync is on purpose: whatever
+ * decides whether a carryover bonus is coming must also decide whether to show the placement
+ * mystery state, or the two could disagree (e.g. placement UI for a player who's about to get a
+ * zero-point bonus).
+ */
+export function computePlacementStatus(
+  params: RankingParams,
+  seasonInfo: SeasonInfo = currentSeasonInfo()
+): PlacementStatus {
+  const notApplicable: PlacementStatus = {
+    applicable: false,
+    inPlacement: false,
+    sessionsCompleted: SEASON_CARRYOVER_MIN_SESSIONS,
+    sessionsNeeded: SEASON_CARRYOVER_MIN_SESSIONS,
+  };
+  if (seasonInfo.seasonNumber <= 1) return notApplicable;
+
+  const previousSeasonInfo = seasonInfoForNumber(seasonInfo.seasonNumber - 1);
+  const previousMedal = computeSeasonMedal(params, previousSeasonInfo);
+  const peakIndex = RANKS.indexOf(previousMedal.peakRank);
+  if (peakIndex <= 0) return notApplicable;
+
+  const today = todayKey();
+  const effectiveEnd = seasonInfo.endDate < today ? seasonInfo.endDate : today;
+  const sessionsInSeason = params.sessions.filter(
+    (s) => s.date >= seasonInfo.startDate && s.date <= effectiveEnd
+  );
+  const sessionsCompleted = Math.min(sessionsInSeason.length, SEASON_CARRYOVER_MIN_SESSIONS);
+
+  return {
+    applicable: true,
+    inPlacement: sessionsInSeason.length < SEASON_CARRYOVER_MIN_SESSIONS,
+    sessionsCompleted,
+    sessionsNeeded: SEASON_CARRYOVER_MIN_SESSIONS,
+  };
+}
+
 export interface SeasonRanking {
   seasonInfo: SeasonInfo;
   totalPoints: number;

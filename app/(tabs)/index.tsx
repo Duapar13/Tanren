@@ -19,7 +19,13 @@ import { Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
 import { toDateKey, todayKey } from '../../utils/date';
 import { sessionsInCurrentWeek, weeklyTarget } from '../../utils/workoutStats';
-import { computeSeasonRanking, POINTS_PER_DIVISION, RANK_COLORS, RANK_ICON_IMAGES } from '../../utils/ranking';
+import {
+  computePlacementStatus,
+  computeSeasonRanking,
+  POINTS_PER_DIVISION,
+  RANK_COLORS,
+  RANK_ICON_IMAGES,
+} from '../../utils/ranking';
 
 export default function DashboardScreen() {
   const { sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries } = useData();
@@ -35,20 +41,24 @@ export default function DashboardScreen() {
 
   const weekSessions = sessionsInCurrentWeek(sessions);
 
-  const ranking = useMemo(
-    () =>
-      computeSeasonRanking({
-        sessions,
-        sets,
-        nutritionEntries,
-        bodyWeightEntries,
-        measurementEntries,
-        measurementsEnabled,
-        trainingDays,
-        goal: user?.goal ?? 'maintain',
-        accountCreatedAt: user?.createdAt ? toDateKey(new Date(user.createdAt)) : todayKey(),
-      }),
+  const rankingParams = useMemo(
+    () => ({
+      sessions,
+      sets,
+      nutritionEntries,
+      bodyWeightEntries,
+      measurementEntries,
+      measurementsEnabled,
+      trainingDays,
+      goal: user?.goal ?? ('maintain' as const),
+      accountCreatedAt: user?.createdAt ? toDateKey(new Date(user.createdAt)) : todayKey(),
+    }),
     [sessions, sets, nutritionEntries, bodyWeightEntries, measurementEntries, measurementsEnabled, trainingDays, user]
+  );
+  const ranking = useMemo(() => computeSeasonRanking(rankingParams), [rankingParams]);
+  const placement = useMemo(
+    () => computePlacementStatus(rankingParams, ranking.seasonInfo),
+    [rankingParams, ranking.seasonInfo]
   );
   const rankColor = RANK_COLORS[ranking.state.rank];
   const topSkills = (Object.entries(ranking.breakdown) as [keyof typeof SKILL_LABELS, number][]).filter(
@@ -100,36 +110,69 @@ export default function DashboardScreen() {
             </ThemedText>
             <Pressable onPress={() => router.push('/(tabs)/rang')}>
               <Card style={{ gap: Spacing.md }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                  <View
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 999,
-                      backgroundColor: rankColor + '26',
-                      borderWidth: 2,
-                      borderColor: rankColor,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Image source={RANK_ICON_IMAGES[ranking.state.rank]} style={{ width: 26, height: 26, tintColor: rankColor }} />
+                {placement.applicable && placement.inPlacement ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                    <View
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 999,
+                        backgroundColor: colors.accent + '1A',
+                        borderWidth: 2,
+                        borderColor: colors.accent,
+                        borderStyle: 'dashed',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="help" size={24} color={colors.accent} />
+                    </View>
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <ThemedText variant="body" weight="700">
+                        {t.rang.placementTitle}
+                      </ThemedText>
+                      <ProgressBar
+                        progress={placement.sessionsCompleted / placement.sessionsNeeded}
+                        tintColor={colors.accent}
+                        height={6}
+                      />
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                   </View>
-                  <View style={{ flex: 1, gap: 6 }}>
-                    <ThemedText variant="body" weight="700">
-                      {ranking.state.rank} {ranking.state.division}
+                ) : (
+                  <>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+                      <View
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 999,
+                          backgroundColor: rankColor + '26',
+                          borderWidth: 2,
+                          borderColor: rankColor,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Image source={RANK_ICON_IMAGES[ranking.state.rank]} style={{ width: 26, height: 26, tintColor: rankColor }} />
+                      </View>
+                      <View style={{ flex: 1, gap: 6 }}>
+                        <ThemedText variant="body" weight="700">
+                          {ranking.state.rank} {ranking.state.division}
+                        </ThemedText>
+                        <ProgressBar
+                          progress={ranking.state.pointsInDivision / POINTS_PER_DIVISION}
+                          tintColor={rankColor}
+                          height={6}
+                        />
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                    </View>
+                    <ThemedText variant="caption" color="tertiary">
+                      {topSkills.map(([key, pts]) => `${SKILL_LABELS[key]} ${pts >= 0 ? '+' : ''}${pts}`).join(' · ')}
                     </ThemedText>
-                    <ProgressBar
-                      progress={ranking.state.pointsInDivision / POINTS_PER_DIVISION}
-                      tintColor={rankColor}
-                      height={6}
-                    />
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-                </View>
-                <ThemedText variant="caption" color="tertiary">
-                  {topSkills.map(([key, pts]) => `${SKILL_LABELS[key]} ${pts >= 0 ? '+' : ''}${pts}`).join(' · ')}
-                </ThemedText>
+                  </>
+                )}
               </Card>
             </Pressable>
           </View>

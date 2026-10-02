@@ -11,6 +11,7 @@ import { ProgressBar } from '../../components/ProgressBar';
 import { SkillBanner } from '../../components/SkillBanner';
 import { Popup } from '../../components/Popup';
 import { SeasonMedalBadge } from '../../components/SeasonMedalBadge';
+import { PlacementReveal } from '../../components/PlacementReveal';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
@@ -20,6 +21,7 @@ import {
   computeSeasonMedalHistory,
   computeSeasonRanking,
   daysUntilNextSeason,
+  computePlacementStatus,
   DIVISIONS,
   POINTS_PER_DIVISION,
   RANK_COLORS,
@@ -30,6 +32,7 @@ import {
 } from '../../utils/ranking';
 import { computeBadgeStatuses, type BadgeProgress, type BadgeStatus } from '../../utils/badges';
 import { toDateKey, todayKey } from '../../utils/date';
+import { hasShownPlacementReveal, markPlacementRevealShown } from '../../utils/placementReveal';
 import { apiFetch } from '../../lib/api';
 import { TranslationDict } from '../../constants/i18n/fr';
 
@@ -134,6 +137,27 @@ export default function RangScreen() {
 
   const { state } = ranking;
   const rankColor = RANK_COLORS[state.rank];
+  const placement = useMemo(
+    () => computePlacementStatus(rankingParams, ranking.seasonInfo),
+    [rankingParams, ranking.seasonInfo]
+  );
+
+  // Fires once, the first time this screen notices placement just finished (sessionsCompleted
+  // reached sessionsNeeded) — hasShownPlacementReveal guards against replaying it on every later
+  // visit to this tab once the season's already placed.
+  const [showReveal, setShowReveal] = useState(false);
+  useEffect(() => {
+    if (!placement.applicable || placement.inPlacement) return;
+    let cancelled = false;
+    hasShownPlacementReveal(ranking.seasonInfo.seasonNumber).then((already) => {
+      if (cancelled || already) return;
+      setShowReveal(true);
+      markPlacementRevealShown(ranking.seasonInfo.seasonNumber);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [placement.applicable, placement.inPlacement, ranking.seasonInfo.seasonNumber]);
 
   // Ranking has no server-side scoring engine — this just reports what this device already
   // computed for itself, so the leaderboard is only as fresh as each player's last report.
@@ -180,47 +204,96 @@ export default function RangScreen() {
             paddingBottom: Spacing.xxl,
           }}
         >
-          <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
-            <View
-              style={{
-                width: 96,
-                height: 96,
-                borderRadius: 999,
-                backgroundColor: rankColor + '26',
-                borderWidth: 2,
-                borderColor: rankColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Image source={RANK_ICON_IMAGES[state.rank]} style={{ width: 44, height: 44, tintColor: rankColor }} />
-            </View>
-            <ThemedText variant="title1" weight="700">
-              {state.rank} {state.division}
-            </ThemedText>
-            <ThemedText variant="subhead" color="secondary">
-              {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
-            </ThemedText>
+          {placement.applicable && placement.inPlacement ? (
+            <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
+              <View
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 999,
+                  backgroundColor: colors.accent + '1A',
+                  borderWidth: 2,
+                  borderColor: colors.accent,
+                  borderStyle: 'dashed',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="help" size={44} color={colors.accent} />
+              </View>
+              <ThemedText variant="title1" weight="700">
+                {t.rang.placementTitle}
+              </ThemedText>
+              <ThemedText variant="subhead" color="secondary">
+                {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
+              </ThemedText>
 
-            <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
-              {state.isMaxTier ? (
-                <ThemedText variant="footnote" color="accent" weight="600" style={{ textAlign: 'center' }}>
-                  {t.rang.maxRankReached}
+              <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
+                <ProgressBar
+                  progress={placement.sessionsCompleted / placement.sessionsNeeded}
+                  tintColor={colors.accent}
+                />
+                <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                  {t.rang.placementProgress(placement.sessionsCompleted, placement.sessionsNeeded)}
                 </ThemedText>
-              ) : (
-                <>
-                  <ProgressBar progress={state.pointsInDivision / POINTS_PER_DIVISION} tintColor={rankColor} />
-                  <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
-                    {t.rang.pointsToNextDivision(state.pointsInDivision, POINTS_PER_DIVISION)}
-                  </ThemedText>
-                </>
-              )}
-            </View>
+              </View>
 
-            <ThemedText variant="caption" color="tertiary">
-              {t.rang.newSeasonIn(daysUntilNextSeason())}
-            </ThemedText>
-          </Card>
+              <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center', marginTop: Spacing.xs }}>
+                {t.rang.placementHint}
+              </ThemedText>
+            </Card>
+          ) : (
+            <Card style={{ alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl }}>
+              <View
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 999,
+                  backgroundColor: rankColor + '26',
+                  borderWidth: 2,
+                  borderColor: rankColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Image source={RANK_ICON_IMAGES[state.rank]} style={{ width: 44, height: 44, tintColor: rankColor }} />
+              </View>
+              <ThemedText variant="title1" weight="700">
+                {state.rank} {state.division}
+              </ThemedText>
+              <ThemedText variant="subhead" color="secondary">
+                {t.rang.seasonLabel(ranking.seasonInfo.seasonNumber)}
+              </ThemedText>
+
+              <View style={{ width: '100%', gap: 6, marginTop: Spacing.sm }}>
+                {state.isMaxTier ? (
+                  <ThemedText variant="footnote" color="accent" weight="600" style={{ textAlign: 'center' }}>
+                    {t.rang.maxRankReached}
+                  </ThemedText>
+                ) : (
+                  <>
+                    <ProgressBar progress={state.pointsInDivision / POINTS_PER_DIVISION} tintColor={rankColor} />
+                    <ThemedText variant="caption" color="tertiary" style={{ textAlign: 'center' }}>
+                      {t.rang.pointsToNextDivision(state.pointsInDivision, POINTS_PER_DIVISION)}
+                    </ThemedText>
+                  </>
+                )}
+              </View>
+
+              <ThemedText variant="caption" color="tertiary">
+                {t.rang.newSeasonIn(daysUntilNextSeason())}
+              </ThemedText>
+            </Card>
+          )}
+
+          <PlacementReveal
+            visible={showReveal}
+            rankLabel={`${state.rank} ${state.division}`}
+            rankColor={rankColor}
+            rankIcon={RANK_ICON_IMAGES[state.rank]}
+            bonusPoints={ranking.breakdown.carryover}
+            onDone={() => setShowReveal(false)}
+          />
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
@@ -291,18 +364,20 @@ export default function RangScreen() {
             )}
           </View>
 
-          <View style={{ gap: Spacing.sm }}>
-            <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
-            <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
-            <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
-            <SkillBanner icon="calendar" label={t.skills.frequency} points={ranking.breakdown.frequency} />
-            {ranking.breakdown.carryover > 0 && (
-              <SkillBanner icon="arrow-redo" label={t.skills.carryover} points={ranking.breakdown.carryover} />
-            )}
-            {user?.measurementsEnabled && (
-              <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
-            )}
-          </View>
+          {!(placement.applicable && placement.inPlacement) && (
+            <View style={{ gap: Spacing.sm }}>
+              <SkillBanner icon="flame" label={t.skills.streak} points={ranking.breakdown.streak} />
+              <SkillBanner icon="barbell" label={t.skills.pr} points={ranking.breakdown.pr} />
+              <SkillBanner icon="nutrition" label={t.skills.nutrition} points={ranking.breakdown.nutrition} />
+              <SkillBanner icon="calendar" label={t.skills.frequency} points={ranking.breakdown.frequency} />
+              {ranking.breakdown.carryover > 0 && (
+                <SkillBanner icon="arrow-redo" label={t.skills.carryover} points={ranking.breakdown.carryover} />
+              )}
+              {user?.measurementsEnabled && (
+                <SkillBanner icon="body" label={t.skills.measurement} points={ranking.breakdown.measurement} />
+              )}
+            </View>
+          )}
 
           <View>
             <ThemedText variant="headline" style={{ marginBottom: Spacing.sm }}>
