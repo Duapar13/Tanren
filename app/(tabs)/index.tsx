@@ -14,22 +14,19 @@ import { Gyma } from '../../components/mascot/Gyma';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
-import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Radius, Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
-import { formatLongDate, todayKey } from '../../utils/date';
+import { todayKey } from '../../utils/date';
 import { loadActiveDraft } from '../../utils/sessionDraft';
-import { suggestSession } from '../../utils/sessionSuggestion';
 import { formatWeight } from '../../utils/units';
 import { openSession } from '../../lib/startSession';
-
-const PREVIEW_EXERCISES = 4;
 
 export default function DashboardScreen() {
   const { sessions, sets, exercises, workoutTemplates } = useData();
   const { user } = useAuth();
   const { colors } = useTheme();
-  const { t, lang } = useTranslation();
+  const { t } = useTranslation();
   const weightUnit = user?.weightUnit ?? 'kg';
 
   const trainingDays = user?.trainingDays ?? [];
@@ -44,11 +41,6 @@ export default function DashboardScreen() {
   }, [sets, todaysSessions]);
   const todaysVolumeKg = todaysSets.reduce((sum, s) => sum + s.weightKg * s.reps, 0);
 
-  const suggestion = useMemo(() => suggestSession(sessions, sets, exercises), [sessions, sets, exercises]);
-  const plannedExercises = suggestion.exerciseIds
-    .map((id) => exercises.find((e) => e.id === id))
-    .filter((e): e is NonNullable<typeof e> => !!e);
-
   // A draft means a workout was started and not finished (app closed mid-session, etc.).
   const [hasDraft, setHasDraft] = useState(false);
   useFocusEffect(
@@ -58,21 +50,17 @@ export default function DashboardScreen() {
   );
 
   const firstName = (user?.displayName ?? user?.username ?? '').split(' ')[0];
-  const categoryLabel = suggestion.category === 'upper' ? t.dashboard.upper : t.dashboard.lower;
   const quiet = isRestToday && !doneToday && !hasDraft;
 
-  let heroEyebrow = t.dashboard.suggested;
-  let heroTitle = categoryLabel;
+  const heroEyebrow = t.dashboard.today;
+  let heroTitle: string = t.dashboard.trainingDay;
   let heroIcon: keyof typeof Ionicons.glyphMap = 'flame';
   if (hasDraft) {
-    heroEyebrow = t.dashboard.today;
     heroTitle = t.dashboard.resume;
   } else if (doneToday) {
-    heroEyebrow = t.dashboard.today;
     heroTitle = t.dashboard.doneToday;
     heroIcon = 'checkmark-circle';
   } else if (isRestToday) {
-    heroEyebrow = t.dashboard.today;
     heroTitle = t.dashboard.restDay;
     heroIcon = 'moon';
   }
@@ -113,11 +101,6 @@ export default function DashboardScreen() {
             </View>
 
             <View style={{ gap: 4 }}>
-              {!hasDraft && !doneToday && !isRestToday && suggestion.basedOnDate && (
-                <ThemedText variant="subhead" color="secondary">
-                  {t.dashboard.basedOn(formatLongDate(suggestion.basedOnDate, LOCALE_MAP[lang]))}
-                </ThemedText>
-              )}
               {doneToday && !hasDraft && (
                 <ThemedText variant="subhead" color="secondary">
                   {t.dashboard.doneBody(todaysSets.length, formatWeight(todaysVolumeKg, weightUnit, 0))}
@@ -130,45 +113,6 @@ export default function DashboardScreen() {
               )}
             </View>
 
-            {!hasDraft && !doneToday && !isRestToday && (
-              <View style={{ gap: Spacing.sm }}>
-                {plannedExercises.length === 0 ? (
-                  <ThemedText variant="subhead" color="secondary">
-                    {t.dashboard.freeHint}
-                  </ThemedText>
-                ) : (
-                  <>
-                    {plannedExercises.slice(0, PREVIEW_EXERCISES).map((e, i) => (
-                      <View key={e.id} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                        <View
-                          style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: 12,
-                            backgroundColor: colors.accent + '26',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <ThemedText variant="caption" weight="800" color="accent">
-                            {i + 1}
-                          </ThemedText>
-                        </View>
-                        <ThemedText variant="subhead" weight="600" numberOfLines={1} style={{ flex: 1 }}>
-                          {e.name}
-                        </ThemedText>
-                      </View>
-                    ))}
-                    {plannedExercises.length > PREVIEW_EXERCISES && (
-                      <ThemedText variant="footnote" color="tertiary" style={{ marginLeft: 36 }}>
-                        {t.dashboard.more(plannedExercises.length - PREVIEW_EXERCISES)}
-                      </ThemedText>
-                    )}
-                  </>
-                )}
-              </View>
-            )}
-
             {hasDraft ? (
               <Button title={t.dashboard.resume} onPress={() => openSession()} />
             ) : doneToday ? (
@@ -177,10 +121,10 @@ export default function DashboardScreen() {
               <Button
                 title={t.dashboard.trainAnyway}
                 variant="tonal"
-                onPress={() => openSession({ exerciseIds: suggestion.exerciseIds })}
+                onPress={() => openSession()}
               />
             ) : (
-              <Button title={t.dashboard.launch} onPress={() => openSession({ exerciseIds: suggestion.exerciseIds })} />
+              <Button title={t.dashboard.startSession} onPress={() => openSession()} />
             )}
           </Card>
           </Animated.View>

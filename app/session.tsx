@@ -26,7 +26,6 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Radius, Spacing } from '../constants/theme';
 import { findExerciseGuide } from '../constants/exerciseGuides';
 import { todayKey } from '../utils/date';
-import { suggestSession } from '../utils/sessionSuggestion';
 import { computeExercisePRs } from '../utils/prStats';
 import { clearSessionDraft, DraftSet, loadActiveDraft, saveSessionDraft } from '../utils/sessionDraft';
 import { setSessionScreenOpen } from '../lib/sessionRuntime';
@@ -162,7 +161,6 @@ export default function SessionScreen() {
   }, [activeIds, selectedId]);
 
   const exercisePRs = useMemo(() => computeExercisePRs(sets, sessions), [sets, sessions]);
-  const suggestion = useMemo(() => suggestSession(sessions, sets, exercises), [sessions, sets, exercises]);
   const selected = selectedId != null ? exercises.find((e) => e.id === selectedId) ?? null : null;
   const selectedSets = selectedId != null ? draftSets[selectedId] ?? [] : [];
 
@@ -515,31 +513,7 @@ export default function SessionScreen() {
                 <ThemedText variant="title3" style={{ textAlign: 'center' }}>
                   {t.session.emptyTitle}
                 </ThemedText>
-                {suggestion.exerciseIds.length > 0 && (
-                  <Pressable
-                    onPress={() => setActiveIds(suggestion.exerciseIds)}
-                    style={({ pressed }) => ({
-                      gap: 4,
-                      padding: Spacing.lg,
-                      borderRadius: Radius.lg,
-                      backgroundColor: colors.accentSoft,
-                      borderWidth: 1,
-                      borderColor: colors.accent + '4D',
-                      opacity: pressed ? 0.75 : 1,
-                    })}
-                  >
-                    <ThemedText variant="footnote" weight="800" color="accent" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                      {t.dashboard.suggested}
-                    </ThemedText>
-                    <ThemedText variant="title3">
-                      {suggestion.category === 'upper' ? t.dashboard.upper : t.dashboard.lower}
-                    </ThemedText>
-                    <ThemedText variant="footnote" color="secondary">
-                      {t.seance.exerciseCount(suggestion.exerciseIds.length)}
-                    </ThemedText>
-                  </Pressable>
-                )}
-                <Button title={t.session.addExercise} variant={suggestion.exerciseIds.length > 0 ? 'tonal' : 'filled'} onPress={() => setPickerOpen(true)} />
+                <Button title={t.session.addExercise} onPress={() => setPickerOpen(true)} />
                 {workoutTemplates.length > 0 && (
                   <View style={{ gap: Spacing.sm }}>
                     <ThemedText variant="footnote" weight="700" color="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
