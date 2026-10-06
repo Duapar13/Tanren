@@ -696,8 +696,22 @@ export async function bootstrapAfterLogin(db: SQLiteDatabase): Promise<void> {
  * missing (one GET /sessions), and safe to repeat since it only inserts sessions whose serverId
  * isn't already present locally. */
 export async function pullMissingSessions(db: SQLiteDatabase): Promise<void> {
-  const serverSessions: { id: number }[] = await apiFetch('/sessions');
+  const serverSessions: { id: number; date?: string }[] = await apiFetch('/sessions');
   if (serverSessions.length === 0) return;
+
+  // A session's date can be corrected server-side (e.g. a workout saved just after midnight under the
+  // wrong day); dates are never edited on the phone, so the server copy wins.
+  const localDated = await db.getAllAsync<{ id: number; serverId: number; date: string }>(
+    'SELECT id, serverId, date FROM sessions WHERE serverId IS NOT NULL'
+  );
+  const localByServerId = new Map(localDated.map((r) => [r.serverId, r]));
+  for (const s of serverSessions) {
+    const local = localByServerId.get(s.id);
+    const serverDate = s.date?.slice(0, 10);
+    if (local && serverDate && local.date !== serverDate) {
+      await db.runAsync('UPDATE sessions SET date = ? WHERE id = ?', serverDate, local.id);
+    }
+  }
 
   const localServerIds = new Set(
     (

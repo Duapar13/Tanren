@@ -28,7 +28,8 @@ import { findExerciseGuide } from '../constants/exerciseGuides';
 import { todayKey } from '../utils/date';
 import { suggestSession } from '../utils/sessionSuggestion';
 import { computeExercisePRs } from '../utils/prStats';
-import { clearSessionDraft, DraftSet, loadSessionDraft, saveSessionDraft } from '../utils/sessionDraft';
+import { clearSessionDraft, DraftSet, loadActiveDraft, saveSessionDraft } from '../utils/sessionDraft';
+import { setSessionScreenOpen } from '../lib/sessionRuntime';
 import { displayToKg, formatWeight, kgToDisplay } from '../utils/units';
 import { haptics } from '../lib/haptics';
 import { showToast } from '../lib/toast';
@@ -72,8 +73,9 @@ export default function SessionScreen() {
 
   const weightUnit = user?.weightUnit ?? 'kg';
   const rpeEnabled = user?.rpeEnabled ?? false;
-  const today = todayKey();
-  const resumeTarget = useMemo(() => sessions.find((s) => s.date === today) ?? null, [sessions, today]);
+  // The workout belongs to the day it was started, even if it is finished after midnight.
+  const [sessionDate, setSessionDate] = useState(() => todayKey());
+  const resumeTarget = useMemo(() => sessions.find((s) => s.date === sessionDate) ?? null, [sessions, sessionDate]);
 
   const [hydrated, setHydrated] = useState(false);
   const [activeIds, setActiveIds] = useState<number[]>([]);
@@ -96,6 +98,11 @@ export default function SessionScreen() {
   const [now, setNow] = useState(() => Date.now());
   const finishedRef = useRef(false);
 
+  useEffect(() => {
+    setSessionScreenOpen(true);
+    return () => setSessionScreenOpen(false);
+  }, []);
+
   // Chrono
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -106,9 +113,10 @@ export default function SessionScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const draft = await loadSessionDraft(today);
+      const draft = await loadActiveDraft();
       if (cancelled) return;
       if (draft && draft.activeExerciseIds.length > 0) {
+        setSessionDate(draft.date);
         setActiveIds(draft.activeExerciseIds);
         setDraftSets(draft.draftSets);
         setStartedAt(draft.startedAt ?? null);
@@ -139,14 +147,14 @@ export default function SessionScreen() {
       clearSessionDraft();
       return;
     }
-    saveSessionDraft(today, {
+    saveSessionDraft(sessionDate, {
       activeExerciseIds: activeIds,
       draftSets,
       validatedExerciseIds: [],
       resuming: !!resumeTarget,
       startedAt: startedAt ?? undefined,
     });
-  }, [hydrated, activeIds, draftSets, startedAt, today, resumeTarget]);
+  }, [hydrated, activeIds, draftSets, startedAt, sessionDate, resumeTarget]);
 
   useEffect(() => {
     if (activeIds.length === 0) setSelectedId(null);
@@ -345,7 +353,7 @@ export default function SessionScreen() {
       );
       finishedRef.current = true;
       if (resumeTarget) await addSetsToSession(resumeTarget.id, setInputs);
-      else await addSession({ date: today, category: 'custom', notes: '' }, setInputs);
+      else await addSession({ date: sessionDate, category: 'custom', notes: '' }, setInputs);
       await clearSessionDraft();
       haptics.finish();
       router.replace({
@@ -499,7 +507,7 @@ export default function SessionScreen() {
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={Keyboard.dismiss}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxl }}
+            contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.md }}
           >
             {!selected ? (
               <View style={{ gap: Spacing.lg }}>
@@ -574,11 +582,11 @@ export default function SessionScreen() {
               <>
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-                    <ThemedText variant="title1" numberOfLines={2} style={{ flex: 1 }}>
+                    <ThemedText variant="title2" numberOfLines={2} style={{ flex: 1 }}>
                       {selected.name}
                     </ThemedText>
                     <NinjaMascot
-                      size={64}
+                      size={52}
                       reaction={celebration ? 'excited' : restTimerEndAt ? 'sleepy' : 'focused'}
                       animated
                       interactive
@@ -610,15 +618,24 @@ export default function SessionScreen() {
                         : t.session.firstTime}
                     </ThemedText>
                   </View>
-                  {guide && (
-                    <Pressable onPress={() => setShowGuide((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 }}>
-                      <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
-                      <ThemedText variant="footnote" weight="700" color="accent">
-                        {t.session.howTo}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
+                    {guide ? (
+                      <Pressable onPress={() => setShowGuide((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+                        <ThemedText variant="footnote" weight="700" color="accent">
+                          {t.session.howTo}
+                        </ThemedText>
+                        <Ionicons name={showGuide ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textTertiary} />
+                      </Pressable>
+                    ) : (
+                      <View />
+                    )}
+                    <Pressable onPress={confirmRemoveExercise} hitSlop={8}>
+                      <ThemedText variant="footnote" weight="700" style={{ color: colors.negative }}>
+                        {t.session.removeExercise}
                       </ThemedText>
-                      <Ionicons name={showGuide ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textTertiary} />
                     </Pressable>
-                  )}
+                  </View>
                   {guide && showGuide && (
                     <Card style={{ gap: 4, padding: Spacing.md }}>
                       {guide.cues.map((cue, i) => (
@@ -641,7 +658,7 @@ export default function SessionScreen() {
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: Spacing.md,
-                            minHeight: 52,
+                            minHeight: 44,
                             paddingHorizontal: Spacing.md,
                             backgroundColor: editingIndex === i ? colors.accentSoft : colors.card,
                           }}
@@ -672,38 +689,51 @@ export default function SessionScreen() {
                   </Card>
                 )}
 
-                <Card variant="accent" style={{ gap: Spacing.lg }}>
-                  <ThemedText variant="footnote" weight="800" color="accent" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                    {editing ? `${t.common.edit} · ${t.session.setNumber((editingIndex ?? 0) + 1)}` : t.session.setNumber(selectedSets.length + 1)}
-                  </ThemedText>
-                  <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-                    <Stepper label={t.common.reps} value={repsStr} onChange={setRepsStr} step={1} min={0} decimals={0} />
-                    <Stepper
-                      label={t.session.weightLabel(weightUnit)}
-                      value={weightStr}
-                      onChange={setWeightStr}
-                      step={weightStep}
-                      min={0}
-                      decimals={1}
-                    />
-                  </View>
-                  {rpeEnabled && (
-                    <Stepper label={t.common.rpe} value={rpeStr} onChange={setRpeStr} step={0.5} min={1} decimals={1} placeholder="—" />
-                  )}
-                  <Button title={editing ? t.common.save : t.session.validateSet} onPress={handleValidate} />
-                  {editing && <Button title={t.common.cancel} variant="plain" onPress={() => setEditingIndex(null)} />}
-                </Card>
-
-                {selectedSets.length > 0 && nextId != null && (
-                  <Button title={t.session.nextExercise} variant="tonal" onPress={() => selectExercise(nextId)} />
-                )}
-                {selectedSets.length > 0 && nextId == null && (
-                  <Button title={t.session.addExercise} variant="tonal" onPress={() => setPickerOpen(true)} />
-                )}
-                <Button title={t.session.removeExercise} variant="plain" onPress={confirmRemoveExercise} />
               </>
             )}
           </ScrollView>
+
+          {selected && (
+            <View style={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm }}>
+              <Card variant="accent" style={{ gap: Spacing.md, padding: Spacing.md }}>
+                <ThemedText variant="footnote" weight="800" color="accent" style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                  {editing ? `${t.common.edit} · ${t.session.setNumber((editingIndex ?? 0) + 1)}` : t.session.setNumber(selectedSets.length + 1)}
+                </ThemedText>
+                <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+                  <Stepper label={t.common.reps} value={repsStr} onChange={setRepsStr} step={1} min={0} decimals={0} />
+                  <Stepper
+                    label={t.session.weightLabel(weightUnit)}
+                    value={weightStr}
+                    onChange={setWeightStr}
+                    step={weightStep}
+                    min={0}
+                    decimals={1}
+                  />
+                </View>
+                {rpeEnabled && (
+                  <Stepper label={t.common.rpe} value={rpeStr} onChange={setRpeStr} step={0.5} min={1} decimals={1} placeholder="—" />
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <Button
+                    title={editing ? t.common.save : t.session.validateSet}
+                    onPress={handleValidate}
+                    style={{ flex: 1 }}
+                  />
+                  {editing ? (
+                    <IconButton name="close" onPress={() => setEditingIndex(null)} />
+                  ) : (
+                    selectedSets.length > 0 && (
+                      <IconButton
+                        name={nextId != null ? 'arrow-forward' : 'add'}
+                        variant="accent"
+                        onPress={() => (nextId != null ? selectExercise(nextId) : setPickerOpen(true))}
+                      />
+                    )
+                  )}
+                </View>
+              </Card>
+            </View>
+          )}
         </KeyboardAvoidingView>
 
         {restTimerEndAt && (

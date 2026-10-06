@@ -53,6 +53,26 @@ export async function loadSessionDraft(date: string): Promise<SessionDraftState 
   }
 }
 
+/** The in-progress workout whatever day it was started on — a workout that crosses midnight must keep
+ * the day it began, so it is looked up without a date. */
+export async function loadActiveDraft(): Promise<(SessionDraftState & { date: string }) | null> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed: StoredSessionDraft = JSON.parse(raw);
+    return {
+      date: parsed.date,
+      activeExerciseIds: parsed.activeExerciseIds,
+      draftSets: parsed.draftSets,
+      validatedExerciseIds: parsed.validatedExerciseIds,
+      resuming: parsed.resuming,
+      startedAt: parsed.startedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function clearSessionDraft(): Promise<void> {
   await AsyncStorage.removeItem(STORAGE_KEY);
 }

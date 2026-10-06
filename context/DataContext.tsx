@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import {
   BodyWeightEntry,
@@ -36,6 +36,7 @@ import { requestSync } from '../lib/syncBus';
 import { LOCALE_MAP, useTranslation } from '../hooks/useTranslation';
 import { formatLongDate, todayKey } from '../utils/date';
 import { clearSessionDraft, peekStaleDraft } from '../utils/sessionDraft';
+import { isSessionScreenOpen } from '../lib/sessionRuntime';
 
 interface DataContextValue {
   loading: boolean;
@@ -187,27 +188,41 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   // "add a forgotten exercise" to an already-closed session (stale.resuming), the original
   // session id isn't persisted, so this creates a separate session for that date rather than
   // appending to it — a minor duplicate-card quirk, not data loss.
+  // A workout left unfinished on a previous day is saved under the day it was started — at launch and
+  // whenever the app comes back to the foreground (e.g. the morning after training late at night).
   useEffect(() => {
-    (async () => {
-      const stale = await peekStaleDraft(todayKey());
-      if (!stale) return;
-      const setInputs = stale.activeExerciseIds.flatMap((exerciseId) =>
-        (stale.draftSets[exerciseId] ?? []).map((s, i) => ({
-          exerciseId,
-          setNumber: i + 1,
-          reps: s.reps,
-          weightKg: s.weightKg,
-          rpe: s.rpe,
-        }))
-      );
-      if (setInputs.length === 0) return;
-      await addSession({ date: stale.date, category: 'custom', notes: '' }, setInputs);
-      await clearSessionDraft();
-      Alert.alert(
-        t.seance.autoValidatedTitle,
-        t.seance.autoValidatedBody(formatLongDate(stale.date, LOCALE_MAP[lang]), setInputs.length)
-      );
-    })();
+    let running = false;
+    const commitStaleDraft = async () => {
+      if (running || isSessionScreenOpen()) return;
+      running = true;
+      try {
+        const stale = await peekStaleDraft(todayKey());
+        if (!stale) return;
+        const setInputs = stale.activeExerciseIds.flatMap((exerciseId) =>
+          (stale.draftSets[exerciseId] ?? []).map((s, i) => ({
+            exerciseId,
+            setNumber: i + 1,
+            reps: s.reps,
+            weightKg: s.weightKg,
+            rpe: s.rpe,
+          }))
+        );
+        if (setInputs.length === 0) return;
+        await addSession({ date: stale.date, category: 'custom', notes: '' }, setInputs);
+        await clearSessionDraft();
+        Alert.alert(
+          t.seance.autoValidatedTitle,
+          t.seance.autoValidatedBody(formatLongDate(stale.date, LOCALE_MAP[lang]), setInputs.length)
+        );
+      } finally {
+        running = false;
+      }
+    };
+    commitStaleDraft();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') commitStaleDraft();
+    });
+    return () => sub.remove();
   }, [addSession, t, lang]);
 
   const removeSession = useCallback(

@@ -18,7 +18,7 @@ import { LOCALE_MAP, useTranslation } from '../../hooks/useTranslation';
 import { Radius, Spacing } from '../../constants/theme';
 import { isTrainingDay } from '../../utils/program';
 import { formatLongDate, todayKey } from '../../utils/date';
-import { loadSessionDraft } from '../../utils/sessionDraft';
+import { loadActiveDraft } from '../../utils/sessionDraft';
 import { suggestSession } from '../../utils/sessionSuggestion';
 import { formatWeight } from '../../utils/units';
 import { openSession } from '../../lib/startSession';
@@ -53,7 +53,7 @@ export default function DashboardScreen() {
   const [hasDraft, setHasDraft] = useState(false);
   useFocusEffect(
     useCallback(() => {
-      loadSessionDraft(today).then((draft) => setHasDraft(!!draft && draft.activeExerciseIds.length > 0));
+      loadActiveDraft().then((draft) => setHasDraft(!!draft && draft.activeExerciseIds.length > 0));
     }, [today])
   );
 
